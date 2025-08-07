@@ -1,0 +1,238 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// USERS & AUTHENTICATION
+// ================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  plan      UserPlan @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  prompts    Prompt[]
+  executions Execution[]
+  apiKeys    ApiKey[]
+
+  @@map("users")
+}
+
+enum UserPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+// ================================
+// PROMPT MANAGEMENT
+// ================================
+
+model Prompt {
+  id          String       @id @default(uuid())
+  name        String
+  description String?
+  template    String       // Large text field for prompt template
+  variables   Json         // Variable definitions with types and constraints
+  version     Int          @default(1)
+  status      PromptStatus @default(DRAFT)
+  tags        String[]     @default([])
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime? // When status changed to PUBLISHED
+
+  // Foreign Keys
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  executions  Execution[]
+  validations Validation[]
+  versions    PromptVersion[]
+
+  @@map("prompts")
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([status, publishedAt])
+}
+
+model PromptVersion {
+  id        String   @id @default(uuid())
+  version   Int
+  template  String
+  variables Json
+  changeLog String?
+  createdAt DateTime @default(now())
+
+  // Foreign Keys
+  promptId String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@map("prompt_versions")
+  @@unique([promptId, version])
+  @@index([promptId, createdAt])
+}
+
+enum PromptStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// ================================
+// EXECUTION ENGINE
+// ================================
+
+model Execution {
+  id String @id @default(uuid())
+
+  // Input Data
+  inputs  Json  // Variable values used for execution
+  context Json? // Additional context data
+
+  // Execution Details
+  status          ExecutionStatus @default(PENDING)
+  priority        Priority        @default(NORMAL)
+  edgeFunctionId  String?         // Edge function execution identifier
+
+  // Results
+  output           String? // Raw AI response
+  validatedOutput  Json?   // Post-validation structured data
+  validationStatus ValidationStatus @default(PENDING)
+
+  // Performance Metrics
+  tokenUsage Json?    @db.JsonB // Input/output token counts and model info
+  latencyMs  Int?     // Execution time in milliseconds
+  costUsd    Decimal? @db.Decimal(10, 6) // Cost in USD with 6 decimal precision
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  startedAt   DateTime? // When execution actually began
+  completedAt DateTime? // When execution finished (success or failure)
+
+  // Foreign Keys
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  promptId String
+  prompt   Prompt @relation(fields: [promptId], references: [id])
+
+  // Relations
+  logs ExecutionLog[]
+
+  @@map("executions")
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([promptId, createdAt])
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ValidationStatus {
+  PENDING
+  PASSED
+  FAILED
+  SKIPPED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
+}
+
+// ================================
+// VALIDATION SYSTEM
+// ================================
+
+model Validation {
+  id       String         @id @default(uuid())
+  name     String
+  type     ValidationType
+  config   Json           @db.JsonB // Validation configuration (schema, regex, function)
+  isActive Boolean        @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign Keys
+  promptId String
+  prompt   Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@map("validations")
+  @@index([promptId, isActive])
+}
+
+enum ValidationType {
+  SCHEMA   // JSON Schema validation
+  REGEX    // Regular expression matching
+  FUNCTION // Custom JavaScript function
+}
+
+// ================================
+// LOGGING & AUDIT
+// ================================
+
+model ExecutionLog {
+  id        String   @id @default(uuid())
+  level     LogLevel @default(INFO)
+  message   String
+  metadata  Json?    @db.JsonB
+  timestamp DateTime @default(now())
+
+  // Foreign Keys
+  executionId String
+  execution   Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@map("execution_logs")
+  @@index([executionId, timestamp])
+  @@index([level, timestamp])
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+}
+
+// ================================
+// API KEY MANAGEMENT
+// ================================
+
+model ApiKey {
+  id       String    @id @default(uuid())
+  name     String
+  keyHash  String    @unique // SHA-256 hash of the actual API key
+  lastUsed DateTime?
+  isActive Boolean   @default(true)
+  createdAt DateTime @default(now())
+
+  // Foreign Keys
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+  @@index([userId, isActive])
+}
