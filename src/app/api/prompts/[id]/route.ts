@@ -20,16 +20,11 @@ const UpdatePromptSchema = z.object({
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
 });
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const { params } = await context.params;
   try {
     const user = await requireAuth();
     const { id } = params;
@@ -61,8 +56,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const { params } = await context.params;
   try {
     const user = await requireAuth();
     const { id } = params;
@@ -114,8 +110,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const { params } = await context.params;
   try {
     const user = await requireAuth();
     const { id } = params;

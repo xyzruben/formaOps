@@ -15,10 +15,10 @@ export async function GET(request: NextRequest) {
 
   const startTime = Date.now();
   const healthChecks = {
-    database: { status: 'unknown', responseTime: 0, error: null },
+    database: { status: 'unknown', responseTime: 0, error: null as string | null },
     memory: { status: 'unknown', usage: 0, total: 0 },
-    performance: { status: 'unknown', metrics: null },
-    errors: [],
+    performance: { status: 'unknown', metrics: null as any },
+    errors: [] as string[],
   };
 
   try {

@@ -10,16 +10,11 @@ const ExecutePromptSchema = z.object({
   validateOutput: z.boolean().optional(),
 });
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 export async function POST(
   request: NextRequest,
-  { params }: RouteParams
+  context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
+  const { params } = await context.params;
   const startTime = Date.now();
   
   try {

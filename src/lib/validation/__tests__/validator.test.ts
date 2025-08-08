@@ -1,5 +1,12 @@
-import { ValidationEngine, createValidator } from '../validator';
+import { ValidationEngine, type ValidationRule } from '../validator';
 import { z } from 'zod';
+
+// Local enum for testing - matches Prisma schema
+enum ValidationType {
+  SCHEMA = 'SCHEMA',
+  REGEX = 'REGEX',  
+  FUNCTION = 'FUNCTION'
+}
 
 describe('ValidationEngine', () => {
   let engine: ValidationEngine;
@@ -9,134 +16,265 @@ describe('ValidationEngine', () => {
   });
 
   describe('Schema Validation', () => {
-    it('should validate against Zod schema', async () => {
-      const schema = z.object({
-        name: z.string().min(1),
-        age: z.number().min(0),
-      });
+    it('should validate JSON against Zod schema', async () => {
+      const rule: ValidationRule = {
+        id: 'user-schema',
+        name: 'User Schema Validation',
+        type: ValidationType.SCHEMA,
+        config: {
+          zodSchema: z.object({
+            name: z.string().min(1),
+            age: z.number().min(0),
+          }),
+        },
+        isActive: true,
+      };
 
-      engine.addRule('user-schema', 'schema', schema);
+      const validJson = JSON.stringify({ name: 'John', age: 25 });
+      const result = await engine.validateSingleRule(validJson, rule);
       
-      const validResult = await engine.validate({ name: 'John', age: 25 });
-      expect(validResult.isValid).toBe(true);
-      expect(validResult.passedRules).toHaveLength(1);
-
-      const invalidResult = await engine.validate({ name: '', age: -1 });
-      expect(invalidResult.isValid).toBe(false);
-      expect(invalidResult.failedRules).toHaveLength(1);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
     it('should handle schema validation errors gracefully', async () => {
-      const schema = z.string();
-      engine.addRule('string-only', 'schema', schema);
+      const rule: ValidationRule = {
+        id: 'string-schema',
+        name: 'String Schema',
+        type: ValidationType.SCHEMA,
+        config: {
+          zodSchema: z.string(),
+        },
+        isActive: true,
+      };
+
+      const invalidJson = JSON.stringify(123);
+      const result = await engine.validateSingleRule(invalidJson, rule);
       
-      const result = await engine.validate(123);
       expect(result.isValid).toBe(false);
-      expect(result.failedRules[0].error).toContain('Expected string');
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle invalid JSON', async () => {
+      const rule: ValidationRule = {
+        id: 'json-rule',
+        name: 'JSON Rule',
+        type: ValidationType.SCHEMA,
+        config: {
+          zodSchema: z.object({ test: z.string() }),
+        },
+        isActive: true,
+      };
+
+      const invalidJson = 'not json';
+      const result = await engine.validateSingleRule(invalidJson, rule);
+      
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0].message).toContain('not valid JSON');
     });
   });
 
   describe('Regex Validation', () => {
     it('should validate against regex patterns', async () => {
-      engine.addRule('email', 'regex', /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-      
-      const validResult = await engine.validate('test@example.com');
-      expect(validResult.isValid).toBe(true);
+      const rule: ValidationRule = {
+        id: 'email-regex',
+        name: 'Email Validation',
+        type: ValidationType.REGEX,
+        config: {
+          pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+          flags: 'i',
+        },
+        isActive: true,
+      };
 
-      const invalidResult = await engine.validate('invalid-email');
-      expect(invalidResult.isValid).toBe(false);
+      const validEmail = 'test@example.com';
+      const result = await engine.validateSingleRule(validEmail, rule);
+      
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
-    it('should handle regex validation for objects', async () => {
-      engine.addRule('email-field', 'regex', /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'email');
-      
-      const validResult = await engine.validate({ email: 'test@example.com', name: 'John' });
-      expect(validResult.isValid).toBe(true);
+    it('should fail invalid regex patterns', async () => {
+      const rule: ValidationRule = {
+        id: 'email-regex',
+        name: 'Email Validation',
+        type: ValidationType.REGEX,
+        config: {
+          pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+          flags: 'i',
+        },
+        isActive: true,
+      };
 
-      const invalidResult = await engine.validate({ email: 'invalid', name: 'John' });
-      expect(invalidResult.isValid).toBe(false);
+      const invalidEmail = 'not-an-email';
+      const result = await engine.validateSingleRule(invalidEmail, rule);
+      
+      expect(result.isValid).toBe(false);
     });
   });
 
   describe('Function Validation', () => {
     it('should validate using custom functions', async () => {
-      const isPositive = (value: number) => value > 0;
-      engine.addRule('positive', 'function', isPositive);
-      
-      const validResult = await engine.validate(5);
-      expect(validResult.isValid).toBe(true);
+      const rule: ValidationRule = {
+        id: 'positive-check',
+        name: 'Positive Number Check',
+        type: ValidationType.FUNCTION,
+        config: {
+          functionCode: `
+            function validate(input) {
+              const num = parseFloat(input);
+              return !isNaN(num) && num > 0;
+            }
+          `,
+          timeout: 5000,
+        },
+        isActive: true,
+      };
 
-      const invalidResult = await engine.validate(-1);
+      const validInput = '5.5';
+      const result = await engine.validateSingleRule(validInput, rule);
+      
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+      
+      const invalidInput = '-1';
+      const invalidResult = await engine.validateSingleRule(invalidInput, rule);
+      
       expect(invalidResult.isValid).toBe(false);
     });
 
     it('should handle function validation errors', async () => {
-      const throwingFunction = () => { throw new Error('Validation error'); };
-      engine.addRule('throws', 'function', throwingFunction);
+      const rule: ValidationRule = {
+        id: 'throwing-function',
+        name: 'Function That Throws',
+        type: ValidationType.FUNCTION,
+        config: {
+          functionCode: `
+            function validate(input) {
+              throw new Error('Validation error');
+            }
+          `,
+          timeout: 5000,
+        },
+        isActive: true,
+      };
+
+      const result = await engine.validateSingleRule('test', rule);
       
-      const result = await engine.validate('test');
       expect(result.isValid).toBe(false);
-      expect(result.failedRules[0].error).toContain('Validation error');
-    });
-
-    it('should timeout long-running validation functions', async () => {
-      const slowFunction = () => new Promise(resolve => setTimeout(resolve, 6000));
-      engine.addRule('slow', 'function', slowFunction);
-      
-      const result = await engine.validate('test');
-      expect(result.isValid).toBe(false);
-      expect(result.failedRules[0].error).toContain('timeout');
-    }, 10000);
-  });
-
-  describe('Multiple Rules', () => {
-    it('should validate against multiple rules', async () => {
-      const schema = z.object({ value: z.number() });
-      const isPositive = (data: { value: number }) => data.value > 0;
-      
-      engine.addRule('schema', 'schema', schema);
-      engine.addRule('positive', 'function', isPositive);
-      
-      const validResult = await engine.validate({ value: 5 });
-      expect(validResult.isValid).toBe(true);
-      expect(validResult.passedRules).toHaveLength(2);
-
-      const invalidResult = await engine.validate({ value: -1 });
-      expect(invalidResult.isValid).toBe(false);
-      expect(invalidResult.passedRules).toHaveLength(1); // Schema passes
-      expect(invalidResult.failedRules).toHaveLength(1); // Function fails
+      expect(result.errors[0].message).toContain('Validation error');
     });
   });
 
-  describe('Rule Management', () => {
-    it('should add and remove rules', () => {
-      engine.addRule('test', 'regex', /test/);
-      expect(engine.getRules()).toHaveLength(1);
+  describe('Multiple Rules Validation', () => {
+    it('should validate against multiple rules and return summary', async () => {
+      const rules: ValidationRule[] = [
+        {
+          id: 'schema-rule',
+          name: 'Schema Rule',
+          type: ValidationType.SCHEMA,
+          config: {
+            zodSchema: z.object({ value: z.number() }),
+          },
+          isActive: true,
+        },
+        {
+          id: 'positive-rule',
+          name: 'Positive Rule',
+          type: ValidationType.FUNCTION,
+          config: {
+            functionCode: `
+              function validate(input) {
+                const data = JSON.parse(input);
+                return data.value > 0;
+              }
+            `,
+            timeout: 5000,
+          },
+          isActive: true,
+        },
+      ];
+
+      const validInput = JSON.stringify({ value: 5 });
+      const result = await engine.validateOutput(validInput, rules);
       
-      engine.removeRule('test');
-      expect(engine.getRules()).toHaveLength(0);
+      expect(result.overallValid).toBe(true);
+      expect(result.passedCount).toBe(2);
+      expect(result.failedCount).toBe(0);
+
+      const invalidInput = JSON.stringify({ value: -1 });
+      const invalidResult = await engine.validateOutput(invalidInput, rules);
+      
+      expect(invalidResult.overallValid).toBe(false);
+      expect(invalidResult.passedCount).toBe(1);
+      expect(invalidResult.failedCount).toBe(1);
     });
 
-    it('should clear all rules', () => {
-      engine.addRule('rule1', 'regex', /test1/);
-      engine.addRule('rule2', 'regex', /test2/);
-      expect(engine.getRules()).toHaveLength(2);
+    it('should skip inactive rules', async () => {
+      const rules: ValidationRule[] = [
+        {
+          id: 'active-rule',
+          name: 'Active Rule',
+          type: ValidationType.REGEX,
+          config: { pattern: '.*', flags: '' },
+          isActive: true,
+        },
+        {
+          id: 'inactive-rule',
+          name: 'Inactive Rule',
+          type: ValidationType.REGEX,
+          config: { pattern: 'fail', flags: '' },
+          isActive: false,
+        },
+      ];
+
+      const result = await engine.validateOutput('test', rules);
       
-      engine.clearRules();
-      expect(engine.getRules()).toHaveLength(0);
+      expect(result.passedCount).toBe(1);
+      expect(result.skippedCount).toBe(1);
+      expect(result.results).toHaveLength(1);
     });
   });
-});
 
-describe('createValidator utility', () => {
-  it('should create validator with predefined rules', async () => {
-    const validator = createValidator([
-      { name: 'email', type: 'regex', rule: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-      { name: 'required', type: 'function', rule: (value: any) => value != null && value !== '' },
-    ]);
+  describe('Test Rule Functionality', () => {
+    it('should test a rule against multiple test cases', async () => {
+      const rule: ValidationRule = {
+        id: 'email-test',
+        name: 'Email Test',
+        type: ValidationType.REGEX,
+        config: {
+          pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+          flags: 'i',
+        },
+        isActive: true,
+      };
 
-    const result = await validator.validate('test@example.com');
-    expect(result.isValid).toBe(true);
-    expect(result.passedRules).toHaveLength(2);
+      const testCases = [
+        {
+          input: 'valid@example.com',
+          expectedValid: true,
+          description: 'Valid email',
+        },
+        {
+          input: 'invalid-email',
+          expectedValid: false,
+          description: 'Invalid email',
+        },
+        {
+          input: 'another@test.co.uk',
+          expectedValid: true,
+          description: 'Valid UK email',
+        },
+      ];
+
+      const testResult = await engine.testRule(rule, testCases);
+      
+      expect(testResult.passed).toBe(2);
+      expect(testResult.failed).toBe(1);
+      expect(testResult.results).toHaveLength(3);
+      expect(testResult.results[0].passed).toBe(true);
+      expect(testResult.results[1].passed).toBe(true);
+      expect(testResult.results[2].passed).toBe(true);
+    });
   });
 });

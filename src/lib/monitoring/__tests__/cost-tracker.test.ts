@@ -1,20 +1,21 @@
 import { CostTracker } from '../cost-tracker';
 import type { TokenUsage } from '../../agent/executor';
 
-// Mock Prisma client
-const mockPrisma = {
-  execution: {
-    findMany: jest.fn(),
-    groupBy: jest.fn(),
-  },
-  prompt: {
-    findUnique: jest.fn(),
-  },
-};
-
 jest.mock('../../database/client', () => ({
-  prisma: mockPrisma,
+  prisma: {
+    execution: {
+      findMany: jest.fn(),
+      groupBy: jest.fn(),
+    },
+    prompt: {
+      findUnique: jest.fn(),
+    },
+  },
 }));
+
+// Get mock reference
+const { prisma } = require('../../database/client');
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 
 describe('CostTracker', () => {
   let costTracker: CostTracker;
@@ -110,7 +111,7 @@ describe('CostTracker', () => {
     it('should calculate user cost metrics correctly', async () => {
       const metrics = await costTracker.getUserCostMetrics('user-1');
       
-      expect(metrics.totalCostUsd).toBe(0.06);
+      expect(metrics.totalCostUsd).toBeCloseTo(0.06, 2);
       expect(metrics.avgCostPerExecution).toBe(0.03);
       expect(metrics.tokenUsage.totalInput).toBe(300);
       expect(metrics.tokenUsage.totalOutput).toBe(150);

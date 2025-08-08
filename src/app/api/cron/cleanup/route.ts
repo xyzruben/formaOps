@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     executionsDeleted: 0,
     logsDeleted: 0,
     versionsDeleted: 0,
-    errors: [],
+    errors: [] as string[],
   };
 
   try {
