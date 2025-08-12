@@ -1,5 +1,5 @@
 import { prisma } from '../database/client';
-import type { TokenUsage } from '../agent/executor';
+import type { TokenUsage } from '../../types/database';
 
 export interface CostMetrics {
   totalCostUsd: number;
@@ -31,6 +31,30 @@ export interface BudgetAlert {
   message: string;
 }
 
+export interface TokenCosts {
+  inputCostPer1k: number;
+  outputCostPer1k: number;
+  model: string;
+}
+
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
+
+export interface CostSummary {
+  totalCost: number;
+  totalExecutions: number;
+  avgCostPerExecution: number;
+  modelBreakdown: Record<string, {
+    executions: number;
+    costUsd: number;
+    inputTokens: number;
+    outputTokens: number;
+  }>;
+  dateRange: DateRange;
+}
+
 export class CostTracker {
   private readonly modelCosts = {
     'gpt-3.5-turbo': { input: 0.0015, output: 0.002 },
@@ -46,6 +70,231 @@ export class CostTracker {
       (tokenUsage.input * costs.input / 1000) +
       (tokenUsage.output * costs.output / 1000)
     );
+  }
+
+  // New methods for Task 5
+  public calculateOpenAICost(tokens: { inputTokens: number; outputTokens: number; totalTokens: number }, model: string): number {
+    const costs = this.modelCosts[model as keyof typeof this.modelCosts] || this.modelCosts['gpt-3.5-turbo'];
+    
+    return (
+      (tokens.inputTokens * costs.input / 1000) +
+      (tokens.outputTokens * costs.output / 1000)
+    );
+  }
+
+  public async trackExecution(executionId: string, cost: number, tokens: { inputTokens: number; outputTokens: number; totalTokens: number }): Promise<void> {
+    // Update the execution record with cost information
+    await prisma.execution.update({
+      where: { id: executionId },
+      data: {
+        costUsd: cost,
+        tokenUsage: {
+          input: tokens.inputTokens,
+          output: tokens.outputTokens,
+          total: tokens.totalTokens,
+        },
+      },
+    });
+
+    // Create execution result record for detailed tracking
+    await prisma.executionResult.create({
+      data: {
+        executionId,
+        rawOutput: '', // This will be filled by the execution endpoint
+        tokenUsage: {
+          inputTokens: tokens.inputTokens,
+          outputTokens: tokens.outputTokens,
+          totalTokens: tokens.totalTokens,
+        },
+        costUsd: cost,
+      },
+    });
+  }
+
+  public async getExecutionCosts(userId: string, dateRange?: DateRange): Promise<CostSummary> {
+    const fromDate = dateRange?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
+    const toDate = dateRange?.to || new Date();
+
+    // Get executions within date range
+    const executions = await prisma.execution.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: fromDate,
+          lte: toDate,
+        },
+        costUsd: { not: null },
+      },
+      select: {
+        id: true,
+        costUsd: true,
+        tokenUsage: true,
+        createdAt: true,
+      },
+    });
+
+    // Calculate totals
+    const totalCost = executions.reduce((sum, exec) => sum + (exec.costUsd?.toNumber() || 0), 0);
+    const totalExecutions = executions.length;
+    const avgCostPerExecution = totalExecutions > 0 ? totalCost / totalExecutions : 0;
+
+    // Group by model for breakdown
+    const modelBreakdown: Record<string, any> = {};
+    
+    for (const exec of executions) {
+      const tokenData = exec.tokenUsage as any;
+      const model = tokenData?.model || 'unknown';
+      
+      if (!modelBreakdown[model]) {
+        modelBreakdown[model] = {
+          executions: 0,
+          costUsd: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+        };
+      }
+      
+      modelBreakdown[model].executions += 1;
+      modelBreakdown[model].costUsd += exec.costUsd?.toNumber() || 0;
+      modelBreakdown[model].inputTokens += tokenData?.input || 0;
+      modelBreakdown[model].outputTokens += tokenData?.output || 0;
+    }
+
+    return {
+      totalCost,
+      totalExecutions,
+      avgCostPerExecution,
+      modelBreakdown,
+      dateRange: { from: fromDate, to: toDate },
+    };
+  }
+
+  public getModelCosts(model: string): TokenCosts {
+    const costs = this.modelCosts[model as keyof typeof this.modelCosts] || this.modelCosts['gpt-3.5-turbo'];
+    
+    return {
+      model,
+      inputCostPer1k: costs.input,
+      outputCostPer1k: costs.output,
+    };
+  }
+
+  public async getDailyCostTrend(userId: string, days: number = 7): Promise<Array<{
+    date: string;
+    executions: number;
+    costUsd: number;
+    inputTokens: number;
+    outputTokens: number;
+  }>> {
+    const trend = [];
+    const now = new Date();
+    
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(0, 0, 0, 0);
+      
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      
+      const dayExecutions = await prisma.execution.findMany({
+        where: {
+          userId,
+          createdAt: {
+            gte: date,
+            lt: nextDate,
+          },
+          costUsd: { not: null },
+        },
+        select: {
+          costUsd: true,
+          tokenUsage: true,
+        },
+      });
+      
+      const dayStats = dayExecutions.reduce(
+        (acc, exec) => {
+          const tokenData = exec.tokenUsage as any;
+          acc.executions += 1;
+          acc.costUsd += exec.costUsd?.toNumber() || 0;
+          acc.inputTokens += tokenData?.input || 0;
+          acc.outputTokens += tokenData?.output || 0;
+          return acc;
+        },
+        { executions: 0, costUsd: 0, inputTokens: 0, outputTokens: 0 }
+      );
+      
+      trend.push({
+        date: date.toISOString().split('T')[0],
+        ...dayStats,
+      });
+    }
+    
+    return trend;
+  }
+
+  public async getTopCostlyPrompts(userId: string, limit: number = 10): Promise<Array<{
+    promptId: string;
+    promptName: string;
+    executions: number;
+    totalCost: number;
+    avgCost: number;
+    totalInputTokens: number;
+    totalOutputTokens: number;
+  }>> {
+    const results = await prisma.execution.groupBy({
+      by: ['promptId'],
+      where: {
+        userId,
+        costUsd: { not: null },
+      },
+      _count: { id: true },
+      _sum: { costUsd: true },
+    });
+
+    // Get detailed information for each prompt
+    const promptDetails = await Promise.all(
+      results.map(async (result) => {
+        const prompt = await prisma.prompt.findUnique({
+          where: { id: result.promptId },
+          select: { name: true },
+        });
+
+        // Get token usage details
+        const executions = await prisma.execution.findMany({
+          where: {
+            userId,
+            promptId: result.promptId,
+            tokenUsage: { not: null },
+          },
+          select: { tokenUsage: true },
+        });
+
+        const tokenTotals = executions.reduce(
+          (acc, exec) => {
+            const tokenData = exec.tokenUsage as any;
+            acc.inputTokens += tokenData?.input || 0;
+            acc.outputTokens += tokenData?.output || 0;
+            return acc;
+          },
+          { inputTokens: 0, outputTokens: 0 }
+        );
+
+        return {
+          promptId: result.promptId,
+          promptName: prompt?.name || 'Unknown',
+          executions: result._count.id,
+          totalCost: result._sum.costUsd?.toNumber() || 0,
+          avgCost: (result._sum.costUsd?.toNumber() || 0) / result._count.id,
+          totalInputTokens: tokenTotals.inputTokens,
+          totalOutputTokens: tokenTotals.outputTokens,
+        };
+      })
+    );
+
+    return promptDetails
+      .sort((a, b) => b.totalCost - a.totalCost)
+      .slice(0, limit);
   }
 
   public async getUserCostMetrics(userId: string, days = 30): Promise<CostMetrics> {

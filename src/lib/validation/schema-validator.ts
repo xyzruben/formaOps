@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { prisma } from '../database/client';
+import { ValidationError } from '../utils/error-handler';
 
 export interface SchemaValidationRule {
   type: 'object' | 'array' | 'string' | 'number' | 'boolean';
@@ -15,14 +17,25 @@ export interface SchemaValidationRule {
 
 export interface ValidationResult {
   isValid: boolean;
-  errors: ValidationError[];
+  errors: ValidationErrorDetail[];
   validatedData?: unknown;
 }
 
-export interface ValidationError {
+export interface ValidationErrorDetail {
   path: string;
   message: string;
   value?: unknown;
+}
+
+export interface ValidationRule {
+  id: string;
+  promptId: string;
+  name: string;
+  type: 'SCHEMA' | 'REGEX' | 'FUNCTION';
+  config: SchemaValidationRule | { pattern: string } | { code: string };
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export class SchemaValidator {
@@ -100,7 +113,12 @@ export class SchemaValidator {
         if (rule.minLength) stringSchema = stringSchema.min(rule.minLength);
         if (rule.maxLength) stringSchema = stringSchema.max(rule.maxLength);
         if (rule.pattern) stringSchema = stringSchema.regex(new RegExp(rule.pattern));
-        if (rule.enum) stringSchema = z.enum(rule.enum as [string, ...string[]]);
+        if (rule.enum) {
+          const stringEnums = rule.enum.filter(v => typeof v === 'string') as string[];
+          if (stringEnums.length > 0) {
+            return z.enum(stringEnums as [string, ...string[]]);
+          }
+        }
         
         return stringSchema;
       
@@ -112,7 +130,9 @@ export class SchemaValidator {
         if (rule.enum) {
           const numericEnum = rule.enum.filter(v => typeof v === 'number') as number[];
           if (numericEnum.length > 0) {
-            return z.enum(numericEnum as [number, ...number[]]);
+            return z.number().refine(val => numericEnum.includes(val), {
+              message: `Must be one of: ${numericEnum.join(', ')}`,
+            });
           }
         }
         
@@ -147,7 +167,233 @@ export class SchemaValidator {
         return z.unknown();
     }
   }
+
+  // Task 7: Database integration methods
+  public async validateOutput(output: string, rules: ValidationRule[]): Promise<ValidationResult> {
+    const errors: ValidationErrorDetail[] = [];
+    let validatedData: any = null;
+
+    try {
+      // Parse output as JSON first
+      let parsedOutput: unknown;
+      try {
+        parsedOutput = JSON.parse(output);
+      } catch {
+        // If not JSON, treat as plain string
+        parsedOutput = output;
+      }
+
+      // Validate against each active rule
+      for (const rule of rules.filter(r => r.isActive)) {
+        let result: ValidationResult;
+        
+        if (rule.type === 'SCHEMA') {
+          result = this.validate(parsedOutput, rule.config as SchemaValidationRule);
+        } else if (rule.type === 'REGEX') {
+          const pattern = (rule.config as { pattern: string }).pattern;
+          const regex = new RegExp(pattern);
+          const isValid = typeof parsedOutput === 'string' && regex.test(parsedOutput);
+          result = {
+            isValid,
+            errors: isValid ? [] : [{
+              path: 'root',
+              message: `Does not match pattern: ${pattern}`,
+            }],
+            validatedData: isValid ? parsedOutput : undefined,
+          };
+        } else {
+          // For now, skip FUNCTION type validations as they need runtime evaluation
+          continue;
+        }
+        
+        if (!result.isValid) {
+          errors.push(...result.errors.map(err => ({
+            ...err,
+            path: `${rule.name}.${err.path}`,
+            message: `${rule.name}: ${err.message}`,
+          })));
+        } else if (validatedData === null) {
+          validatedData = result.validatedData;
+        }
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        validatedData: validatedData || parsedOutput,
+      };
+
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [{
+          path: 'root',
+          message: error instanceof Error ? error.message : 'Validation failed',
+        }],
+      };
+    }
+  }
+
+  public async createValidationRule(
+    promptId: string,
+    rule: Omit<ValidationRule, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<ValidationRule> {
+    try {
+      // Create validation rule in database
+      const createdRule = await prisma.validation.create({
+        data: {
+          promptId,
+          name: rule.name,
+          type: rule.type,
+          config: rule.config as any,
+          isActive: rule.isActive,
+        },
+      });
+
+      return {
+        id: createdRule.id,
+        promptId: createdRule.promptId,
+        name: createdRule.name,
+        type: createdRule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
+        config: createdRule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        isActive: createdRule.isActive,
+        createdAt: createdRule.createdAt,
+        updatedAt: createdRule.updatedAt,
+      };
+    } catch (error) {
+      throw new ValidationError(
+        `Failed to create validation rule: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  public async getValidationRules(promptId: string): Promise<ValidationRule[]> {
+    try {
+      const rules = await prisma.validation.findMany({
+        where: { promptId },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      return rules.map(rule => ({
+        id: rule.id,
+        promptId: rule.promptId,
+        name: rule.name,
+        type: rule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
+        config: rule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        isActive: rule.isActive,
+        createdAt: rule.createdAt,
+        updatedAt: rule.updatedAt,
+      }));
+    } catch (error) {
+      throw new ValidationError(
+        `Failed to get validation rules: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  public async updateValidationRule(
+    ruleId: string,
+    updates: Partial<Pick<ValidationRule, 'name' | 'type' | 'config' | 'isActive'>>
+  ): Promise<ValidationRule> {
+    try {
+      const updatedRule = await prisma.validation.update({
+        where: { id: ruleId },
+        data: {
+          ...updates,
+          config: updates.config as any,
+          updatedAt: new Date(),
+        },
+      });
+
+      return {
+        id: updatedRule.id,
+        promptId: updatedRule.promptId,
+        name: updatedRule.name,
+        type: updatedRule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
+        config: updatedRule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        isActive: updatedRule.isActive,
+        createdAt: updatedRule.createdAt,
+        updatedAt: updatedRule.updatedAt,
+      };
+    } catch (error) {
+      throw new ValidationError(
+        `Failed to update validation rule: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  public async deleteValidationRule(ruleId: string): Promise<void> {
+    try {
+      await prisma.validation.delete({
+        where: { id: ruleId },
+      });
+    } catch (error) {
+      throw new ValidationError(
+        `Failed to delete validation rule: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
+
+  public async validateExecutionOutput(
+    executionId: string,
+    output: string
+  ): Promise<{ isValid: boolean; errors: ValidationErrorDetail[]; validationStatus: 'PASSED' | 'FAILED' }> {
+    try {
+      // Get execution and its prompt's validation rules
+      const execution = await prisma.execution.findUnique({
+        where: { id: executionId },
+        include: {
+          prompt: {
+            include: {
+              validations: true,
+            },
+          },
+        },
+      });
+
+      if (!execution) {
+        throw new ValidationError('Execution not found');
+      }
+
+      // Convert database validation rules to ValidationRule format
+      const rules: ValidationRule[] = execution.prompt.validations.map(rule => ({
+        id: rule.id,
+        promptId: rule.promptId,
+        name: rule.name,
+        type: rule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
+        config: rule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        isActive: rule.isActive,
+        createdAt: rule.createdAt,
+        updatedAt: rule.updatedAt,
+      }));
+
+      // Validate output against rules
+      const result = await this.validateOutput(output, rules);
+
+      // Update execution with validation results
+      await prisma.execution.update({
+        where: { id: executionId },
+        data: {
+          validationStatus: result.isValid ? 'PASSED' : 'FAILED',
+          validatedOutput: result.validatedData as any,
+        },
+      });
+
+      return {
+        isValid: result.isValid,
+        errors: result.errors,
+        validationStatus: result.isValid ? 'PASSED' : 'FAILED',
+      };
+    } catch (error) {
+      throw new ValidationError(
+        `Failed to validate execution output: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
 }
+
+// Create singleton instance
+export const schemaValidator = new SchemaValidator();
 
 // Predefined common schemas
 export const commonSchemas = {

@@ -1,73 +1,270 @@
 import OpenAI from 'openai';
+import { costTracker } from '../monitoring/cost-tracker';
+import { logger } from '../monitoring/logger';
+import { 
+  ValidationError, 
+  ServiceUnavailableError, 
+  RateLimitError 
+} from '../utils/error-handler';
 
-let openaiClient: OpenAI | null = null;
-
-export function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    if (!apiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    openaiClient = new OpenAI({
-      apiKey,
-    });
-  }
-
-  return openaiClient;
+export interface OpenAIConfig {
+  apiKey: string;
+  model: 'gpt-3.5-turbo' | 'gpt-4';
+  maxTokens: number;
+  temperature: number;
 }
 
-export async function executePrompt(
-  template: string,
-  inputs: Record<string, unknown>
-): Promise<{
+export interface ExecutionResult {
   output: string;
   tokenUsage: {
-    input: number;
-    output: number;
-    total: number;
-    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
   };
-}> {
-  const openai = getOpenAIClient();
-  
-  // Simple template substitution for Phase 2
-  let processedPrompt = template;
-  
-  Object.entries(inputs).forEach(([key, value]) => {
-    const placeholder = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-    processedPrompt = processedPrompt.replace(placeholder, String(value));
-  });
+  costUsd: number;
+  model: string;
+}
 
-  const startTime = Date.now();
-  
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages: [
-      {
-        role: 'user',
-        content: processedPrompt,
-      },
-    ],
-    temperature: 0.7,
-    max_tokens: 2000,
-  });
+export class OpenAIClient {
+  private client: OpenAI;
+  private defaultConfig: OpenAIConfig;
 
-  const output = completion.choices[0]?.message?.content || '';
-  const usage = completion.usage;
+  constructor(apiKey?: string) {
+    if (!apiKey && !process.env.OPENAI_API_KEY) {
+      throw new ValidationError('OpenAI API key is required');
+    }
 
-  if (!usage) {
-    throw new Error('No usage information returned from OpenAI');
+    this.client = new OpenAI({
+      apiKey: apiKey || process.env.OPENAI_API_KEY!,
+    });
+
+    this.defaultConfig = {
+      apiKey: apiKey || process.env.OPENAI_API_KEY!,
+      model: (process.env.OPENAI_DEFAULT_MODEL as 'gpt-3.5-turbo' | 'gpt-4') || 'gpt-3.5-turbo',
+      maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
+      temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
+    };
+
+    this.validateConfig(this.defaultConfig);
   }
 
-  return {
-    output,
-    tokenUsage: {
-      input: usage.prompt_tokens,
-      output: usage.completion_tokens,
-      total: usage.total_tokens,
-      model: completion.model,
-    },
-  };
+  private validateConfig(config: OpenAIConfig): void {
+    // Validate API key format
+    if (!config.apiKey.startsWith('sk-')) {
+      throw new ValidationError('Invalid OpenAI API key format');
+    }
+
+    // Validate model
+    const supportedModels = ['gpt-3.5-turbo', 'gpt-4'];
+    if (!supportedModels.includes(config.model)) {
+      throw new ValidationError(`Unsupported model: ${config.model}. Supported: ${supportedModels.join(', ')}`);
+    }
+
+    // Validate maxTokens
+    if (config.maxTokens < 1 || config.maxTokens > 4000) {
+      throw new ValidationError('maxTokens must be between 1 and 4000');
+    }
+
+    // Validate temperature
+    if (config.temperature < 0 || config.temperature > 2) {
+      throw new ValidationError('temperature must be between 0 and 2');
+    }
+  }
+
+  public async executePrompt(
+    prompt: string,
+    config?: Partial<OpenAIConfig>,
+    executionId?: string
+  ): Promise<ExecutionResult> {
+    const executionConfig = { ...this.defaultConfig, ...config };
+    
+    // Validate merged config
+    this.validateConfig(executionConfig);
+
+    const startTime = Date.now();
+    
+    try {
+      // Log execution start
+      if (executionId) {
+        await logger.info('Starting OpenAI API call', {
+          model: executionConfig.model,
+          maxTokens: executionConfig.maxTokens,
+          temperature: executionConfig.temperature,
+          promptLength: prompt.length,
+        }, executionId);
+      }
+
+      // Make the API call
+      const completion = await this.client.chat.completions.create({
+        model: executionConfig.model,
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: executionConfig.maxTokens,
+        temperature: executionConfig.temperature,
+      });
+
+      const latencyMs = Date.now() - startTime;
+
+      // Extract response data
+      const output = completion.choices[0]?.message?.content || '';
+      const usage = completion.usage;
+
+      if (!usage) {
+        throw new ServiceUnavailableError('OpenAI API did not return usage information');
+      }
+
+      const tokenUsage = {
+        inputTokens: usage.prompt_tokens,
+        outputTokens: usage.completion_tokens,
+        totalTokens: usage.total_tokens,
+      };
+
+      // Calculate cost using the new OpenAI-specific method
+      const costUsd = costTracker.calculateOpenAICost(tokenUsage, executionConfig.model);
+      
+      // Track execution if executionId is provided
+      if (executionId) {
+        await costTracker.trackExecution(executionId, costUsd, tokenUsage);
+      }
+
+      // Log successful completion
+      if (executionId) {
+        await logger.info('OpenAI API call completed successfully', {
+          latencyMs,
+          tokenUsage,
+          costUsd,
+          outputLength: output.length,
+        }, executionId);
+
+        // Log performance metric
+        await logger.logPerformance({
+          name: 'openai_api_latency',
+          value: latencyMs,
+          unit: 'ms',
+          metadata: {
+            model: executionConfig.model,
+            inputTokens: tokenUsage.inputTokens,
+            outputTokens: tokenUsage.outputTokens,
+          },
+        });
+      }
+
+      return {
+        output,
+        tokenUsage,
+        costUsd,
+        model: executionConfig.model,
+      };
+
+    } catch (error) {
+      const latencyMs = Date.now() - startTime;
+      
+      // Handle specific OpenAI errors
+      if (error && typeof error === 'object') {
+        const openaiError = error as any;
+        
+        // Rate limit error
+        if (openaiError.status === 429) {
+          const retryAfter = openaiError.headers?.['retry-after'] 
+            ? parseInt(openaiError.headers['retry-after']) 
+            : 60;
+          
+          if (executionId) {
+            await logger.error('OpenAI rate limit exceeded', error, {
+              latencyMs,
+              retryAfter,
+            }, executionId);
+          }
+          
+          throw new RateLimitError(
+            `OpenAI rate limit exceeded. Retry after ${retryAfter} seconds.`,
+            retryAfter
+          );
+        }
+
+        // API error
+        if (openaiError.status >= 400 && openaiError.status < 500) {
+          if (executionId) {
+            await logger.error('OpenAI API client error', error, {
+              status: openaiError.status,
+              latencyMs,
+            }, executionId);
+          }
+          
+          throw new ValidationError(
+            `OpenAI API error: ${openaiError.message || 'Invalid request'}`
+          );
+        }
+
+        // Server error
+        if (openaiError.status >= 500) {
+          if (executionId) {
+            await logger.error('OpenAI API server error', error, {
+              status: openaiError.status,
+              latencyMs,
+            }, executionId);
+          }
+          
+          throw new ServiceUnavailableError('OpenAI API');
+        }
+      }
+
+      // Generic error handling
+      if (executionId) {
+        await logger.error('OpenAI API call failed', error, {
+          latencyMs,
+        }, executionId);
+      }
+
+      if (error instanceof Error) {
+        throw error;
+      }
+
+      throw new ServiceUnavailableError('OpenAI API');
+    }
+  }
+
+  public estimateCost(
+    inputLength: number,
+    expectedOutputLength: number,
+    model?: string
+  ): {
+    estimatedInputTokens: number;
+    estimatedOutputTokens: number;
+    estimatedCost: number;
+  } {
+    return costTracker.estimateExecutionCost(
+      inputLength,
+      expectedOutputLength,
+      model || this.defaultConfig.model
+    );
+  }
+
+  public getSupportedModels(): string[] {
+    return ['gpt-3.5-turbo', 'gpt-4'];
+  }
+
+  public getDefaultConfig(): OpenAIConfig {
+    return { ...this.defaultConfig };
+  }
+
+  public async validateConnection(): Promise<boolean> {
+    try {
+      // Test with a minimal prompt
+      const result = await this.executePrompt('Hello', {
+        maxTokens: 5,
+        temperature: 0,
+      });
+      
+      return Boolean(result.output && result.tokenUsage.totalTokens > 0);
+    } catch (error) {
+      await logger.error('OpenAI connection validation failed', error);
+      return false;
+    }
+  }
 }
+
+// Create and export singleton instance
+const openAIClient = new OpenAIClient();
+
+export { openAIClient };
+export default openAIClient;

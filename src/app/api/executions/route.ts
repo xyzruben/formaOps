@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/auth/server';
-import { getUserExecutions } from '@/lib/database/queries';
+import { requireAuth } from '../../../lib/auth/server';
+import { getExecutionHistory, type ExecutionFilters } from '../../../lib/database/queries';
+import { handleApiError } from '../../../lib/utils/error-handler';
 
 const ExecutionsQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
@@ -35,34 +36,34 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       to: query.to ? new Date(query.to) : undefined,
     };
 
-    const result = await getUserExecutions(user.id, options);
+    // Build filters for the new getExecutionHistory function
+    const filters: ExecutionFilters = {
+      userId: user.id,
+      promptId: query.promptId,
+      status: query.status,
+      page: query.page,
+      limit: query.limit,
+    };
+    
+    // Add date range filter if provided
+    if (options.from || options.to) {
+      filters.dateRange = {
+        from: options.from || new Date(0),
+        to: options.to || new Date(),
+      };
+    }
 
-    return NextResponse.json(result);
+    const result = await getExecutionHistory(filters);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        executions: result.executions,
+        pagination: result.pagination,
+      },
+    });
   } catch (error) {
-    if (error instanceof Error && error.message === 'Authentication required') {
-      return NextResponse.json(
-        { error: 'Unauthorized', code: 'UNAUTHORIZED' },
-        { status: 401 }
-      );
-    }
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          details: error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
-      { status: 500 }
-    );
+    const apiError = handleApiError(error);
+    return NextResponse.json(apiError, { status: apiError.statusCode });
   }
 }

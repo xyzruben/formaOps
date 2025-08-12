@@ -1,3 +1,4 @@
+import React from 'react';
 import { performanceMonitor } from '../monitoring/performance-monitor';
 
 // Performance utilities for optimizing React components and API calls

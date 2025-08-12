@@ -108,10 +108,18 @@ model Execution {
   priority        Priority        @default(NORMAL)
   edgeFunctionId  String?         // Edge function execution identifier
 
+  // AI Model Configuration
+  model          String?         @default("gpt-3.5-turbo")
+  totalTokens    Int?
+  inputTokens    Int?
+  outputTokens   Int?
+
   // Results
   output           String? // Raw AI response
+  rawOutput        String? // Raw unprocessed AI response
   validatedOutput  Json?   // Post-validation structured data
   validationStatus ValidationStatus @default(PENDING)
+  validationErrors Json?   // Validation error details
 
   // Performance Metrics
   tokenUsage Json?    @db.JsonB // Input/output token counts and model info
@@ -130,7 +138,8 @@ model Execution {
   prompt   Prompt @relation(fields: [promptId], references: [id])
 
   // Relations
-  logs ExecutionLog[]
+  logs    ExecutionLog[]
+  results ExecutionResult[]
 
   @@map("executions")
   @@index([userId, status])
@@ -138,6 +147,20 @@ model Execution {
   @@index([promptId, createdAt])
   @@index([status, createdAt])
   @@index([userId, createdAt])
+  @@index([model])
+}
+
+model ExecutionResult {
+  id          String    @id @default(uuid())
+  executionId String
+  execution   Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  rawOutput   String
+  tokenUsage  Json      @db.JsonB
+  costUsd     Decimal   @db.Decimal(10, 6)
+  createdAt   DateTime  @default(now())
+
+  @@map("execution_results")
+  @@index([executionId])
 }
 
 enum ExecutionStatus {

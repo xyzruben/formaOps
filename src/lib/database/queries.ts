@@ -4,11 +4,10 @@ import type {
   Execution,
   PromptStatus,
   ExecutionStatus,
+} from '@prisma/client';
+import type {
   VariableDefinition,
-  CreatePromptRequest,
-  UpdatePromptRequest,
-  ExecutePromptRequest,
-} from '@/types';
+} from '../../types/database';
 
 // User queries
 export const findUserByEmail = async (email: string) => {
@@ -103,7 +102,14 @@ export const getPromptById = async (id: string, userId: string) => {
 
 export const createPrompt = async (
   userId: string,
-  data: CreatePromptRequest
+  data: {
+    name: string;
+    description?: string;
+    template: string;
+    variables: any;
+    status?: PromptStatus;
+    tags?: string[];
+  }
 ) => {
   return prisma.prompt.create({
     data: {
@@ -116,7 +122,14 @@ export const createPrompt = async (
 export const updatePrompt = async (
   id: string,
   userId: string,
-  data: UpdatePromptRequest
+  data: Partial<{
+    name: string;
+    description: string;
+    template: string;
+    variables: any;
+    status: PromptStatus;
+    tags: string[];
+  }>
 ) => {
   return prisma.prompt.updateMany({
     where: { id, userId },
@@ -207,29 +220,16 @@ export const getUserExecutions = async (
   };
 };
 
-export const getExecutionById = async (id: string, userId: string) => {
-  return prisma.execution.findFirst({
-    where: { id, userId },
-    include: {
-      prompt: {
-        select: {
-          id: true,
-          name: true,
-          template: true,
-        },
-      },
-      logs: {
-        orderBy: { timestamp: 'desc' },
-        take: 50,
-      },
-    },
-  });
-};
+// Removed old getExecutionById - replaced with new version in Task 6 functions
 
 export const createExecution = async (
   userId: string,
   promptId: string,
-  data: ExecutePromptRequest
+  data: {
+    inputs: Record<string, any>;
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL';
+    model?: string;
+  }
 ) => {
   return prisma.execution.create({
     data: {
@@ -261,3 +261,233 @@ export const updateExecution = async (
     data,
   });
 };
+
+// Task 6: New execution history functions
+export interface ExecutionFilters {
+  userId: string;
+  promptId?: string;
+  status?: ExecutionStatus;
+  dateRange?: { from: Date; to: Date };
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedExecutions {
+  executions: ExecutionWithDetails[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface ExecutionWithDetails {
+  id: string;
+  status: ExecutionStatus;
+  inputs: any;
+  output: string | null;
+  validationStatus: 'PENDING' | 'PASSED' | 'FAILED' | 'SKIPPED';
+  latencyMs: number | null;
+  costUsd: number | null;
+  tokenUsage: any;
+  createdAt: Date;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  prompt: {
+    id: string;
+    name: string;
+  };
+  logs?: Array<{
+    id: string;
+    level: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+    message: string;
+    timestamp: Date;
+  }>;
+}
+
+export async function getExecutionHistory(filters: ExecutionFilters): Promise<PaginatedExecutions> {
+  const { userId, promptId, status, dateRange, page = 1, limit = 20 } = filters;
+  
+  // Validate pagination parameters
+  const validatedPage = Math.max(1, page);
+  const validatedLimit = Math.min(100, Math.max(1, limit));
+  
+  // Build where clause
+  const where = {
+    userId,
+    ...(promptId && { promptId }),
+    ...(status && { status }),
+    ...(dateRange && {
+      createdAt: {
+        gte: dateRange.from,
+        lte: dateRange.to,
+      },
+    }),
+  };
+
+  // Execute queries in parallel
+  const [executions, total] = await Promise.all([
+    prisma.execution.findMany({
+      where,
+      select: {
+        id: true,
+        status: true,
+        inputs: true,
+        output: true,
+        validationStatus: true,
+        latencyMs: true,
+        costUsd: true,
+        tokenUsage: true,
+        createdAt: true,
+        startedAt: true,
+        completedAt: true,
+        prompt: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (validatedPage - 1) * validatedLimit,
+      take: validatedLimit,
+    }),
+    prisma.execution.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / validatedLimit);
+
+  return {
+    executions: executions.map(exec => ({
+      ...exec,
+      costUsd: exec.costUsd?.toNumber() || null,
+    })) as ExecutionWithDetails[],
+    pagination: {
+      page: validatedPage,
+      limit: validatedLimit,
+      total,
+      totalPages,
+    },
+  };
+}
+
+export async function getExecutionById(id: string, userId: string): Promise<ExecutionWithDetails | null> {
+  // Validate execution exists and user owns it
+  const execution = await prisma.execution.findFirst({
+    where: { id, userId },
+    select: {
+      id: true,
+      status: true,
+      inputs: true,
+      output: true,
+      validationStatus: true,
+      latencyMs: true,
+      costUsd: true,
+      tokenUsage: true,
+      createdAt: true,
+      startedAt: true,
+      completedAt: true,
+      prompt: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      logs: {
+        select: {
+          id: true,
+          level: true,
+          message: true,
+          timestamp: true,
+        },
+        orderBy: { timestamp: 'asc' },
+      },
+    },
+  });
+
+  if (!execution) {
+    return null;
+  }
+
+  return {
+    ...execution,
+    costUsd: execution.costUsd?.toNumber() || null,
+  } as ExecutionWithDetails;
+}
+
+export async function retryExecution(executionId: string, userId: string): Promise<Execution> {
+  // Validate execution exists and user owns it
+  const existingExecution = await prisma.execution.findFirst({
+    where: { id: executionId, userId },
+    include: { prompt: true },
+  });
+
+  if (!existingExecution) {
+    throw new Error('Execution not found');
+  }
+
+  // Validate execution can be retried (must be in FAILED state)
+  if (existingExecution.status !== 'FAILED') {
+    throw new Error('Only failed executions can be retried');
+  }
+
+  // Create new execution with same parameters
+  const newExecution = await prisma.execution.create({
+    data: {
+      userId,
+      promptId: existingExecution.promptId,
+      inputs: existingExecution.inputs,
+      priority: existingExecution.priority,
+      status: 'PENDING',
+    },
+  });
+
+  return newExecution;
+}
+
+// Additional helper functions
+export async function getExecutionStats(userId: string, dateRange?: { from: Date; to: Date }) {
+  const where = {
+    userId,
+    ...(dateRange && {
+      createdAt: {
+        gte: dateRange.from,
+        lte: dateRange.to,
+      },
+    }),
+  };
+
+  const [total, completed, failed, pending] = await Promise.all([
+    prisma.execution.count({ where }),
+    prisma.execution.count({ where: { ...where, status: 'COMPLETED' } }),
+    prisma.execution.count({ where: { ...where, status: 'FAILED' } }),
+    prisma.execution.count({ where: { ...where, status: 'PENDING' } }),
+  ]);
+
+  const successRate = total > 0 ? (completed / total) * 100 : 0;
+
+  return {
+    total,
+    completed,
+    failed,
+    pending,
+    successRate,
+  };
+}
+
+export async function deleteExecution(executionId: string, userId: string): Promise<void> {
+  // Verify user owns the execution
+  const execution = await prisma.execution.findFirst({
+    where: { id: executionId, userId },
+  });
+
+  if (!execution) {
+    throw new Error('Execution not found');
+  }
+
+  // Delete execution (cascade will handle logs and results)
+  await prisma.execution.delete({
+    where: { id: executionId },
+  });
+}
