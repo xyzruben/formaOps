@@ -1,0 +1,1 @@
+export { SimpleDashboard } from './simple-dashboard';
