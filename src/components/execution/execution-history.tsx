@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+// Note: Using a simple select for now to avoid Radix dependency
 import { 
   Table, 
   TableBody, 
@@ -156,24 +156,43 @@ export function ExecutionHistory({
           {/* Filters */}
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
-              <Select
-                value={statusFilter || 'all'}
-                onValueChange={(value) => 
-                  setStatusFilter(value === 'all' ? undefined : value as ExecutionStatus)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                  <SelectItem value="FAILED">Failed</SelectItem>
-                  <SelectItem value="RUNNING">Running</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={statusFilter === undefined ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter(undefined)}
+                >
+                  All Statuses
+                </Button>
+                <Button
+                  variant={statusFilter === 'COMPLETED' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('COMPLETED')}
+                >
+                  Completed
+                </Button>
+                <Button
+                  variant={statusFilter === 'FAILED' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('FAILED')}
+                >
+                  Failed
+                </Button>
+                <Button
+                  variant={statusFilter === 'RUNNING' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('RUNNING')}
+                >
+                  Running
+                </Button>
+                <Button
+                  variant={statusFilter === 'PENDING' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setStatusFilter('PENDING')}
+                >
+                  Pending
+                </Button>
+              </div>
             </div>
             
             <div className="flex gap-2">

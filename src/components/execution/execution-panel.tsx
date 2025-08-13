@@ -13,7 +13,7 @@ import {
 } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+// Note: Using native select to avoid Radix dependency
 import { LoadingSpinner, ErrorState } from '../ui/loading-spinner';
 import { Badge } from '../ui/badge';
 import type { Prompt, VariableDefinition } from '../../types/database';
@@ -175,21 +175,18 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
           {variable.description && (
             <p className="text-xs text-muted-foreground">{variable.description}</p>
           )}
-          <Select 
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             value={watch(`inputs.${variable.name}`) || ''}
-            onValueChange={(value) => setValue(`inputs.${variable.name}`, value)}
+            onChange={(e) => setValue(`inputs.${variable.name}`, e.target.value)}
           >
-            <SelectTrigger>
-              <SelectValue placeholder={`Select ${variable.name}`} />
-            </SelectTrigger>
-            <SelectContent>
-              {variable.options.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <option value="">{`Select ${variable.name}`}</option>
+            {variable.options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
           {fieldError && (
             <p className="text-xs text-destructive">{fieldError.message}</p>
           )}
@@ -274,18 +271,14 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Model</label>
-                  <Select 
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     value={watchedModel}
-                    onValueChange={(value) => setValue('model', value as 'gpt-3.5-turbo' | 'gpt-4')}
+                    onChange={(e) => setValue('model', e.target.value as 'gpt-3.5-turbo' | 'gpt-4')}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                  </select>
                 </div>
 
                 <div className="space-y-2">
