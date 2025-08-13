@@ -23,6 +23,14 @@ interface ExecutionPanelProps {
   onExecutionComplete?: (result: ExecutionResult) => void;
 }
 
+interface ExecutionError {
+  error: string;
+  code: string;
+  retryable?: boolean;
+  retryAfter?: number;
+  executionId?: string;
+}
+
 interface ExecutionResult {
   executionId: string;
   status: string;
@@ -85,7 +93,8 @@ const createExecutionSchema = (variables: VariableDefinition[]) => {
 export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelProps): JSX.Element {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ExecutionError | null>(null);
+  const [retryCountdown, setRetryCountdown] = useState<number>(0);
 
   // Parse variables from prompt (assuming they're stored as JSON)
   const variables: VariableDefinition[] = Array.isArray(prompt.variables) 
@@ -142,14 +151,42 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to execute prompt');
+        const executionError: ExecutionError = {
+          error: errorData.error || 'Failed to execute prompt',
+          code: errorData.code || 'UNKNOWN_ERROR',
+          retryable: errorData.retryable || false,
+          retryAfter: errorData.retryAfter,
+          executionId: errorData.executionId
+        };
+        
+        // Start countdown for rate limit errors
+        if (executionError.code === 'RATE_LIMIT' && executionError.retryAfter) {
+          setRetryCountdown(executionError.retryAfter);
+          const interval = setInterval(() => {
+            setRetryCountdown(prev => {
+              if (prev <= 1) {
+                clearInterval(interval);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+        }
+        
+        setError(executionError);
+        return;
       }
 
       const result = await response.json();
       setExecutionResult(result);
       onExecutionComplete?.(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      const executionError: ExecutionError = {
+        error: err instanceof Error ? err.message : 'Unknown error occurred',
+        code: 'CLIENT_ERROR',
+        retryable: true
+      };
+      setError(executionError);
     } finally {
       setIsExecuting(false);
     }
@@ -339,8 +376,83 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
       {/* Error Display */}
       {error && (
         <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <ErrorState message={error} onRetry={() => setError(null)} />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              Execution Failed
+              <Badge variant="destructive">{error.code}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-destructive">{error.error}</p>
+            
+            {/* Rate limit specific messaging */}
+            {error.code === 'RATE_LIMIT' && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  API rate limit exceeded. Please wait before retrying.
+                </p>
+                {retryCountdown > 0 && (
+                  <p className="text-sm font-medium">
+                    Retry available in: {retryCountdown} seconds
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {/* Timeout specific messaging */}
+            {error.code === 'TIMEOUT' && (
+              <p className="text-sm text-muted-foreground">
+                The request timed out. This usually resolves itself - try again.
+              </p>
+            )}
+            
+            {/* API error specific messaging */}
+            {error.code === 'API_ERROR' && (
+              <p className="text-sm text-muted-foreground">
+                Temporary API issue. Please try again in a moment.
+              </p>
+            )}
+            
+            {/* Validation error specific messaging */}
+            {error.code === 'VALIDATION_ERROR' && (
+              <p className="text-sm text-muted-foreground">
+                Please check your inputs and try again. Validation errors cannot be retried.
+              </p>
+            )}
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setError(null)}
+              >
+                Dismiss
+              </Button>
+              
+              {error.retryable && retryCountdown === 0 && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setError(null);
+                    // Re-submit the form with current values
+                    handleSubmit(onSubmit)();
+                  }}
+                >
+                  Retry
+                </Button>
+              )}
+              
+              {error.retryable && retryCountdown > 0 && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  disabled
+                >
+                  Retry in {retryCountdown}s
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

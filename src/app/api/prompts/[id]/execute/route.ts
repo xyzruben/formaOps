@@ -7,6 +7,7 @@ import { templateEngine } from '../../../../../lib/prompts/template-engine';
 import { schemaValidator } from '../../../../../lib/validation/schema-validator';
 import { handleApiError } from '../../../../../lib/utils/error-handler';
 import { logger } from '../../../../../lib/monitoring/logger';
+import { executionErrorHandler, ExecutionError } from '../../../../../lib/execution/error-handler';
 
 const ExecutePromptSchema = z.object({
   inputs: z.record(z.unknown()),
@@ -98,16 +99,40 @@ export async function POST(
       );
     }
 
-    // Execute with OpenAI
+    // Execute with OpenAI using error handler and retry logic
     const startTime = Date.now();
-    const aiResult = await openAIClient.executePrompt(
-      templateResult.processedTemplate,
-      {
-        model: data.model,
-        maxTokens: data.maxTokens,
-        temperature: data.temperature,
+    let attemptCount = 0;
+    
+    const aiResult = await executionErrorHandler.executeWithRetry(
+      execution.id,
+      async () => {
+        attemptCount++;
+        
+        // Update retry count in database
+        if (attemptCount > 1) {
+          await updateExecution(execution.id, {
+            retryCount: attemptCount - 1,
+          });
+        }
+        
+        return await openAIClient.executePrompt(
+          templateResult.processedTemplate,
+          {
+            model: data.model,
+            maxTokens: data.maxTokens,
+            temperature: data.temperature,
+          },
+          execution.id
+        );
       },
-      execution.id
+      async (attempt, delay) => {
+        // Log retry attempt
+        await logger.logExecutionEvent(execution.id, 'RETRY_ATTEMPT', {
+          attempt,
+          delayMs: delay,
+          totalAttempts: attemptCount,
+        });
+      }
     );
 
     const latencyMs = Date.now() - startTime;
@@ -169,11 +194,26 @@ export async function POST(
     });
 
   } catch (error) {
+    // Process error through execution error handler
+    let executionError: ExecutionError;
+    let finalError = error;
+    
+    // Check if this is a final error from retry handler
+    if ((error as any).executionError) {
+      executionError = (error as any).executionError;
+      finalError = error;
+    } else {
+      executionError = executionErrorHandler.handleError(error);
+    }
+
     // Update execution status to FAILED if we have an execution record
     if (execution) {
       const latencyMs = Date.now() - (execution.startedAt?.getTime() || Date.now());
+      
       await updateExecution(execution.id, {
         status: 'FAILED',
+        errorType: executionError.type,
+        errorMessage: executionError.message,
         completedAt: new Date(),
         latencyMs,
       });
@@ -181,12 +221,24 @@ export async function POST(
       await logger.logExecutionComplete(execution.id, {
         status: 'FAILED',
         latencyMs,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: executionError.message,
+        errorType: executionError.type,
+        retryable: executionError.retryable,
+        retryCount: (finalError as any).attemptCount || 1,
       });
     }
 
-    // Handle and return appropriate error response
-    const apiError = handleApiError(error);
-    return NextResponse.json(apiError, { status: apiError.statusCode });
+    // Return error response based on execution error type
+    const statusCode = executionError.type === 'VALIDATION_ERROR' ? 400 :
+                      executionError.type === 'RATE_LIMIT' ? 429 :
+                      executionError.type === 'TIMEOUT' ? 408 : 500;
+
+    return NextResponse.json({
+      error: executionError.message,
+      code: executionError.type,
+      retryable: executionError.retryable,
+      retryAfter: executionError.retryAfter,
+      executionId: execution?.id,
+    }, { status: statusCode });
   }
 }

@@ -3,6 +3,7 @@ import { requireAuth } from '../../../../../lib/auth/server';
 import { retryExecution, getExecutionById } from '../../../../../lib/database/queries';
 import { handleApiError } from '../../../../../lib/utils/error-handler';
 import { logger } from '../../../../../lib/monitoring/logger';
+import { executionErrorHandler } from '../../../../../lib/execution/error-handler';
 
 export async function POST(
   request: NextRequest,
@@ -52,6 +53,32 @@ export async function POST(
         },
         { status: 400 }
       );
+    }
+
+    // Check if the error type is retryable
+    if (originalExecution.errorType) {
+      const mockError = {
+        type: originalExecution.errorType as 'RATE_LIMIT' | 'API_ERROR' | 'TIMEOUT' | 'VALIDATION_ERROR',
+        message: originalExecution.errorMessage || 'Unknown error',
+        retryable: true
+      };
+
+      if (!executionErrorHandler.shouldRetry(mockError, originalExecution.retryCount || 0)) {
+        return NextResponse.json(
+          { 
+            error: 'This execution cannot be retried',
+            code: 'RETRY_NOT_ALLOWED',
+            details: { 
+              errorType: originalExecution.errorType,
+              retryCount: originalExecution.retryCount,
+              reason: originalExecution.errorType === 'VALIDATION_ERROR' 
+                ? 'Validation errors are not retryable'
+                : 'Maximum retry attempts exceeded'
+            }
+          },
+          { status: 400 }
+        );
+      }
     }
 
     // Create retry execution

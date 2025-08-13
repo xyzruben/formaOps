@@ -121,6 +121,11 @@ model Execution {
   validationStatus ValidationStatus @default(PENDING)
   validationErrors Json?   // Validation error details
 
+  // Error Tracking (Task 17)
+  errorType    String? // RATE_LIMIT, API_ERROR, TIMEOUT, VALIDATION_ERROR
+  errorMessage String? // Human-readable error message
+  retryCount   Int     @default(0) // Number of retry attempts
+
   // Performance Metrics
   tokenUsage Json?    @db.JsonB // Input/output token counts and model info
   latencyMs  Int?     // Execution time in milliseconds
