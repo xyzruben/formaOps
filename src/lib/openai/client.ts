@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { costTracker } from '../monitoring/cost-tracker';
 import { logger } from '../monitoring/logger';
+import { openAIConfig } from '../config/openai';
 import { 
   ValidationError, 
   ServiceUnavailableError, 
@@ -30,19 +31,31 @@ export class OpenAIClient {
   private defaultConfig: OpenAIConfig;
 
   constructor(apiKey?: string) {
-    if (!apiKey && !process.env.OPENAI_API_KEY) {
+    // Try to load configuration from config manager first
+    let configFromManager: any = null;
+    try {
+      configFromManager = openAIConfig.getConfig();
+    } catch (error) {
+      // Fall back to environment variables if config manager fails
+      console.warn('Failed to load OpenAI config, falling back to environment variables:', error);
+    }
+
+    // Determine API key
+    const resolvedApiKey = apiKey || configFromManager?.apiKey || process.env.OPENAI_API_KEY;
+    if (!resolvedApiKey) {
       throw new ValidationError('OpenAI API key is required');
     }
 
     this.client = new OpenAI({
-      apiKey: apiKey || process.env.OPENAI_API_KEY!,
+      apiKey: resolvedApiKey,
     });
 
+    // Use config manager values if available, otherwise fall back to environment variables
     this.defaultConfig = {
-      apiKey: apiKey || process.env.OPENAI_API_KEY!,
-      model: (process.env.OPENAI_DEFAULT_MODEL as 'gpt-3.5-turbo' | 'gpt-4') || 'gpt-3.5-turbo',
-      maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
-      temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
+      apiKey: resolvedApiKey,
+      model: configFromManager?.defaultModel || (process.env.OPENAI_DEFAULT_MODEL as 'gpt-3.5-turbo' | 'gpt-4') || 'gpt-3.5-turbo',
+      maxTokens: configFromManager?.maxTokens || parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
+      temperature: configFromManager?.temperature || parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
     };
 
     this.validateConfig(this.defaultConfig);

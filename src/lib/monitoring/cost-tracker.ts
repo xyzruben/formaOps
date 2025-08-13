@@ -1,4 +1,5 @@
 import { prisma } from '../database/client';
+import { openAIConfig } from '../config/openai';
 import type { TokenUsage } from '../../types/database';
 
 export interface CostMetrics {
@@ -56,15 +57,29 @@ export interface CostSummary {
 }
 
 export class CostTracker {
-  private readonly modelCosts = {
-    'gpt-3.5-turbo': { input: 0.0015, output: 0.002 },
-    'gpt-4': { input: 0.03, output: 0.06 },
-    'gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
-  };
+  /**
+   * Get model costs from configuration
+   * Falls back to hardcoded values if config is not available
+   */
+  private getConfiguredModelCosts(): Record<string, { input: number; output: number }> {
+    try {
+      // Try to get costs from configuration
+      const config = openAIConfig.getConfig();
+      return config.costConfig;
+    } catch (error) {
+      // Fallback to hardcoded costs if config fails
+      console.warn('Failed to load cost configuration, using fallback values:', error);
+      return {
+        'gpt-3.5-turbo': { input: 0.0015, output: 0.002 },
+        'gpt-4': { input: 0.03, output: 0.06 },
+        'gpt-4-turbo-preview': { input: 0.01, output: 0.03 },
+      };
+    }
+  }
 
   public calculateExecutionCost(tokenUsage: TokenUsage): number {
-    const model = tokenUsage.model as keyof typeof this.modelCosts;
-    const costs = this.modelCosts[model] || this.modelCosts['gpt-3.5-turbo'];
+    const modelCosts = this.getConfiguredModelCosts();
+    const costs = modelCosts[tokenUsage.model] || modelCosts['gpt-3.5-turbo'];
     
     return (
       (tokenUsage.input * costs.input / 1000) +
@@ -74,7 +89,8 @@ export class CostTracker {
 
   // New methods for Task 5
   public calculateOpenAICost(tokens: { inputTokens: number; outputTokens: number; totalTokens: number }, model: string): number {
-    const costs = this.modelCosts[model as keyof typeof this.modelCosts] || this.modelCosts['gpt-3.5-turbo'];
+    const modelCosts = this.getConfiguredModelCosts();
+    const costs = modelCosts[model] || modelCosts['gpt-3.5-turbo'];
     
     return (
       (tokens.inputTokens * costs.input / 1000) +
@@ -170,7 +186,8 @@ export class CostTracker {
   }
 
   public getModelCosts(model: string): TokenCosts {
-    const costs = this.modelCosts[model as keyof typeof this.modelCosts] || this.modelCosts['gpt-3.5-turbo'];
+    const modelCosts = this.getConfiguredModelCosts();
+    const costs = modelCosts[model] || modelCosts['gpt-3.5-turbo'];
     
     return {
       model,
@@ -534,7 +551,8 @@ export class CostTracker {
     const estimatedInputTokens = Math.ceil(templateLength / 4);
     const estimatedOutputTokens = Math.ceil(expectedOutputLength / 4);
 
-    const costs = this.modelCosts[model as keyof typeof this.modelCosts] || this.modelCosts['gpt-3.5-turbo'];
+    const modelCosts = this.getConfiguredModelCosts();
+    const costs = modelCosts[model] || modelCosts['gpt-3.5-turbo'];
     
     const estimatedCost = (
       (estimatedInputTokens * costs.input / 1000) +
