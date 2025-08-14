@@ -42,7 +42,7 @@ export default function PromptDetailPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState('details');
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const fetchPrompt = async (): Promise<void> => {
+  const fetchPrompt = React.useCallback(async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -67,7 +67,7 @@ export default function PromptDetailPage(): JSX.Element {
     } finally {
       setLoading(false);
     }
-  };
+  }, [promptId]);
 
   const handleDelete = async (): Promise<void> => {
     if (!prompt) return;

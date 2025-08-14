@@ -14,7 +14,7 @@ import {
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 // Note: Using native select to avoid Radix dependency
-import { LoadingSpinner, ErrorState } from '../ui/loading-spinner';
+import { LoadingSpinner } from '../ui/loading-spinner';
 import { Badge } from '../ui/badge';
 import type { Prompt, VariableDefinition } from '../../types/database';
 

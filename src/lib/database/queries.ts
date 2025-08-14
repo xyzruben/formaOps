@@ -1,13 +1,9 @@
 import { prisma } from './client';
 import type {
-  Prompt,
   Execution,
   PromptStatus,
   ExecutionStatus,
 } from '@prisma/client';
-import type {
-  VariableDefinition,
-} from '../../types/database';
 
 // User queries
 export const findUserByEmail = async (email: string) => {

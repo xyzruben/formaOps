@@ -51,7 +51,6 @@ export class RetryManager {
     let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= finalConfig.maxAttempts; attempt++) {
-      const attemptStart = Date.now();
 
       try {
         const result = await operation();
@@ -112,19 +111,19 @@ export class RetryManager {
 
   public async executeWithCircuitBreaker<T>(
     operation: () => Promise<T>,
-    circuitConfig?: {
+    _circuitConfig?: {
       failureThreshold?: number;
       recoveryTimeMs?: number;
       monitoringWindowMs?: number;
     }
   ): Promise<T> {
     // Simplified circuit breaker implementation
-    const config = {
-      failureThreshold: 5,
-      recoveryTimeMs: 60000,
-      monitoringWindowMs: 300000, // 5 minutes
-      ...circuitConfig,
-    };
+    // const config = {
+    //   failureThreshold: 5,
+    //   recoveryTimeMs: 60000,
+    //   monitoringWindowMs: 300000, // 5 minutes
+    //   ...circuitConfig,
+    // };
 
     // In a real implementation, this would track failures across requests
     // For this simulation, we'll just check if the system is overloaded

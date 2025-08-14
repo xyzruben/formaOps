@@ -15,13 +15,13 @@ export interface TemplateResult {
   isValid: boolean;
 }
 
-// Zod schemas for validation
-const VariableValueSchema = z.union([
-  z.string(),
-  z.number(),
-  z.boolean(),
-  z.array(z.any()),
-]);
+// Zod schemas for validation (commented out as unused)
+// const VariableValueSchema = z.union([
+//   z.string(),
+//   z.number(),
+//   z.boolean(),
+//   z.array(z.unknown()),
+// ]);
 
 
 export class TemplateEngine {

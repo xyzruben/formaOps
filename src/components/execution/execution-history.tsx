@@ -25,28 +25,10 @@ interface ExecutionHistoryProps {
   onExecutionSelect?: (executionId: string) => void;
 }
 
-interface ExecutionListItem {
-  id: string;
-  status: ExecutionStatus;
-  createdAt: Date;
-  tokenUsage?: {
-    input: number;
-    output: number;
-    total: number;
-  };
-  costUsd?: number;
-  hasError: boolean;
-  prompt: {
-    id: string;
-    name: string;
-  };
-  validationStatus: 'PENDING' | 'PASSED' | 'FAILED' | 'SKIPPED';
-  latencyMs?: number;
-}
 
 export function ExecutionHistory({ 
   promptId, 
-  userId, 
+  userId: _userId, 
   onExecutionSelect 
 }: ExecutionHistoryProps): JSX.Element {
   const [page, setPage] = useState(1);

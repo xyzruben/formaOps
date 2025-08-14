@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import type { ExecutionWithDetails } from '../../lib/database/queries';
@@ -14,15 +13,6 @@ interface ResultsViewerProps {
   onRetry?: () => void;
 }
 
-interface ExecutionMetrics {
-  tokenUsage: {
-    input: number;
-    output: number;
-    total: number;
-  };
-  costUsd: number;
-  latencyMs: number;
-  model: string;
 }
 
 export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.Element {

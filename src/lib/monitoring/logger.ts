@@ -207,7 +207,7 @@ export class Logger {
   public async getSystemLogs(
     level?: LogLevel,
     category?: string,
-    limit = 100
+    _limit = 100
   ): Promise<Array<{
     level: LogLevel;
     message: string;

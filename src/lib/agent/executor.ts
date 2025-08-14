@@ -110,8 +110,6 @@ export class AIExecutor {
     // Process template with advanced variable substitution
     const processedPrompt = this.processTemplate(template, inputs);
     
-    const startTime = Date.now();
-    
     try {
       const completion = await this.openai.chat.completions.create({
         model: modelName,

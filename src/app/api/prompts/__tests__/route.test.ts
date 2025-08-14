@@ -42,7 +42,7 @@ describe('/api/prompts', () => {
       mockPrisma.prompt.findMany.mockResolvedValue(mockPrompts);
 
       const request = new NextRequest('http://localhost:3000/api/prompts');
-      const response = await GET(request);
+      await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -58,7 +58,7 @@ describe('/api/prompts', () => {
       mockPrisma.prompt.findMany.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost:3000/api/prompts');
-      const response = await GET(request);
+      await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(500);
@@ -72,7 +72,7 @@ describe('/api/prompts', () => {
       const request = new NextRequest(
         'http://localhost:3000/api/prompts?page=2&limit=10'
       );
-      const response = await GET(request);
+      await GET(request);
 
       expect(mockPrisma.prompt.findMany).toHaveBeenCalledWith({
         where: { userId: 'user-123' },
@@ -88,7 +88,7 @@ describe('/api/prompts', () => {
       const request = new NextRequest(
         'http://localhost:3000/api/prompts?search=test'
       );
-      const response = await GET(request);
+      await GET(request);
 
       expect(mockPrisma.prompt.findMany).toHaveBeenCalledWith({
         where: {
@@ -221,7 +221,7 @@ describe('/api/prompts', () => {
         }),
       });
 
-      const response = await POST(request);
+      await POST(request);
       
       // Should create prompt with auto-detected variables
       expect(mockPrisma.prompt.create).toHaveBeenCalledWith({
@@ -265,7 +265,7 @@ describe('/api/prompts', () => {
         }),
       });
 
-      const response = await POST(request);
+      await POST(request);
 
       expect(mockPrisma.prompt.create).toHaveBeenCalledWith({
         data: expect.objectContaining({

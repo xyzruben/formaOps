@@ -22,7 +22,7 @@ const RATE_LIMIT_CONFIG = {
   default: { limit: 200, window: 60 * 60 * 1000 }, // 200 requests per hour default
 };
 
-function getRateLimit(pathname: string) {
+function getRateLimit(pathname: string): { limit: number; window: number } {
   for (const [path, config] of Object.entries(RATE_LIMIT_CONFIG)) {
     if (path !== 'default' && pathname.startsWith(path)) {
       return config;
@@ -61,7 +61,7 @@ function isRateLimited(clientId: string, config: { limit: number; window: number
   return false;
 }
 
-function cleanupRateLimit() {
+function cleanupRateLimit(): void {
   const now = Date.now();
   for (const [key, data] of rateLimitMap.entries()) {
     if (now > data.resetTime) {
@@ -73,7 +73,7 @@ function cleanupRateLimit() {
 // Cleanup old rate limit entries every 10 minutes
 setInterval(cleanupRateLimit, 10 * 60 * 1000);
 
-export function middleware(request: NextRequest) {
+export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files and certain paths

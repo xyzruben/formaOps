@@ -1,4 +1,4 @@
-import type { Priority, ExecutionStatus } from '@prisma/client';
+import type { Priority } from '@prisma/client';
 
 export interface PriorityConfig {
   maxConcurrentAgentOps: number;
