@@ -13,8 +13,6 @@ interface ResultsViewerProps {
   onRetry?: () => void;
 }
 
-}
-
 export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.Element {
   const [isRetrying, setIsRetrying] = useState(false);
   const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
