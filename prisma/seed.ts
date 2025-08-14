@@ -132,7 +132,7 @@ Please ensure the email is {{tone}} and includes all key points in a {{length}} 
   });
 
   // Create data analysis prompt
-  const dataAnalysisPrompt = await prisma.prompt.create({
+  await prisma.prompt.create({
     data: {
       name: 'Data Insights Generator',
       description: 'Analyzes datasets and generates executive summaries',

@@ -16,26 +16,20 @@ interface PromptWithDetails {
   name: string;
   description: string | null;
   template: string;
-  variables: any;
+  variables: Array<{ name: string; type: string; required?: boolean }> | null;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   tags: string[];
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
   userId: string;
-  validations: any[];
+  validations: Array<{ id: string; type: string; configuration: Record<string, unknown> }>;
   _count: {
     executions: number;
     versions: number;
   };
 }
 
-interface PromptTabs {
-  details: boolean;
-  executions: boolean;
-  history: boolean;
-  settings: boolean;
-}
 
 export default function PromptDetailPage(): JSX.Element {
   const params = useParams();
@@ -133,7 +127,7 @@ export default function PromptDetailPage(): JSX.Element {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'outline' => {
     switch (status) {
       case 'PUBLISHED':
         return 'default';
@@ -146,18 +140,18 @@ export default function PromptDetailPage(): JSX.Element {
     }
   };
 
-  const formatVariables = (variables: any): string => {
+  const formatVariables = (variables: Array<{ name: string; type: string }> | null): string => {
     if (!variables || !Array.isArray(variables)) return 'No variables defined';
     if (variables.length === 0) return 'No variables defined';
     
-    return variables.map((v: any) => `{{${v.name}}} (${v.type})`).join(', ');
+    return variables.map((v) => `{{${v.name}}} (${v.type})`).join(', ');
   };
 
   useEffect(() => {
     if (promptId) {
       fetchPrompt();
     }
-  }, [promptId]);
+  }, [promptId, fetchPrompt]);
 
   if (loading) {
     return <LoadingState message="Loading prompt details..." />;
@@ -352,8 +346,8 @@ export default function PromptDetailPage(): JSX.Element {
             <CardContent>
               <ExecutionPanel 
                 prompt={prompt} 
-                onExecutionComplete={(result) => {
-                  console.log('Execution completed:', result);
+                onExecutionComplete={(_result) => {
+                  // Execution completed successfully
                   // Switch to history tab to see the new execution
                   setActiveTab('history');
                 }}
@@ -375,8 +369,8 @@ export default function PromptDetailPage(): JSX.Element {
               <ExecutionHistory 
                 userId={prompt.userId}
                 promptId={prompt.id}
-                onExecutionSelect={(executionId) => {
-                  console.log('Selected execution:', executionId);
+                onExecutionSelect={(_executionId) => {
+                  // Selected execution for detailed view
                   // Could navigate to detailed execution view
                 }}
               />

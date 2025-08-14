@@ -1,6 +1,6 @@
-import { SchemaValidator, type SchemaValidationRule, type ValidationResult as SchemaResult } from './schema-validator';
-import { RegexValidator, type RegexValidationRule, type RegexValidationResult } from './regex-validator';
-import { FunctionValidator, type FunctionValidationRule, type FunctionValidationResult, type ValidationContext } from './function-validator';
+import { SchemaValidator, type SchemaValidationRule } from './schema-validator';
+import { RegexValidator, type RegexValidationRule } from './regex-validator';
+import { FunctionValidator, type FunctionValidationRule, type ValidationContext } from './function-validator';
 import type { ValidationType } from '@prisma/client';
 
 export interface ValidationRule {

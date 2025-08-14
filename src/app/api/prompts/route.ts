@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/server';
 import { getUserPrompts, createPrompt } from '@/lib/database/queries';
-import type { VariableDefinition } from '@/types';
 
 const VariableSchema = z.object({
   name: z.string().min(1).regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid variable name'),

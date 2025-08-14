@@ -3,7 +3,7 @@ import { prisma } from '@/lib/database/client';
 import { logger } from '@/lib/monitoring/logger';
 
 // Cleanup job for old data and maintenance tasks
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   // Verify cron job authorization
   const authHeader = request.headers.get('authorization');
   const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'default-cron-secret'}`;
@@ -135,6 +135,6 @@ export async function GET(request: NextRequest) {
 }
 
 // Also support POST for manual triggers
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   return GET(request);
 }

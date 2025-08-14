@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Simple health check without database dependency
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   const health = {
     status: 'healthy',
     timestamp: new Date().toISOString(),

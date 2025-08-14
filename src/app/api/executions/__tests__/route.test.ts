@@ -264,7 +264,7 @@ describe('/api/executions', () => {
       }),
     });
 
-    const response = await POST(request);
+    await POST(request);
 
     expect(mockAIExecutor.executePrompt).toHaveBeenCalledWith({
       template: 'Hello {{name}}',

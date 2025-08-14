@@ -23,12 +23,6 @@ const VariableValueSchema = z.union([
   z.array(z.any()),
 ]);
 
-const TemplateVariableSchema = z.object({
-  name: z.string().min(1),
-  value: VariableValueSchema,
-  type: z.enum(['string', 'number', 'boolean']),
-  required: z.boolean(),
-});
 
 export class TemplateEngine {
   private static readonly VARIABLE_PATTERN = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
@@ -44,7 +38,7 @@ export class TemplateEngine {
       this.validateTemplate(template);
 
       // Extract variables from template
-      const templateVariables = this.extractVariables(template);
+      this.extractVariables(template);
       
       // Validate provided variables against definitions
       const validationResult = this.validateVariables(variables, variableDefinitions);
@@ -292,7 +286,7 @@ export class TemplateEngine {
   }> {
     return definitions.map(def => {
       let type: 'text' | 'number' | 'checkbox' | 'select' | 'textarea' = 'text';
-      let placeholder = def.description || `Enter ${def.name}`;
+      const placeholder = def.description || `Enter ${def.name}`;
 
       // Determine form field type
       if (def.options && def.options.length > 0) {

@@ -5,7 +5,6 @@ import { getPromptById, createExecution, updateExecution } from '../../../../../
 import { openAIClient } from '../../../../../lib/openai/client';
 import { templateEngine } from '../../../../../lib/prompts/template-engine';
 import { schemaValidator } from '../../../../../lib/validation/schema-validator';
-import { handleApiError } from '../../../../../lib/utils/error-handler';
 import { logger } from '../../../../../lib/monitoring/logger';
 import { executionErrorHandler, ExecutionError } from '../../../../../lib/execution/error-handler';
 

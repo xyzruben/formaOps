@@ -174,10 +174,11 @@ export function usePerformanceMonitor() {
   const measureRender = React.useCallback((componentName: string) => {
     const start = performance.now();
     
-    React.useEffect(() => {
+    // Schedule the metric recording for the next tick to avoid hooks violations
+    setTimeout(() => {
       const duration = performance.now() - start;
       recordMetric(`render_${componentName}`, duration);
-    });
+    }, 0);
   }, [recordMetric]);
 
   return {
@@ -187,13 +188,11 @@ export function usePerformanceMonitor() {
 }
 
 // HOC for measuring component render performance
-export function withPerformanceMonitoring<T extends Record<string, any>>(
+export function withPerformanceMonitoring<T extends Record<string, unknown>>(
   Component: React.ComponentType<T>,
   displayName: string
 ): React.ComponentType<T> {
-  const React = require('react');
-  
-  const PerformanceMonitoredComponent = React.forwardRef<any, T>((props, ref) => {
+  const PerformanceMonitoredComponent = React.forwardRef<unknown, T>((props, ref) => {
     const startTime = React.useRef(performance.now());
     
     React.useEffect(() => {

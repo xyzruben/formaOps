@@ -10,10 +10,6 @@ const AnalyticsQuerySchema = z.object({
   to: z.string().optional(),
 });
 
-interface AnalyticsQuery {
-  from?: string; // ISO date
-  to?: string;   // ISO date
-}
 
 interface DashboardAnalytics {
   executions: {

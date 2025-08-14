@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/database/client';
 
 // Health check endpoint for monitoring and load balancers
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest): Promise<NextResponse> {
   const start = Date.now();
   
   try {
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 }
 
 // Simple readiness check
-export async function HEAD(request: NextRequest) {
+export async function HEAD(_request: NextRequest): Promise<NextResponse> {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return new NextResponse(null, { status: 200 });

@@ -4,7 +4,7 @@ import { logger } from '@/lib/monitoring/logger';
 import { performanceMonitor } from '@/lib/monitoring/performance-monitor';
 
 // Health monitoring cron job
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   // Verify cron job authorization
   const authHeader = request.headers.get('authorization');
   const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'default-cron-secret'}`;
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const healthChecks = {
     database: { status: 'unknown', responseTime: 0, error: null as string | null },
     memory: { status: 'unknown', usage: 0, total: 0 },
-    performance: { status: 'unknown', metrics: null as any },
+    performance: { status: 'unknown', metrics: null as Record<string, unknown> | null },
     errors: [] as string[],
   };
 
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         SELECT count(*) as active_connections 
         FROM pg_stat_activity 
         WHERE state = 'active'
-      ` as any[];
+      ` as Array<{ count: number }>;
       
       logger.info(`Database health check passed. Active connections: ${activeConnections[0]?.active_connections || 'unknown'}`);
     } catch (error) {
@@ -171,6 +171,6 @@ export async function GET(request: NextRequest) {
 }
 
 // Also support POST for manual triggers
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   return GET(request);
 }
