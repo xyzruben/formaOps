@@ -30,20 +30,21 @@ FormaOps is a **sophisticated, enterprise-grade AI-native prompt management plat
 
 ### 🎯 Why FormaOps?
 
-| Feature | FormaOps | Traditional Solutions |
-|---------|----------|----------------------|
-| **Type Safety** | ✅ 100% TypeScript, Zero TS Errors | ❌ Runtime Type Issues |
-| **CI/CD Ready** | ✅ Full Pipeline, Auto-Deploy | ❌ Manual Deployment |
-| **Enterprise Security** | ✅ Multi-layer Validation | ❌ Basic Authentication |
-| **Performance Monitoring** | ✅ Real-time Analytics | ❌ Limited Insights |
-| **Cost Management** | ✅ Granular Cost Tracking | ❌ No Cost Control |
-| **Production Architecture** | ✅ Microservices, Scalable | ❌ Monolithic Structure |
+| Feature                     | FormaOps                           | Traditional Solutions   |
+| --------------------------- | ---------------------------------- | ----------------------- |
+| **Type Safety**             | ✅ 100% TypeScript, Zero TS Errors | ❌ Runtime Type Issues  |
+| **CI/CD Ready**             | ✅ Full Pipeline, Auto-Deploy      | ❌ Manual Deployment    |
+| **Enterprise Security**     | ✅ Multi-layer Validation          | ❌ Basic Authentication |
+| **Performance Monitoring**  | ✅ Real-time Analytics             | ❌ Limited Insights     |
+| **Cost Management**         | ✅ Granular Cost Tracking          | ❌ No Cost Control      |
+| **Production Architecture** | ✅ Microservices, Scalable         | ❌ Monolithic Structure |
 
 ---
 
 ## 🚀 Enterprise Features
 
 ### 🏗️ **Production-Ready Architecture**
+
 - **Microservices Design** - Clean separation of concerns with modular architecture
 - **Type-Safe Interfaces** - 100% TypeScript coverage with zero compilation errors
 - **Comprehensive Error Handling** - Graceful degradation and recovery mechanisms
@@ -51,6 +52,7 @@ FormaOps is a **sophisticated, enterprise-grade AI-native prompt management plat
 - **Scalable Infrastructure** - Built for high-throughput, low-latency operations
 
 ### 📊 **Advanced Analytics & Monitoring**
+
 - **Real-time Performance Metrics** - Sub-millisecond response time tracking
 - **Comprehensive Cost Analysis** - Token usage, model costs, and budget management
 - **Business Intelligence Dashboard** - Executive-level insights and reporting
@@ -58,6 +60,7 @@ FormaOps is a **sophisticated, enterprise-grade AI-native prompt management plat
 - **Custom KPI Tracking** - Configurable metrics for business requirements
 
 ### 🔒 **Enterprise-Grade Security**
+
 - **Zero-Trust Architecture** - Comprehensive input validation and sanitization
 - **Rate Limiting & DDoS Protection** - Configurable limits with intelligent throttling
 - **Audit Logging** - Complete request/response tracking for compliance
@@ -65,6 +68,7 @@ FormaOps is a **sophisticated, enterprise-grade AI-native prompt management plat
 - **Security Headers** - CSP, HSTS, and comprehensive security hardening
 
 ### 🛡️ **Data Validation & Quality**
+
 - **Schema Validation** - Zod-powered type-safe data validation
 - **Regex Pattern Matching** - Advanced pattern recognition and validation
 - **Function-Based Validation** - Custom validation logic with JavaScript/TypeScript
@@ -84,14 +88,14 @@ graph TB
         B[React 18 Components]
         C[TypeScript Interfaces]
     end
-    
+
     subgraph "API Layer"
         D[RESTful Endpoints]
         E[Authentication Middleware]
         F[Rate Limiting]
         G[Input Validation]
     end
-    
+
     subgraph "Business Logic"
         H[Prompt Management Service]
         I[Execution Engine]
@@ -99,28 +103,28 @@ graph TB
         K[Cost Tracking System]
         L[Performance Monitor]
     end
-    
+
     subgraph "AI Integration"
         M[OpenAI Client]
         N[Model Management]
         O[Token Optimization]
         P[Response Processing]
     end
-    
+
     subgraph "Data Layer"
         Q[Prisma ORM]
         R[PostgreSQL Database]
         S[Connection Pooling]
         T[Data Migrations]
     end
-    
+
     subgraph "Infrastructure"
         U[Docker Containers]
         V[CI/CD Pipeline]
         W[Monitoring Stack]
         X[Security Scanning]
     end
-    
+
     A --> D
     B --> E
     C --> F
@@ -135,7 +139,7 @@ graph TB
     M --> Q
     N --> S
     Q --> T
-    
+
     style A fill:#e1f5fe
     style H fill:#f3e5f5
     style M fill:#fff3e0
@@ -147,6 +151,7 @@ graph TB
 ## 🛠️ Technology Stack
 
 ### **Frontend Architecture**
+
 - **Framework**: Next.js 15.4.6 (App Router, Server Components)
 - **Language**: TypeScript 5.3.0 (Strict Mode, Zero Errors)
 - **UI Framework**: React 18.3.1 (Concurrent Features)
@@ -155,6 +160,7 @@ graph TB
 - **Icons**: Lucide React (Tree-shakeable, Optimized)
 
 ### **Backend Infrastructure**
+
 - **Runtime**: Node.js 18+ (LTS, Production-Ready)
 - **API Framework**: Next.js API Routes (Serverless-Ready)
 - **Database**: PostgreSQL 15+ with Prisma ORM 5.22
@@ -163,6 +169,7 @@ graph TB
 - **Validation**: Zod 3.22 (Type-Safe Runtime Validation)
 
 ### **DevOps & Quality Assurance**
+
 - **Testing Framework**: Jest 29.7 + React Testing Library 14.3
 - **E2E Testing**: Playwright 1.40 (Cross-Browser, CI/CD)
 - **Code Quality**: ESLint 8.56 + Prettier 3.1 (Zero Errors)
@@ -171,6 +178,7 @@ graph TB
 - **Security**: Snyk + CodeQL (Automated Scanning)
 
 ### **Production Deployment**
+
 - **Platform**: Vercel (Edge Functions, Global CDN)
 - **Containerization**: Docker (Multi-Stage Builds)
 - **Database**: Supabase (Managed PostgreSQL)
@@ -181,22 +189,23 @@ graph TB
 
 ## 📈 Performance Metrics
 
-| Metric | Target | Achieved |
-|--------|--------|----------|
-| **First Contentful Paint** | < 1.2s | ✅ 0.8s |
-| **Largest Contentful Paint** | < 2.5s | ✅ 1.9s |
-| **Cumulative Layout Shift** | < 0.1 | ✅ 0.05 |
-| **Time to Interactive** | < 3.8s | ✅ 2.1s |
-| **API Response Time** | < 200ms | ✅ 150ms |
-| **Database Query Time** | < 50ms | ✅ 35ms |
-| **Bundle Size** | < 250KB | ✅ 221KB |
-| **Lighthouse Score** | > 90 | ✅ 95 |
+| Metric                       | Target  | Achieved |
+| ---------------------------- | ------- | -------- |
+| **First Contentful Paint**   | < 1.2s  | ✅ 0.8s  |
+| **Largest Contentful Paint** | < 2.5s  | ✅ 1.9s  |
+| **Cumulative Layout Shift**  | < 0.1   | ✅ 0.05  |
+| **Time to Interactive**      | < 3.8s  | ✅ 2.1s  |
+| **API Response Time**        | < 200ms | ✅ 150ms |
+| **Database Query Time**      | < 50ms  | ✅ 35ms  |
+| **Bundle Size**              | < 250KB | ✅ 221KB |
+| **Lighthouse Score**         | > 90    | ✅ 95    |
 
 ---
 
 ## 🚦 Quick Start
 
 ### **Prerequisites**
+
 - **Node.js** 18.0.0+ (LTS recommended)
 - **npm** 9.0.0+ (Package manager)
 - **PostgreSQL** 15+ (Database)
@@ -204,6 +213,7 @@ graph TB
 - **Supabase Account** (Authentication)
 
 ### **⚡ One-Line Setup**
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/username/formaops/main/scripts/setup.sh | bash
 ```
@@ -211,6 +221,7 @@ curl -fsSL https://raw.githubusercontent.com/username/formaops/main/scripts/setu
 ### **🔧 Manual Installation**
 
 1. **Clone & Install**
+
    ```bash
    git clone https://github.com/username/formaops.git
    cd formaops
@@ -218,23 +229,25 @@ curl -fsSL https://raw.githubusercontent.com/username/formaops/main/scripts/setu
    ```
 
 2. **Configure Environment**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    **Required Environment Variables:**
+
    ```env
    # Database Configuration
    DATABASE_URL="postgresql://username:password@localhost:5432/formaops"
-   
+
    # AI Integration
    OPENAI_API_KEY="sk-your-openai-api-key-here"
-   
+
    # Authentication (Supabase)
    SUPABASE_URL="https://your-project.supabase.co"
    SUPABASE_ANON_KEY="your-supabase-anon-key"
    SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
-   
+
    # Optional: Advanced Configuration
    CRON_SECRET="your-cron-secret-for-scheduled-tasks"
    ENABLE_REQUEST_LOGGING="true"
@@ -242,6 +255,7 @@ curl -fsSL https://raw.githubusercontent.com/username/formaops/main/scripts/setu
    ```
 
 3. **Database Setup**
+
    ```bash
    npm run db:setup     # Creates database, runs migrations, seeds data
    npm run db:studio    # Opens Prisma Studio for database management
@@ -253,6 +267,7 @@ curl -fsSL https://raw.githubusercontent.com/username/formaops/main/scripts/setu
    ```
 
 ### **🐳 Docker Deployment**
+
 ```bash
 # Development Environment
 docker-compose up --build
@@ -269,6 +284,7 @@ docker run -p 3000:3000 --env-file .env.production formaops:production
 FormaOps implements **comprehensive testing** at every layer:
 
 ### **Test Execution**
+
 ```bash
 # Run all tests with coverage
 npm test
@@ -286,12 +302,14 @@ npm test -- --testPathPattern=e2e         # E2E tests only
 ```
 
 ### **Test Coverage Breakdown**
+
 - **Unit Tests**: 85% coverage (Business logic, utilities, components)
 - **Integration Tests**: 90% coverage (API endpoints, database operations)
 - **E2E Tests**: 95% coverage (Critical user journeys)
 - **Total Coverage**: **95%** (Industry-leading coverage)
 
 ### **Quality Gates**
+
 - ✅ **Zero TypeScript Errors** - Strict type checking
 - ✅ **Zero ESLint Errors** - Code quality standards
 - ✅ **100% Prettier Formatted** - Consistent code style
@@ -338,6 +356,7 @@ FormaOps features a **sophisticated multi-stage CI/CD pipeline** ensuring produc
    - Error rate monitoring
 
 ### **Pipeline Status**
+
 ```bash
 ✅ Install Dependencies     ✅ ESLint Validation       ✅ TypeScript Compilation
 ✅ Prettier Formatting      ✅ Unit Tests              ✅ Integration Tests
@@ -350,6 +369,7 @@ FormaOps features a **sophisticated multi-stage CI/CD pipeline** ensuring produc
 ## 📖 API Documentation
 
 ### **Authentication**
+
 ```typescript
 // Login with email/password
 POST /api/auth/login
@@ -368,6 +388,7 @@ Content-Type: application/json
 ```
 
 ### **Prompt Management**
+
 ```typescript
 // Create a new prompt template
 POST /api/prompts
@@ -386,7 +407,7 @@ Content-Type: application/json
       "description": "Customer's full name"
     },
     {
-      "name": "companyName", 
+      "name": "companyName",
       "type": "string",
       "required": true,
       "default": "Your Company"
@@ -405,6 +426,7 @@ Content-Type: application/json
 ```
 
 ### **Prompt Execution**
+
 ```typescript
 // Execute prompt with AI model
 POST /api/prompts/{promptId}/execute
@@ -442,6 +464,7 @@ Content-Type: application/json
 ```
 
 ### **Analytics & Monitoring**
+
 ```typescript
 // Get execution analytics
 GET /api/analytics/dashboard
@@ -477,33 +500,34 @@ Query Parameters: ?period=7d&model=gpt-4&status=COMPLETED
 ## 🔧 Configuration
 
 ### **Environment Configuration**
+
 ```typescript
 // Type-safe configuration schema
 interface EnvironmentConfig {
   // Database
   DATABASE_URL: string;
-  
+
   // AI Integration
   OPENAI_API_KEY: string;
   OPENAI_ORGANIZATION?: string;
-  
+
   // Authentication
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
-  
+
   // Rate Limiting
   RATE_LIMIT_REQUESTS_PER_MINUTE?: number; // Default: 100
-  RATE_LIMIT_BURST_ALLOWANCE?: number;     // Default: 20
-  
+  RATE_LIMIT_BURST_ALLOWANCE?: number; // Default: 20
+
   // Performance
-  ENABLE_REQUEST_LOGGING?: boolean;         // Default: false
+  ENABLE_REQUEST_LOGGING?: boolean; // Default: false
   ENABLE_PERFORMANCE_MONITORING?: boolean; // Default: true
-  
+
   // Security
   CRON_SECRET?: string;
   CSP_REPORT_URI?: string;
-  
+
   // Monitoring
   SENTRY_DSN?: string;
   DATADOG_API_KEY?: string;
@@ -511,13 +535,14 @@ interface EnvironmentConfig {
 ```
 
 ### **Feature Flags**
+
 ```typescript
 // runtime feature configuration
 const features = {
   ADVANCED_ANALYTICS: process.env.ENABLE_ADVANCED_ANALYTICS === 'true',
   EXPERIMENTAL_MODELS: process.env.ENABLE_EXPERIMENTAL_MODELS === 'true',
   COST_OPTIMIZATION: process.env.ENABLE_COST_OPTIMIZATION === 'true',
-  AUDIT_LOGGING: process.env.ENABLE_AUDIT_LOGGING === 'true'
+  AUDIT_LOGGING: process.env.ENABLE_AUDIT_LOGGING === 'true',
 };
 ```
 
@@ -528,6 +553,7 @@ const features = {
 FormaOps implements **defense-in-depth security** with multiple protection layers:
 
 ### **Input Validation & Sanitization**
+
 - **XSS Prevention**: DOMPurify sanitization for all user inputs
 - **SQL Injection Protection**: Parameterized queries via Prisma ORM
 - **Path Traversal Prevention**: Strict file path validation
@@ -535,6 +561,7 @@ FormaOps implements **defense-in-depth security** with multiple protection layer
 - **CSRF Protection**: SameSite cookies and CSRF tokens
 
 ### **Authentication & Authorization**
+
 - **JWT-Based Authentication**: Secure token-based authentication
 - **Role-Based Access Control**: Granular permission system
 - **Session Management**: Secure session handling with rotation
@@ -542,25 +569,28 @@ FormaOps implements **defense-in-depth security** with multiple protection layer
 - **OAuth Integration**: Google, GitHub, and enterprise SSO
 
 ### **Rate Limiting & DDoS Protection**
+
 ```typescript
 // Configurable rate limiting
 const rateLimits = {
   '/api/auth/login': { requests: 5, window: '15m' },
   '/api/prompts/*/execute': { requests: 100, window: '1h' },
-  '/api/*': { requests: 1000, window: '1h' }
+  '/api/*': { requests: 1000, window: '1h' },
 };
 ```
 
 ### **Security Headers**
+
 ```typescript
 // Comprehensive security headers
 const securityHeaders = {
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'",
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self' 'unsafe-inline'",
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 };
 ```
 
@@ -569,26 +599,31 @@ const securityHeaders = {
 ## 📊 Monitoring & Observability
 
 ### **Performance Monitoring**
+
 - **Real-time Metrics**: Response times, throughput, error rates
 - **Custom KPIs**: Business-specific performance indicators
 - **Resource Utilization**: CPU, memory, database connection tracking
 - **User Experience**: Core Web Vitals and user journey analytics
 
 ### **Cost Tracking & Optimization**
+
 ```typescript
 interface CostMetrics {
-  totalCost: number;          // Total spend across all models
-  costByModel: {              // Breakdown by AI model
+  totalCost: number; // Total spend across all models
+  costByModel: {
+    // Breakdown by AI model
     'gpt-4': number;
     'gpt-3.5-turbo': number;
   };
-  costByUser: Record<string, number>;     // Cost attribution by user
-  costByProject: Record<string, number>;  // Cost attribution by project
-  predictions: {                          // AI-powered cost forecasting
+  costByUser: Record<string, number>; // Cost attribution by user
+  costByProject: Record<string, number>; // Cost attribution by project
+  predictions: {
+    // AI-powered cost forecasting
     nextMonth: number;
     nextQuarter: number;
   };
-  optimizations: {                        // Cost optimization suggestions
+  optimizations: {
+    // Cost optimization suggestions
     potentialSavings: number;
     recommendations: string[];
   };
@@ -596,6 +631,7 @@ interface CostMetrics {
 ```
 
 ### **Error Tracking & Recovery**
+
 - **Comprehensive Error Boundaries**: Graceful error handling
 - **Automated Error Recovery**: Retry mechanisms and fallbacks
 - **Error Analytics**: Error rate trends and root cause analysis
@@ -608,6 +644,7 @@ interface CostMetrics {
 We welcome contributions from the community! FormaOps follows **enterprise-grade development practices**.
 
 ### **Development Setup**
+
 ```bash
 # Fork and clone
 git clone https://github.com/yourusername/formaops.git
@@ -624,6 +661,7 @@ npm run dev
 ```
 
 ### **Development Workflow**
+
 1. **Create Feature Branch**: `git checkout -b feature/amazing-feature`
 2. **Make Changes**: Follow TypeScript strict mode and ESLint rules
 3. **Write Tests**: Maintain 95%+ test coverage
@@ -632,6 +670,7 @@ npm run dev
 6. **Push & PR**: Create detailed pull request with testing instructions
 
 ### **Code Quality Standards**
+
 - ✅ **TypeScript Strict Mode**: Zero compilation errors required
 - ✅ **ESLint Compliance**: Zero linting errors required
 - ✅ **Test Coverage**: 95%+ coverage for new code
@@ -639,6 +678,7 @@ npm run dev
 - ✅ **Security**: Pass all security scans
 
 ### **Pull Request Checklist**
+
 - [ ] Code follows TypeScript strict mode
 - [ ] All tests pass with 95%+ coverage
 - [ ] ESLint and Prettier checks pass
@@ -654,6 +694,7 @@ npm run dev
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ### **Third-Party Licenses**
+
 - [OpenAI API Terms](https://openai.com/policies/api-data-usage-policies)
 - [Supabase Terms](https://supabase.com/terms)
 - [Vercel Terms](https://vercel.com/legal/terms)
@@ -663,16 +704,19 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🆘 Support & Resources
 
 ### **📚 Documentation**
+
 - **[Complete Documentation](https://docs.formaops.com)** - Comprehensive guides and tutorials
 - **[API Reference](https://api.formaops.com/docs)** - Complete API documentation
 - **[Enterprise Guide](https://docs.formaops.com/enterprise)** - Enterprise deployment and configuration
 
 ### **💬 Community**
+
 - **[GitHub Issues](https://github.com/username/formaops/issues)** - Bug reports and feature requests
 - **[GitHub Discussions](https://github.com/username/formaops/discussions)** - Community discussions
 - **[Discord Community](https://discord.gg/formaops)** - Real-time community chat
 
 ### **🏢 Enterprise Support**
+
 - **[Enterprise Sales](mailto:enterprise@formaops.com)** - Custom deployment and support
 - **[Technical Support](mailto:support@formaops.com)** - Priority technical assistance
 - **[Professional Services](https://formaops.com/services)** - Custom development and integration
@@ -682,6 +726,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🏆 Recognition & Achievements
 
 ### **Technical Milestones**
+
 - ✅ **Zero TypeScript Errors** - 100% type-safe codebase
 - ✅ **95% Test Coverage** - Industry-leading test coverage
 - ✅ **Zero Security Vulnerabilities** - Comprehensive security validation
@@ -689,6 +734,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - ✅ **Production Ready** - Battle-tested in enterprise environments
 
 ### **Industry Recognition**
+
 - 🏅 **Best AI Development Tool 2024** - Developer's Choice Awards
 - 🏅 **Excellence in Software Architecture** - Tech Innovation Awards
 - 🏅 **Top Open Source Project** - GitHub Developer Community
@@ -698,18 +744,21 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🚀 Roadmap
 
 ### **Q4 2024**
+
 - [ ] Advanced AI Model Support (Anthropic Claude, Google Bard)
 - [ ] Real-time Collaboration Features
 - [ ] Advanced Analytics Dashboard
 - [ ] Enterprise SSO Integration
 
 ### **Q1 2025**
+
 - [ ] Multi-tenant Architecture
 - [ ] Advanced Cost Optimization
 - [ ] Custom Model Fine-tuning
 - [ ] Advanced Workflow Automation
 
 ### **Q2 2025**
+
 - [ ] AI-Powered Prompt Optimization
 - [ ] Advanced Security Features
 - [ ] Mobile Application
@@ -724,6 +773,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 **Built with ❤️ and Enterprise Standards**
 
 Special thanks to:
+
 - **[OpenAI](https://openai.com)** - Revolutionary AI API platform
 - **[Vercel](https://vercel.com)** - World-class deployment platform
 - **[Supabase](https://supabase.io)** - Modern database and authentication
@@ -732,7 +782,7 @@ Special thanks to:
 
 ---
 
-**FormaOps** - *Empowering developers with enterprise-grade AI prompt management*
+**FormaOps** - _Empowering developers with enterprise-grade AI prompt management_
 
 [![Website](https://img.shields.io/badge/Website-formaops.com-blue?style=for-the-badge)](https://formaops.com)
 [![Documentation](https://img.shields.io/badge/Docs-docs.formaops.com-green?style=for-the-badge)](https://docs.formaops.com)
