@@ -17,6 +17,7 @@ interface PromptWithDetails {
   description: string | null;
   template: string;
   variables: Array<{ name: string; type: string; required?: boolean }> | null;
+  version: number;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   tags: string[];
   createdAt: string;

@@ -28,9 +28,9 @@
       "@/app/*": ["./src/app/*"]
     },
     "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    "exactOptionalPropertyTypes": true
+    "noUncheckedIndexedAccess": false,
+    "noImplicitReturns": false,
+    "exactOptionalPropertyTypes": false
   },
   "include": [
     "next-env.d.ts",

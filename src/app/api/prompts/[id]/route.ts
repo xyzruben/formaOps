@@ -24,7 +24,7 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  const { params } = await context.params;
+  const params = await context.params;
   try {
     const user = await requireAuth();
     const { id } = params;
@@ -58,7 +58,7 @@ export async function PUT(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  const { params } = await context.params;
+  const params = await context.params;
   try {
     const user = await requireAuth();
     const { id } = params;
@@ -112,7 +112,7 @@ export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
-  const { params } = await context.params;
+  const params = await context.params;
   try {
     const user = await requireAuth();
     const { id } = params;

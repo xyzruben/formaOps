@@ -11,6 +11,12 @@ export interface WebVitalsMetric {
   id: string;
 }
 
+interface MemoryInfo {
+  usedJSHeapSize: number;
+  totalJSHeapSize: number;
+  jsHeapSizeLimit: number;
+}
+
 export class PerformanceUtils {
   // Debounce function to limit API calls
   static debounce<T extends (...args: any[]) => any>(
@@ -126,7 +132,7 @@ export class PerformanceUtils {
   // Memory usage monitor
   static getMemoryUsage(): MemoryInfo | null {
     if (typeof window !== 'undefined' && 'memory' in performance) {
-      return (performance as any).memory;
+      return (performance as Performance & { memory: MemoryInfo }).memory;
     }
     return null;
   }

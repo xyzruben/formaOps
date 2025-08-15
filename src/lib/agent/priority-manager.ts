@@ -129,7 +129,7 @@ export class PriorityManager {
     
     let insertIndex = this.queuedExecutions.length;
     for (let i = 0; i < this.queuedExecutions.length; i++) {
-      const queuedPriority = priorityOrder[this.queuedExecutions[i].priority];
+      const queuedPriority = priorityOrder[this.queuedExecutions[i]?.priority] ?? 999;
       if (jobPriority < queuedPriority) {
         insertIndex = i;
         break;

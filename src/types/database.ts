@@ -69,9 +69,9 @@ export interface VariableDefinition {
   name: string;
   type: 'string' | 'number' | 'boolean' | 'array';
   required: boolean;
-  description?: string;
-  defaultValue?: unknown;
-  options?: string[];
+  description?: string | undefined;
+  defaultValue?: unknown | undefined;
+  options?: string[] | undefined;
 }
 
 // Validation configurations

@@ -24,9 +24,9 @@ export interface ValidationContext {
       input: number;
       output: number;
       total: number;
-    };
-    model?: string;
-    latencyMs?: number;
+    } | undefined;
+    model?: string | undefined;
+    latencyMs?: number | undefined;
   };
 }
 
@@ -88,7 +88,7 @@ export class FunctionValidator {
       expected: boolean;
       actual: boolean;
       passed: boolean;
-      error?: string;
+      error?: string | undefined;
     }>;
   }> {
     return Promise.all(
@@ -146,9 +146,9 @@ export class FunctionValidator {
       output: typeof data === 'string' ? data : JSON.stringify(data),
       inputs: context?.inputs || {},
       metadata: {
-        tokenUsage: context?.metadata?.tokenUsage,
-        model: context?.metadata?.model,
-        latencyMs: context?.metadata?.latencyMs,
+        tokenUsage: context?.metadata?.tokenUsage || undefined,
+        model: context?.metadata?.model || undefined,
+        latencyMs: context?.metadata?.latencyMs || undefined,
       },
     };
   }

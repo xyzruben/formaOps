@@ -104,7 +104,7 @@ export async function POST(
   } catch (error) {
     // Log retry failure
     await logger.error('Execution retry failed', error, {
-      executionId: context.params ? (await context.params).id : 'unknown',
+      executionId: (await context.params).id,
       userId: 'unknown',
     });
 
