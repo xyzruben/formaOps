@@ -2,7 +2,6 @@
 // Temporarily disabled to unblock TypeScript compilation for deployment
 
 import { ValidationEngine } from '../validator';
-import { ValidationType } from '@prisma/client';
 
 describe.skip('ValidationEngine', () => {
   it('should create an instance', () => {
@@ -16,7 +15,6 @@ describe.skip('ValidationEngine', () => {
 // This test file was written for a different version of ValidationRule
 
 import { ValidationEngine } from '../validator';
-import { ValidationType } from '@prisma/client';
 import { z } from 'zod';
 
 describe('ValidationEngine', () => {

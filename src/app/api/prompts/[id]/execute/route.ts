@@ -192,12 +192,10 @@ export async function POST(
   } catch (error) {
     // Process error through execution error handler
     let executionError: ExecutionError;
-    let finalError = error;
     
     // Check if this is a final error from retry handler
     if ((error as any).executionError) {
       executionError = (error as any).executionError;
-      finalError = error;
     } else {
       executionError = executionErrorHandler.handleError(error);
     }
