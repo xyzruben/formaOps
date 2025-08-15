@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
-process.env.OPENAI_API_KEY = 'test-openai-key';
+process.env.OPENAI_API_KEY = 'sk-test-openai-key-12345678901234567890123456789012';
 process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_ANON_KEY = 'test-supabase-key';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
@@ -81,6 +81,9 @@ jest.mock('@prisma/client', () => ({
       findMany: jest.fn(),
     },
   })),
+  Prisma: {
+    JsonNull: Symbol('JsonNull'),
+  },
 }));
 
 // Mock OpenAI
@@ -141,4 +144,78 @@ global.ResizeObserver = jest.fn().mockImplementation(() => ({
 global.IntersectionObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
   disconnect: jest.fn(),
+}));
+
+// Mock Web APIs for Next.js server environment
+global.Request = jest.fn().mockImplementation((url, options) => ({
+  url,
+  method: options?.method || 'GET',
+  headers: new Map(Object.entries(options?.headers || {})),
+  body: options?.body,
+  json: jest.fn().mockResolvedValue({}),
+  text: jest.fn().mockResolvedValue(''),
+}));
+
+global.Response = jest.fn().mockImplementation((body, options) => ({
+  status: options?.status || 200,
+  statusText: 'OK',
+  headers: new Map(Object.entries(options?.headers || {})),
+  body,
+  json: jest.fn().mockResolvedValue(JSON.parse(body || '{}')),
+  text: jest.fn().mockResolvedValue(body || ''),
+}));
+
+global.Headers = jest.fn().mockImplementation((init) => {
+  const headers = new Map();
+  if (init) {
+    Object.entries(init).forEach(([key, value]) => {
+      headers.set(key, value);
+    });
+  }
+  return headers;
+});
+
+global.URLSearchParams = URLSearchParams;
+
+// Mock Next.js server functions
+jest.mock('next/headers', () => ({
+  cookies: jest.fn().mockResolvedValue({
+    get: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+    has: jest.fn(),
+    getAll: jest.fn().mockReturnValue([]),
+    toString: jest.fn().mockReturnValue(''),
+  }),
+  headers: jest.fn().mockResolvedValue({
+    get: jest.fn(),
+    has: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+    append: jest.fn(),
+    getSetCookie: jest.fn().mockReturnValue([]),
+    forEach: jest.fn(),
+    entries: jest.fn().mockReturnValue([]),
+    keys: jest.fn().mockReturnValue([]),
+    values: jest.fn().mockReturnValue([]),
+  }),
+}));
+
+// Mock Next.js server responses
+jest.mock('next/server', () => ({
+  NextRequest: jest.fn(),
+  NextResponse: {
+    json: jest.fn((data, options) => ({
+      status: options?.status || 200,
+      statusText: 'OK',
+      headers: new Map(Object.entries(options?.headers || {})),
+      json: jest.fn().mockResolvedValue(data),
+      text: jest.fn().mockResolvedValue(JSON.stringify(data)),
+      ok: (options?.status || 200) >= 200 && (options?.status || 200) < 300,
+    })),
+    redirect: jest.fn((url, status) => ({
+      status: status || 302,
+      headers: new Map([['location', url]]),
+    })),
+  },
 }));

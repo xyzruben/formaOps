@@ -1,42 +1,46 @@
-import { GET } from '../route';
 import { NextRequest } from 'next/server';
 
-// Mock dependencies
-const mockPrisma = {
-  prompt: {
-    findUnique: jest.fn(),
-  },
-  execution: {
-    create: jest.fn(),
-  },
-};
+// Mock authentication first
+jest.mock('@/lib/auth/server', () => ({
+  requireAuth: jest.fn().mockResolvedValue({
+    id: 'user-123',
+  }),
+}));
 
-const mockAIExecutor = {
-  executePrompt: jest.fn(),
-};
-
-const mockPriorityManager = {
-  boostPriorityForAI: jest.fn().mockReturnValue({ success: true }),
-  restoreOriginalPriority: jest.fn(),
-};
-
+// Mock dependencies using factory functions
 jest.mock('@/lib/database/client', () => ({
-  prisma: mockPrisma,
+  prisma: {
+    prompt: {
+      findUnique: jest.fn(),
+    },
+    execution: {
+      create: jest.fn(),
+    },
+  },
 }));
 
 jest.mock('@/lib/agent/executor', () => ({
-  aiExecutor: mockAIExecutor,
+  aiExecutor: {
+    executePrompt: jest.fn(),
+  },
 }));
 
 jest.mock('@/lib/agent/priority-manager', () => ({
-  cpuPriorityManager: mockPriorityManager,
+  cpuPriorityManager: {
+    boostPriorityForAI: jest.fn().mockReturnValue({ success: true }),
+    restoreOriginalPriority: jest.fn(),
+  },
 }));
 
-jest.mock('@/lib/auth/server-auth', () => ({
-  getServerAuth: jest.fn().mockResolvedValue({
-    user: { id: 'user-123' },
-  }),
-}));
+import { GET } from '../route';
+import { prisma } from '@/lib/database/client';
+import { aiExecutor } from '@/lib/agent/executor';
+import { cpuPriorityManager } from '@/lib/agent/priority-manager';
+
+// Get typed mocks for better intellisense
+const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockAIExecutor = aiExecutor as jest.Mocked<typeof aiExecutor>;
+const mockPriorityManager = cpuPriorityManager as jest.Mocked<typeof cpuPriorityManager>;
 
 describe('/api/executions', () => {
   beforeEach(() => {

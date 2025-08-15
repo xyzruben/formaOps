@@ -1,16 +1,22 @@
 import { POST } from '../login/route';
 import { NextRequest } from 'next/server';
 
-// Mock Supabase
-const mockSupabase = {
-  auth: {
-    signInWithPassword: jest.fn(),
-  },
-};
-
-jest.mock('@/lib/supabase/client', () => ({
-  supabase: mockSupabase,
+// Mock Supabase SSR using factory pattern
+jest.mock('@supabase/ssr', () => ({
+  createServerClient: jest.fn().mockReturnValue({
+    auth: {
+      signInWithPassword: jest.fn(),
+    },
+  }),
 }));
+
+import { createServerClient } from '@supabase/ssr';
+
+// Get mock reference after import
+const mockCreateServerClient = createServerClient as jest.MockedFunction<typeof createServerClient>;
+const mockSupabase = mockCreateServerClient.mock.results[0]?.value || {
+  auth: { signInWithPassword: jest.fn() }
+};
 
 describe('/api/auth/login', () => {
   beforeEach(() => {
@@ -20,8 +26,8 @@ describe('/api/auth/login', () => {
   it('should authenticate user with valid credentials', async () => {
     mockSupabase.auth.signInWithPassword.mockResolvedValue({
       data: {
-        user: { id: 'user-123', email: 'test@example.com' },
-        session: { access_token: 'token-123' },
+        user: { id: 'user-123', email: 'test@example.com', user_metadata: {} },
+        session: { access_token: 'token-123', refresh_token: 'refresh-123' },
       },
       error: null,
     });
@@ -38,11 +44,13 @@ describe('/api/auth/login', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
     expect(data.user).toEqual({
       id: 'user-123',
       email: 'test@example.com',
+      name: null,
     });
+    expect(data.access_token).toBe('token-123');
+    expect(data.refresh_token).toBe('refresh-123');
     expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
       email: 'test@example.com',
       password: 'password123',
@@ -67,8 +75,8 @@ describe('/api/auth/login', () => {
     const data = await response.json();
 
     expect(response.status).toBe(401);
-    expect(data.success).toBe(false);
-    expect(data.error).toBe('Invalid login credentials');
+    expect(data.error).toBe('Invalid credentials');
+    expect(data.code).toBe('INVALID_CREDENTIALS');
   });
 
   it('should validate required fields', async () => {
@@ -84,8 +92,16 @@ describe('/api/auth/login', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.success).toBe(false);
-    expect(data.error).toContain('Password is required');
+    expect(data.error).toBe('Validation failed');
+    expect(data.code).toBe('VALIDATION_ERROR');
+    expect(data.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'password',
+          message: expect.stringContaining('Required'),
+        }),
+      ])
+    );
   });
 
   it('should validate email format', async () => {
@@ -101,8 +117,16 @@ describe('/api/auth/login', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.success).toBe(false);
-    expect(data.error).toContain('Invalid email format');
+    expect(data.error).toBe('Validation failed');
+    expect(data.code).toBe('VALIDATION_ERROR');
+    expect(data.details).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: 'email',
+          message: expect.stringContaining('Invalid email'),
+        }),
+      ])
+    );
   });
 
   it('should handle Supabase errors gracefully', async () => {
@@ -122,8 +146,8 @@ describe('/api/auth/login', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.success).toBe(false);
-    expect(data.error).toBe('Authentication service error');
+    expect(data.error).toBe('Internal server error');
+    expect(data.code).toBe('INTERNAL_ERROR');
   });
 
   it('should handle malformed JSON', async () => {
@@ -135,9 +159,9 @@ describe('/api/auth/login', () => {
     const response = await POST(request);
     const data = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(data.success).toBe(false);
-    expect(data.error).toBe('Invalid request body');
+    expect(response.status).toBe(500);
+    expect(data.error).toBe('Internal server error');
+    expect(data.code).toBe('INTERNAL_ERROR');
   });
 
   it('should rate limit excessive requests', async () => {
@@ -145,7 +169,7 @@ describe('/api/auth/login', () => {
     // For now, we'll test the structure
     const request = new NextRequest('http://localhost:3000/api/auth/login', {
       method: 'POST',
-      headers: { 'x-forwarded-for': '192.168.1.1' },
+      headers: new Headers({ 'x-forwarded-for': '192.168.1.1' }),
       body: JSON.stringify({
         email: 'test@example.com',
         password: 'password123',

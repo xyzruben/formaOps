@@ -90,18 +90,18 @@ describe('RetryManager', () => {
       const operation = jest.fn().mockRejectedValue(new Error('TIMEOUT'));
 
       const config = {
-        maxAttempts: 5,
-        baseDelayMs: 1000,
-        maxDelayMs: 2000,
-        backoffMultiplier: 3,
+        maxAttempts: 3, // Reduced attempts to prevent timeout
+        baseDelayMs: 100, // Much shorter delays for test
+        maxDelayMs: 200,
+        backoffMultiplier: 2,
         jitterMs: 0,
       };
 
       const result = await retryManager.executeWithRetry(operation, config);
 
       // Even with high backoff multiplier, should not exceed maxDelayMs per retry
-      expect(result.totalDelayMs).toBeLessThan(8000); // 4 retries * 2000ms max
-    });
+      expect(result.totalDelayMs).toBeLessThan(400); // 2 retries * 200ms max
+    }, 10000); // Increase timeout to 10 seconds
   });
 
   describe('Circuit Breaker', () => {

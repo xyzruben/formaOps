@@ -120,7 +120,7 @@ describe('CostTracker', () => {
       const metrics = await costTracker.getUserCostMetrics('user-1');
 
       expect(metrics.totalCostUsd).toBeCloseTo(0.06, 2);
-      expect(metrics.avgCostPerExecution).toBe(0.03);
+      expect(metrics.avgCostPerExecution).toBeCloseTo(0.03, 2);
       expect(metrics.tokenUsage.totalInput).toBe(300);
       expect(metrics.tokenUsage.totalOutput).toBe(150);
       expect(metrics.tokenUsage.totalTokens).toBe(450);
@@ -228,13 +228,17 @@ describe('CostTracker', () => {
         .mockResolvedValueOnce({ name: 'Cheap Prompt' });
 
       const mockExecutionsForTokens = [
-        [{ tokenUsage: { total: 1000 } }, { tokenUsage: { total: 1500 } }],
-        [{ tokenUsage: { total: 500 } }],
+        [
+          { tokenUsage: { input: 400, output: 600, total: 1000 } },
+          { tokenUsage: { input: 750, output: 750, total: 1500 } },
+        ],
+        [{ tokenUsage: { input: 250, output: 250, total: 500 } }],
       ];
 
+      // Mock execution.findMany calls for token usage (called after groupBy)
       mockPrisma.execution.findMany
-        .mockResolvedValueOnce(mockExecutionsForTokens[0])
-        .mockResolvedValueOnce(mockExecutionsForTokens[1]);
+        .mockResolvedValueOnce(mockExecutionsForTokens[0])  // For prompt-1
+        .mockResolvedValueOnce(mockExecutionsForTokens[1]); // For prompt-2
     });
 
     it('should return top expensive prompts', async () => {

@@ -1,24 +1,23 @@
-import { GET, POST } from '../route';
-import { NextRequest } from 'next/server';
-
-// Mock Prisma
-const mockPrisma = {
-  prompt: {
-    findMany: jest.fn(),
-    create: jest.fn(),
-  },
-};
-
-jest.mock('@/lib/database/client', () => ({
-  prisma: mockPrisma,
-}));
-
-// Mock authentication
-jest.mock('@/lib/auth/server-auth', () => ({
-  getServerAuth: jest.fn().mockResolvedValue({
-    user: { id: 'user-123' },
+// Mock authentication first - must be hoisted
+jest.mock('@/lib/auth/server', () => ({
+  requireAuth: jest.fn().mockResolvedValue({
+    id: 'user-123',
   }),
 }));
+
+// Mock database queries - must be hoisted  
+jest.mock('@/lib/database/queries', () => ({
+  getUserPrompts: jest.fn(),
+  createPrompt: jest.fn(),
+}));
+
+import { NextRequest } from 'next/server';
+import { GET, POST } from '../route';
+import { getUserPrompts, createPrompt } from '@/lib/database/queries';
+
+// Get typed mocks for better intellisense
+const mockGetUserPrompts = getUserPrompts as jest.MockedFunction<typeof getUserPrompts>;
+const mockCreatePrompt = createPrompt as jest.MockedFunction<typeof createPrompt>;
 
 describe('/api/prompts', () => {
   beforeEach(() => {
@@ -27,78 +26,76 @@ describe('/api/prompts', () => {
 
   describe('GET /api/prompts', () => {
     it('should return user prompts', async () => {
-      const mockPrompts = [
-        {
-          id: 'prompt-1',
-          name: 'Test Prompt',
-          template: 'Hello {{name}}',
-          variables: [{ name: 'name', type: 'string', required: true }],
-          userId: 'user-123',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
+      const mockResult = {
+        prompts: [
+          {
+            id: 'prompt-1',
+            name: 'Test Prompt',
+            description: 'Test description',
+            status: 'PUBLISHED',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ],
+        total: 1,
+        page: 1,
+        totalPages: 1,
+      };
 
-      mockPrisma.prompt.findMany.mockResolvedValue(mockPrompts);
+      mockGetUserPrompts.mockResolvedValue(mockResult);
 
       const request = new NextRequest('http://localhost:3000/api/prompts');
       const response = await GET(request);
       const data = await response.json();
 
+      // Check if mocks were called
+      expect(mockGetUserPrompts).toHaveBeenCalled();
       expect(response.status).toBe(200);
-      expect(data.success).toBe(true);
-      expect(data.prompts).toEqual(mockPrompts);
-      expect(mockPrisma.prompt.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-123' },
-        orderBy: { updatedAt: 'desc' },
+      expect(data).toEqual(mockResult);
+      expect(mockGetUserPrompts).toHaveBeenCalledWith('user-123', {
+        page: 1,
+        limit: 20,
       });
     });
 
     it('should handle database errors', async () => {
-      mockPrisma.prompt.findMany.mockRejectedValue(new Error('Database error'));
+      mockGetUserPrompts.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost:3000/api/prompts');
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(500);
-      expect(data.success).toBe(false);
-      expect(data.error).toBe('Failed to fetch prompts');
+      expect(data.error).toBe('Internal server error');
+      expect(data.code).toBe('INTERNAL_ERROR');
     });
 
     it('should support pagination', async () => {
-      mockPrisma.prompt.findMany.mockResolvedValue([]);
+      mockGetUserPrompts.mockResolvedValue({ prompts: [], total: 0, page: 2, totalPages: 0 });
 
       const request = new NextRequest(
         'http://localhost:3000/api/prompts?page=2&limit=10'
       );
       await GET(request);
 
-      expect(mockPrisma.prompt.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-123' },
-        orderBy: { updatedAt: 'desc' },
-        skip: 10, // (page - 1) * limit
-        take: 10,
+      expect(mockGetUserPrompts).toHaveBeenCalledWith('user-123', {
+        page: 2,
+        limit: 10,
       });
     });
 
     it('should support search filtering', async () => {
-      mockPrisma.prompt.findMany.mockResolvedValue([]);
+      mockGetUserPrompts.mockResolvedValue({ prompts: [], total: 0, page: 1, totalPages: 0 });
 
       const request = new NextRequest(
         'http://localhost:3000/api/prompts?search=test'
       );
       await GET(request);
 
-      expect(mockPrisma.prompt.findMany).toHaveBeenCalledWith({
-        where: {
-          userId: 'user-123',
-          OR: [
-            { name: { contains: 'test', mode: 'insensitive' } },
-            { template: { contains: 'test', mode: 'insensitive' } },
-          ],
-        },
-        orderBy: { updatedAt: 'desc' },
+      expect(mockGetUserPrompts).toHaveBeenCalledWith('user-123', {
+        page: 1,
+        limit: 20,
+        search: 'test',
       });
     });
   });
@@ -108,6 +105,7 @@ describe('/api/prompts', () => {
       const newPrompt = {
         id: 'prompt-2',
         name: 'New Prompt',
+        description: 'Test description',
         template: 'Hello {{name}}',
         variables: [{ name: 'name', type: 'string', required: true }],
         userId: 'user-123',
@@ -116,7 +114,7 @@ describe('/api/prompts', () => {
         updatedAt: new Date(),
       };
 
-      mockPrisma.prompt.create.mockResolvedValue(newPrompt);
+      mockCreatePrompt.mockResolvedValue(newPrompt);
 
       const request = new NextRequest('http://localhost:3000/api/prompts', {
         method: 'POST',
@@ -131,16 +129,11 @@ describe('/api/prompts', () => {
       const data = await response.json();
 
       expect(response.status).toBe(201);
-      expect(data.success).toBe(true);
-      expect(data.prompt).toEqual(newPrompt);
-      expect(mockPrisma.prompt.create).toHaveBeenCalledWith({
-        data: {
-          name: 'New Prompt',
-          template: 'Hello {{name}}',
-          variables: [{ name: 'name', type: 'string', required: true }],
-          userId: 'user-123',
-          version: 1,
-        },
+      expect(data).toEqual(newPrompt);
+      expect(mockCreatePrompt).toHaveBeenCalledWith('user-123', {
+        name: 'New Prompt',
+        template: 'Hello {{name}}',
+        variables: [{ name: 'name', type: 'string', required: true }],
       });
     });
 
@@ -157,8 +150,8 @@ describe('/api/prompts', () => {
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.success).toBe(false);
-      expect(data.error).toContain('Template is required');
+      expect(data.error).toBe('Validation failed');
+      expect(data.code).toBe('VALIDATION_ERROR');
     });
 
     it('should validate prompt name length', async () => {
