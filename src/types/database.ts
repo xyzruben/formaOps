@@ -1,10 +1,10 @@
-import type { 
-  User, 
-  Prompt, 
-  PromptVersion, 
-  Execution, 
+import type {
+  User,
+  Prompt,
+  PromptVersion,
+  Execution,
   ExecutionLog,
-  Validation, 
+  Validation,
   ApiKey,
   UserPlan,
   PromptStatus,
@@ -12,7 +12,7 @@ import type {
   ValidationStatus,
   Priority,
   ValidationType,
-  LogLevel
+  LogLevel,
 } from '@prisma/client';
 
 // Base database types
@@ -51,14 +51,17 @@ export type ExecutionWithRelations = Execution & {
   logs: ExecutionLog[];
 };
 
-export type PromptListItem = Pick<Prompt, 'id' | 'name' | 'description' | 'status' | 'createdAt' | 'updatedAt'> & {
+export type PromptListItem = Pick<
+  Prompt,
+  'id' | 'name' | 'description' | 'status' | 'createdAt' | 'updatedAt'
+> & {
   _count: {
     executions: number;
   };
 };
 
 export type ExecutionListItem = Pick<
-  Execution, 
+  Execution,
   'id' | 'status' | 'latencyMs' | 'costUsd' | 'createdAt' | 'validationStatus'
 > & {
   prompt: Pick<Prompt, 'id' | 'name'>;
@@ -93,9 +96,9 @@ export interface FunctionValidationConfig {
   description?: string;
 }
 
-export type ValidationConfig = 
-  | SchemaValidationConfig 
-  | RegexValidationConfig 
+export type ValidationConfig =
+  | SchemaValidationConfig
+  | RegexValidationConfig
   | FunctionValidationConfig;
 
 // Token usage tracking

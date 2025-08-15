@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { PromptsResponse, CreatePromptRequest, UpdatePromptRequest } from '@/types';
+import type {
+  PromptsResponse,
+  CreatePromptRequest,
+  UpdatePromptRequest,
+} from '@/types';
 
 interface UsePromptsOptions {
   page?: number;
@@ -27,7 +31,7 @@ export function usePrompts(options: UsePromptsOptions = {}) {
       if (options.search) params.set('search', options.search);
 
       const response = await fetch(`/api/prompts?${params}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch prompts');
@@ -42,75 +46,84 @@ export function usePrompts(options: UsePromptsOptions = {}) {
     }
   }, [options.page, options.limit, options.status, options.search]);
 
-  const createPrompt = useCallback(async (promptData: CreatePromptRequest) => {
-    try {
-      const response = await fetch('/api/prompts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(promptData),
-      });
+  const createPrompt = useCallback(
+    async (promptData: CreatePromptRequest) => {
+      try {
+        const response = await fetch('/api/prompts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(promptData),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create prompt');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create prompt');
+        }
+
+        const newPrompt = await response.json();
+
+        // Refresh the list
+        await fetchPrompts();
+
+        return newPrompt;
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
+    },
+    [fetchPrompts]
+  );
 
-      const newPrompt = await response.json();
-      
-      // Refresh the list
-      await fetchPrompts();
-      
-      return newPrompt;
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('Unknown error');
-    }
-  }, [fetchPrompts]);
+  const updatePrompt = useCallback(
+    async (id: string, promptData: UpdatePromptRequest) => {
+      try {
+        const response = await fetch(`/api/prompts/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(promptData),
+        });
 
-  const updatePrompt = useCallback(async (id: string, promptData: UpdatePromptRequest) => {
-    try {
-      const response = await fetch(`/api/prompts/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(promptData),
-      });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update prompt');
+        }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update prompt');
+        const updatedPrompt = await response.json();
+
+        // Refresh the list
+        await fetchPrompts();
+
+        return updatedPrompt;
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
+    },
+    [fetchPrompts]
+  );
 
-      const updatedPrompt = await response.json();
-      
-      // Refresh the list
-      await fetchPrompts();
-      
-      return updatedPrompt;
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('Unknown error');
-    }
-  }, [fetchPrompts]);
+  const deletePrompt = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/prompts/${id}`, {
+          method: 'DELETE',
+        });
 
-  const deletePrompt = useCallback(async (id: string) => {
-    try {
-      const response = await fetch(`/api/prompts/${id}`, {
-        method: 'DELETE',
-      });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete prompt');
+        }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete prompt');
+        // Refresh the list
+        await fetchPrompts();
+      } catch (err) {
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
-
-      // Refresh the list
-      await fetchPrompts();
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('Unknown error');
-    }
-  }, [fetchPrompts]);
+    },
+    [fetchPrompts]
+  );
 
   useEffect(() => {
     fetchPrompts();

@@ -14,12 +14,18 @@ interface ExecutionViewerProps {
   promptId?: string;
 }
 
-export function ExecutionViewer({ userId, promptId }: ExecutionViewerProps): JSX.Element {
-  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(null);
-  const [selectedExecution, setSelectedExecution] = useState<ExecutionWithDetails | null>(null);
+export function ExecutionViewer({
+  userId,
+  promptId,
+}: ExecutionViewerProps): JSX.Element {
+  const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(
+    null
+  );
+  const [selectedExecution, setSelectedExecution] =
+    useState<ExecutionWithDetails | null>(null);
   const [loadingExecution, setLoadingExecution] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
-  
+
   const { getExecutionById, retryExecution } = useExecutions();
 
   const handleExecutionSelect = async (executionId: string): Promise<void> => {
@@ -27,11 +33,13 @@ export function ExecutionViewer({ userId, promptId }: ExecutionViewerProps): JSX
       setLoadingExecution(true);
       setExecutionError(null);
       setSelectedExecutionId(executionId);
-      
+
       const execution = await getExecutionById(executionId);
       setSelectedExecution(execution);
     } catch (error) {
-      setExecutionError(error instanceof Error ? error.message : 'Failed to load execution');
+      setExecutionError(
+        error instanceof Error ? error.message : 'Failed to load execution'
+      );
       setSelectedExecution(null);
     } finally {
       setLoadingExecution(false);
@@ -40,13 +48,15 @@ export function ExecutionViewer({ userId, promptId }: ExecutionViewerProps): JSX
 
   const handleRetry = async (): Promise<void> => {
     if (!selectedExecutionId) return;
-    
+
     try {
       await retryExecution(selectedExecutionId);
       // Refresh the selected execution after retry
       await handleExecutionSelect(selectedExecutionId);
     } catch (error) {
-      setExecutionError(error instanceof Error ? error.message : 'Failed to retry execution');
+      setExecutionError(
+        error instanceof Error ? error.message : 'Failed to retry execution'
+      );
     }
   };
 
@@ -75,16 +85,16 @@ export function ExecutionViewer({ userId, promptId }: ExecutionViewerProps): JSX
         {loadingExecution && (
           <LoadingState message="Loading execution details..." />
         )}
-        
+
         {executionError && (
-          <ErrorState message={executionError} onRetry={() => handleExecutionSelect(selectedExecutionId)} />
-        )}
-        
-        {selectedExecution && !loadingExecution && (
-          <ResultsViewer 
-            execution={selectedExecution} 
-            onRetry={handleRetry}
+          <ErrorState
+            message={executionError}
+            onRetry={() => handleExecutionSelect(selectedExecutionId)}
           />
+        )}
+
+        {selectedExecution && !loadingExecution && (
+          <ResultsViewer execution={selectedExecution} onRetry={handleRetry} />
         )}
       </div>
     );

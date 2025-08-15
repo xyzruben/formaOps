@@ -66,7 +66,10 @@ export class PerformanceMonitor {
     this.checkAlerts(metric);
   }
 
-  public recordExecutionLatency(latencyMs: number, metadata?: Record<string, unknown>): void {
+  public recordExecutionLatency(
+    latencyMs: number,
+    metadata?: Record<string, unknown>
+  ): void {
     this.recordMetric({
       name: 'execution_latency',
       value: latencyMs,
@@ -76,7 +79,10 @@ export class PerformanceMonitor {
     });
   }
 
-  public recordExecutionSuccess(success: boolean, metadata?: Record<string, unknown>): void {
+  public recordExecutionSuccess(
+    success: boolean,
+    metadata?: Record<string, unknown>
+  ): void {
     this.recordMetric({
       name: 'execution_success',
       value: success ? 1 : 0,
@@ -86,7 +92,10 @@ export class PerformanceMonitor {
     });
   }
 
-  public recordTokenUsage(tokens: number, metadata?: Record<string, unknown>): void {
+  public recordTokenUsage(
+    tokens: number,
+    metadata?: Record<string, unknown>
+  ): void {
     this.recordMetric({
       name: 'token_usage',
       value: tokens,
@@ -96,7 +105,10 @@ export class PerformanceMonitor {
     });
   }
 
-  public recordValidationTime(timeMs: number, metadata?: Record<string, unknown>): void {
+  public recordValidationTime(
+    timeMs: number,
+    metadata?: Record<string, unknown>
+  ): void {
     this.recordMetric({
       name: 'validation_time',
       value: timeMs,
@@ -127,12 +139,14 @@ export class PerformanceMonitor {
       filtered = filtered.filter(m => m.timestamp >= since);
     }
 
-    return filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return filtered.sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    );
   }
 
   public calculatePercentile(values: number[], percentile: number): number {
     if (values.length === 0) return 0;
-    
+
     const sorted = values.slice().sort((a, b) => a - b);
     const index = Math.ceil((percentile / 100) * sorted.length) - 1;
     return sorted[Math.max(0, Math.min(index, sorted.length - 1))];
@@ -147,8 +161,9 @@ export class PerformanceMonitor {
       .filter(m => m.name === 'execution_latency')
       .map(m => m.value);
 
-    const executionSuccesses = metrics
-      .filter(m => m.name === 'execution_success');
+    const executionSuccesses = metrics.filter(
+      m => m.name === 'execution_success'
+    );
 
     const successCount = executionSuccesses.filter(m => m.value === 1).length;
     const totalExecutions = executionSuccesses.length;
@@ -157,13 +172,16 @@ export class PerformanceMonitor {
     const tokenMetrics = metrics.filter(m => m.name === 'token_usage');
     const costMetrics = metrics.filter(m => m.name === 'execution_cost');
 
-    const avgTokensPerExecution = tokenMetrics.length > 0 
-      ? tokenMetrics.reduce((sum, m) => sum + m.value, 0) / tokenMetrics.length 
-      : 0;
+    const avgTokensPerExecution =
+      tokenMetrics.length > 0
+        ? tokenMetrics.reduce((sum, m) => sum + m.value, 0) /
+          tokenMetrics.length
+        : 0;
 
-    const avgCostPerExecution = costMetrics.length > 0
-      ? costMetrics.reduce((sum, m) => sum + m.value, 0) / costMetrics.length
-      : 0;
+    const avgCostPerExecution =
+      costMetrics.length > 0
+        ? costMetrics.reduce((sum, m) => sum + m.value, 0) / costMetrics.length
+        : 0;
 
     // Model distribution
     const modelDistribution: Record<string, number> = {};
@@ -176,17 +194,22 @@ export class PerformanceMonitor {
 
     // Validation metrics
     const validationMetrics = metrics.filter(m => m.name === 'validation_time');
-    const avgValidationTime = validationMetrics.length > 0
-      ? validationMetrics.reduce((sum, m) => sum + m.value, 0) / validationMetrics.length
-      : 0;
+    const avgValidationTime =
+      validationMetrics.length > 0
+        ? validationMetrics.reduce((sum, m) => sum + m.value, 0) /
+          validationMetrics.length
+        : 0;
 
     return {
       executionMetrics: {
         totalExecutions,
-        successRate: totalExecutions > 0 ? (successCount / totalExecutions) * 100 : 0,
-        avgLatency: executionLatencies.length > 0 
-          ? executionLatencies.reduce((a, b) => a + b, 0) / executionLatencies.length 
-          : 0,
+        successRate:
+          totalExecutions > 0 ? (successCount / totalExecutions) * 100 : 0,
+        avgLatency:
+          executionLatencies.length > 0
+            ? executionLatencies.reduce((a, b) => a + b, 0) /
+              executionLatencies.length
+            : 0,
         p50Latency: this.calculatePercentile(executionLatencies, 50),
         p95Latency: this.calculatePercentile(executionLatencies, 95),
         p99Latency: this.calculatePercentile(executionLatencies, 99),
@@ -195,12 +218,15 @@ export class PerformanceMonitor {
         avgTokensPerExecution,
         avgCostPerExecution,
         modelDistribution,
-        errorRate: totalExecutions > 0 ? ((totalExecutions - successCount) / totalExecutions) * 100 : 0,
+        errorRate:
+          totalExecutions > 0
+            ? ((totalExecutions - successCount) / totalExecutions) * 100
+            : 0,
       },
       systemMetrics: {
         activeExecutions: 0, // Would be updated by system monitor
         queuedExecutions: 0, // Would be updated by system monitor
-        cpuUtilization: 0,   // Would be updated by system monitor
+        cpuUtilization: 0, // Would be updated by system monitor
       },
       validationMetrics: {
         totalValidations: validationMetrics.length,
@@ -215,7 +241,9 @@ export class PerformanceMonitor {
   }
 
   public removeAlertThreshold(metricName: string): void {
-    this.alertThresholds = this.alertThresholds.filter(t => t.metric !== metricName);
+    this.alertThresholds = this.alertThresholds.filter(
+      t => t.metric !== metricName
+    );
   }
 
   public getActiveAlerts(): Array<{
@@ -225,7 +253,7 @@ export class PerformanceMonitor {
   }> {
     const now = new Date();
     const recentWindow = new Date(now.getTime() - 5 * 60 * 1000); // Last 5 minutes
-    
+
     const alerts: Array<{
       threshold: AlertThreshold;
       currentValue: number;
@@ -234,7 +262,7 @@ export class PerformanceMonitor {
 
     for (const threshold of this.alertThresholds) {
       const recentMetrics = this.getMetrics(threshold.metric, recentWindow);
-      
+
       if (recentMetrics.length === 0) continue;
 
       const currentValue = recentMetrics[0].value; // Most recent value
@@ -279,26 +307,40 @@ export class PerformanceMonitor {
   } {
     const summary = this.getSystemMetrics(timeWindowHours);
     const alerts = this.getActiveAlerts();
-    
+
     // Calculate trends (comparing current hour to previous hour)
     const currentHour = this.getSystemMetrics(1);
     const previousHour = this.getSystemMetrics(2);
-    
+
     const trends = [
       {
         metric: 'success_rate',
-        trend: this.getTrend(currentHour.executionMetrics.successRate, previousHour.executionMetrics.successRate),
-        change: currentHour.executionMetrics.successRate - previousHour.executionMetrics.successRate,
+        trend: this.getTrend(
+          currentHour.executionMetrics.successRate,
+          previousHour.executionMetrics.successRate
+        ),
+        change:
+          currentHour.executionMetrics.successRate -
+          previousHour.executionMetrics.successRate,
       },
       {
         metric: 'avg_latency',
-        trend: this.getTrend(previousHour.executionMetrics.avgLatency, currentHour.executionMetrics.avgLatency), // Inverted for latency
-        change: currentHour.executionMetrics.avgLatency - previousHour.executionMetrics.avgLatency,
+        trend: this.getTrend(
+          previousHour.executionMetrics.avgLatency,
+          currentHour.executionMetrics.avgLatency
+        ), // Inverted for latency
+        change:
+          currentHour.executionMetrics.avgLatency -
+          previousHour.executionMetrics.avgLatency,
       },
       {
         metric: 'error_rate',
-        trend: this.getTrend(previousHour.aiMetrics.errorRate, currentHour.aiMetrics.errorRate), // Inverted for error rate
-        change: currentHour.aiMetrics.errorRate - previousHour.aiMetrics.errorRate,
+        trend: this.getTrend(
+          previousHour.aiMetrics.errorRate,
+          currentHour.aiMetrics.errorRate
+        ), // Inverted for error rate
+        change:
+          currentHour.aiMetrics.errorRate - previousHour.aiMetrics.errorRate,
       },
     ];
 
@@ -309,16 +351,22 @@ export class PerformanceMonitor {
     };
   }
 
-  private getTrend(current: number, previous: number): 'improving' | 'degrading' | 'stable' {
-    const changePercent = previous === 0 ? 0 : ((current - previous) / previous) * 100;
-    
+  private getTrend(
+    current: number,
+    previous: number
+  ): 'improving' | 'degrading' | 'stable' {
+    const changePercent =
+      previous === 0 ? 0 : ((current - previous) / previous) * 100;
+
     if (Math.abs(changePercent) < 5) return 'stable';
     return changePercent > 0 ? 'improving' : 'degrading';
   }
 
   private checkAlerts(metric: PerformanceMetric): void {
-    const relevantThresholds = this.alertThresholds.filter(t => t.metric === metric.name);
-    
+    const relevantThresholds = this.alertThresholds.filter(
+      t => t.metric === metric.name
+    );
+
     for (const threshold of relevantThresholds) {
       let triggered = false;
 
@@ -335,12 +383,15 @@ export class PerformanceMonitor {
       }
 
       if (triggered) {
-        console.warn(`[ALERT] ${threshold.severity.toUpperCase()}: ${threshold.message}`, {
-          metric: metric.name,
-          value: metric.value,
-          threshold: threshold.threshold,
-          timestamp: metric.timestamp,
-        });
+        console.warn(
+          `[ALERT] ${threshold.severity.toUpperCase()}: ${threshold.message}`,
+          {
+            metric: metric.name,
+            value: metric.value,
+            threshold: threshold.threshold,
+            timestamp: metric.timestamp,
+          }
+        );
       }
     }
   }

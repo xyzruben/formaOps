@@ -2,10 +2,10 @@ import OpenAI from 'openai';
 import { costTracker } from '../monitoring/cost-tracker';
 import { logger } from '../monitoring/logger';
 import { openAIConfig } from '../config/openai';
-import { 
-  ValidationError, 
-  ServiceUnavailableError, 
-  RateLimitError 
+import {
+  ValidationError,
+  ServiceUnavailableError,
+  RateLimitError,
 } from '../utils/error-handler';
 
 export interface OpenAIConfig {
@@ -37,11 +37,15 @@ export class OpenAIClient {
       configFromManager = openAIConfig.getConfig();
     } catch (error) {
       // Fall back to environment variables if config manager fails
-      console.warn('Failed to load OpenAI config, falling back to environment variables:', error);
+      console.warn(
+        'Failed to load OpenAI config, falling back to environment variables:',
+        error
+      );
     }
 
     // Determine API key
-    const resolvedApiKey = apiKey || configFromManager?.apiKey || process.env.OPENAI_API_KEY;
+    const resolvedApiKey =
+      apiKey || configFromManager?.apiKey || process.env.OPENAI_API_KEY;
     if (!resolvedApiKey) {
       throw new ValidationError('OpenAI API key is required');
     }
@@ -53,9 +57,16 @@ export class OpenAIClient {
     // Use config manager values if available, otherwise fall back to environment variables
     this.defaultConfig = {
       apiKey: resolvedApiKey,
-      model: configFromManager?.defaultModel || (process.env.OPENAI_DEFAULT_MODEL as 'gpt-3.5-turbo' | 'gpt-4') || 'gpt-3.5-turbo',
-      maxTokens: configFromManager?.maxTokens || parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
-      temperature: configFromManager?.temperature || parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
+      model:
+        configFromManager?.defaultModel ||
+        (process.env.OPENAI_DEFAULT_MODEL as 'gpt-3.5-turbo' | 'gpt-4') ||
+        'gpt-3.5-turbo',
+      maxTokens:
+        configFromManager?.maxTokens ||
+        parseInt(process.env.OPENAI_MAX_TOKENS || '2000'),
+      temperature:
+        configFromManager?.temperature ||
+        parseFloat(process.env.OPENAI_TEMPERATURE || '0.7'),
     };
 
     this.validateConfig(this.defaultConfig);
@@ -70,7 +81,9 @@ export class OpenAIClient {
     // Validate model
     const supportedModels = ['gpt-3.5-turbo', 'gpt-4'];
     if (!supportedModels.includes(config.model)) {
-      throw new ValidationError(`Unsupported model: ${config.model}. Supported: ${supportedModels.join(', ')}`);
+      throw new ValidationError(
+        `Unsupported model: ${config.model}. Supported: ${supportedModels.join(', ')}`
+      );
     }
 
     // Validate maxTokens
@@ -90,21 +103,25 @@ export class OpenAIClient {
     executionId?: string
   ): Promise<ExecutionResult> {
     const executionConfig = { ...this.defaultConfig, ...config };
-    
+
     // Validate merged config
     this.validateConfig(executionConfig);
 
     const startTime = Date.now();
-    
+
     try {
       // Log execution start
       if (executionId) {
-        await logger.info('Starting OpenAI API call', {
-          model: executionConfig.model,
-          maxTokens: executionConfig.maxTokens,
-          temperature: executionConfig.temperature,
-          promptLength: prompt.length,
-        }, executionId);
+        await logger.info(
+          'Starting OpenAI API call',
+          {
+            model: executionConfig.model,
+            maxTokens: executionConfig.maxTokens,
+            temperature: executionConfig.temperature,
+            promptLength: prompt.length,
+          },
+          executionId
+        );
       }
 
       // Make the API call
@@ -122,7 +139,9 @@ export class OpenAIClient {
       const usage = completion.usage;
 
       if (!usage) {
-        throw new ServiceUnavailableError('OpenAI API did not return usage information');
+        throw new ServiceUnavailableError(
+          'OpenAI API did not return usage information'
+        );
       }
 
       const tokenUsage = {
@@ -132,8 +151,11 @@ export class OpenAIClient {
       };
 
       // Calculate cost using the new OpenAI-specific method
-      const costUsd = costTracker.calculateOpenAICost(tokenUsage, executionConfig.model);
-      
+      const costUsd = costTracker.calculateOpenAICost(
+        tokenUsage,
+        executionConfig.model
+      );
+
       // Track execution if executionId is provided
       if (executionId) {
         await costTracker.trackExecution(executionId, costUsd, tokenUsage);
@@ -141,12 +163,16 @@ export class OpenAIClient {
 
       // Log successful completion
       if (executionId) {
-        await logger.info('OpenAI API call completed successfully', {
-          latencyMs,
-          tokenUsage,
-          costUsd,
-          outputLength: output.length,
-        }, executionId);
+        await logger.info(
+          'OpenAI API call completed successfully',
+          {
+            latencyMs,
+            tokenUsage,
+            costUsd,
+            outputLength: output.length,
+          },
+          executionId
+        );
 
         // Log performance metric
         await logger.logPerformance({
@@ -167,27 +193,31 @@ export class OpenAIClient {
         costUsd,
         model: executionConfig.model,
       };
-
     } catch (error) {
       const latencyMs = Date.now() - startTime;
-      
+
       // Handle specific OpenAI errors
       if (error && typeof error === 'object') {
         const openaiError = error as any;
-        
+
         // Rate limit error
         if (openaiError.status === 429) {
-          const retryAfter = openaiError.headers?.['retry-after'] 
-            ? parseInt(openaiError.headers['retry-after']) 
+          const retryAfter = openaiError.headers?.['retry-after']
+            ? parseInt(openaiError.headers['retry-after'])
             : 60;
-          
+
           if (executionId) {
-            await logger.error('OpenAI rate limit exceeded', error, {
-              latencyMs,
-              retryAfter,
-            }, executionId);
+            await logger.error(
+              'OpenAI rate limit exceeded',
+              error,
+              {
+                latencyMs,
+                retryAfter,
+              },
+              executionId
+            );
           }
-          
+
           throw new RateLimitError(
             `OpenAI rate limit exceeded. Retry after ${retryAfter} seconds.`,
             retryAfter
@@ -197,12 +227,17 @@ export class OpenAIClient {
         // API error
         if (openaiError.status >= 400 && openaiError.status < 500) {
           if (executionId) {
-            await logger.error('OpenAI API client error', error, {
-              status: openaiError.status,
-              latencyMs,
-            }, executionId);
+            await logger.error(
+              'OpenAI API client error',
+              error,
+              {
+                status: openaiError.status,
+                latencyMs,
+              },
+              executionId
+            );
           }
-          
+
           throw new ValidationError(
             `OpenAI API error: ${openaiError.message || 'Invalid request'}`
           );
@@ -211,21 +246,31 @@ export class OpenAIClient {
         // Server error
         if (openaiError.status >= 500) {
           if (executionId) {
-            await logger.error('OpenAI API server error', error, {
-              status: openaiError.status,
-              latencyMs,
-            }, executionId);
+            await logger.error(
+              'OpenAI API server error',
+              error,
+              {
+                status: openaiError.status,
+                latencyMs,
+              },
+              executionId
+            );
           }
-          
+
           throw new ServiceUnavailableError('OpenAI API');
         }
       }
 
       // Generic error handling
       if (executionId) {
-        await logger.error('OpenAI API call failed', error, {
-          latencyMs,
-        }, executionId);
+        await logger.error(
+          'OpenAI API call failed',
+          error,
+          {
+            latencyMs,
+          },
+          executionId
+        );
       }
 
       if (error instanceof Error) {
@@ -267,7 +312,7 @@ export class OpenAIClient {
         maxTokens: 5,
         temperature: 0,
       });
-      
+
       return Boolean(result.output && result.tokenUsage.totalTokens > 0);
     } catch (error) {
       await logger.error('OpenAI connection validation failed', error);

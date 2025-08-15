@@ -10,6 +10,7 @@
 ## Authentication Endpoints
 
 ### POST /auth/login
+
 ```typescript
 // Request
 interface LoginRequest {
@@ -30,21 +31,23 @@ interface LoginResponse {
 
 // Error 401
 interface AuthError {
-  error: "Invalid credentials";
-  code: "INVALID_CREDENTIALS";
+  error: 'Invalid credentials';
+  code: 'INVALID_CREDENTIALS';
 }
 ```
 
 ### POST /auth/logout
+
 ```typescript
 // Request: No body (token in header)
 // Response 200
 interface LogoutResponse {
-  message: "Logged out successfully";
+  message: 'Logged out successfully';
 }
 ```
 
 ### GET /auth/me
+
 ```typescript
 // Response 200
 interface UserResponse {
@@ -56,21 +59,22 @@ interface UserResponse {
 
 // Error 401
 interface UnauthorizedError {
-  error: "Unauthorized";
-  code: "UNAUTHORIZED";
+  error: 'Unauthorized';
+  code: 'UNAUTHORIZED';
 }
 ```
 
 ## Prompt Management
 
 ### GET /prompts
+
 ```typescript
 // Query Parameters
 interface PromptsQuery {
-  page?: number;        // Default: 1
-  limit?: number;       // Default: 20, Max: 100
+  page?: number; // Default: 1
+  limit?: number; // Default: 20, Max: 100
   status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
-  search?: string;      // Search name/description
+  search?: string; // Search name/description
 }
 
 // Response 200
@@ -96,23 +100,24 @@ interface PromptsResponse {
 ```
 
 ### POST /prompts
+
 ```typescript
 // Request
 interface CreatePromptRequest {
-  name: string;                    // Min: 1, Max: 100
-  description?: string;            // Max: 500
-  template: string;                // Min: 1, Max: 10000
+  name: string; // Min: 1, Max: 100
+  description?: string; // Max: 500
+  template: string; // Min: 1, Max: 10000
   variables: VariableDefinition[];
   validations?: ValidationRule[];
 }
 
 interface VariableDefinition {
-  name: string;                    // /^[a-zA-Z_][a-zA-Z0-9_]*$/
+  name: string; // /^[a-zA-Z_][a-zA-Z0-9_]*$/
   type: 'string' | 'number' | 'boolean' | 'array';
   required: boolean;
   description?: string;
   defaultValue?: any;
-  options?: string[];              // For enum-like values
+  options?: string[]; // For enum-like values
 }
 
 interface ValidationRule {
@@ -136,8 +141,8 @@ interface CreatePromptResponse {
 
 // Error 400
 interface ValidationError {
-  error: "Validation failed";
-  code: "VALIDATION_ERROR";
+  error: 'Validation failed';
+  code: 'VALIDATION_ERROR';
   details: {
     field: string;
     message: string;
@@ -146,6 +151,7 @@ interface ValidationError {
 ```
 
 ### GET /prompts/:id
+
 ```typescript
 // Response 200
 interface PromptResponse {
@@ -167,12 +173,13 @@ interface PromptResponse {
 
 // Error 404
 interface NotFoundError {
-  error: "Prompt not found";
-  code: "NOT_FOUND";
+  error: 'Prompt not found';
+  code: 'NOT_FOUND';
 }
 ```
 
 ### PUT /prompts/:id
+
 ```typescript
 // Request (same as CreatePromptRequest but all fields optional)
 interface UpdatePromptRequest {
@@ -188,41 +195,43 @@ interface UpdatePromptRequest {
 ```
 
 ### DELETE /prompts/:id
+
 ```typescript
 // Response 200
 interface DeleteResponse {
-  message: "Prompt deleted successfully";
+  message: 'Prompt deleted successfully';
 }
 
 // Error 409
 interface ConflictError {
-  error: "Cannot delete prompt with active executions";
-  code: "CONFLICT";
+  error: 'Cannot delete prompt with active executions';
+  code: 'CONFLICT';
 }
 ```
 
 ## Execution Management
 
 ### POST /prompts/:id/execute
+
 ```typescript
 // Request
 interface ExecutePromptRequest {
   inputs: Record<string, any>;
   priority?: 'LOW' | 'NORMAL' | 'HIGH';
-  validateOutput?: boolean;        // Default: true
+  validateOutput?: boolean; // Default: true
 }
 
 // Response 202 (Accepted - async processing)
 interface ExecuteResponse {
   executionId: string;
   status: 'PENDING';
-  estimatedTime: number;           // Seconds
+  estimatedTime: number; // Seconds
 }
 
 // Error 400
 interface ExecutionError {
-  error: "Invalid input variables";
-  code: "INVALID_INPUTS";
+  error: 'Invalid input variables';
+  code: 'INVALID_INPUTS';
   details: {
     variable: string;
     expected: string;
@@ -232,13 +241,14 @@ interface ExecutionError {
 
 // Error 402
 interface QuotaError {
-  error: "Daily usage quota exceeded";
-  code: "QUOTA_EXCEEDED";
+  error: 'Daily usage quota exceeded';
+  code: 'QUOTA_EXCEEDED';
   resetTime: string;
 }
 ```
 
 ### GET /executions
+
 ```typescript
 // Query Parameters
 interface ExecutionsQuery {
@@ -246,8 +256,8 @@ interface ExecutionsQuery {
   limit?: number;
   status?: ExecutionStatus;
   promptId?: string;
-  from?: string;                   // ISO date
-  to?: string;                     // ISO date
+  from?: string; // ISO date
+  to?: string; // ISO date
 }
 
 // Response 200
@@ -278,6 +288,7 @@ interface ExecutionsResponse {
 ```
 
 ### GET /executions/:id
+
 ```typescript
 // Response 200
 interface ExecutionDetailResponse {
@@ -310,25 +321,27 @@ interface ExecutionDetailResponse {
 ```
 
 ### POST /executions/:id/retry
+
 ```typescript
 // Request: No body
 // Response 202
 interface RetryResponse {
-  executionId: string;              // New execution ID
+  executionId: string; // New execution ID
   originalId: string;
   status: 'PENDING';
 }
 
 // Error 409
 interface RetryError {
-  error: "Cannot retry successful execution";
-  code: "INVALID_RETRY";
+  error: 'Cannot retry successful execution';
+  code: 'INVALID_RETRY';
 }
 ```
 
 ## Real-time WebSocket Events
 
 ### Connection
+
 ```typescript
 // Connect to: ws://localhost:3000/api/ws
 // Auth: ?token=<jwt_token>
@@ -341,13 +354,14 @@ interface WebSocketMessage {
 ```
 
 ### Execution Status Updates
+
 ```typescript
 interface ExecutionStatusEvent {
   type: 'execution.status';
   data: {
     executionId: string;
     status: ExecutionStatus;
-    progress?: number;              // 0-100 for RUNNING status
+    progress?: number; // 0-100 for RUNNING status
     latencyMs?: number;
     error?: string;
   };
@@ -367,6 +381,7 @@ interface ExecutionCompletedEvent {
 ```
 
 ### System Events
+
 ```typescript
 interface SystemStatusEvent {
   type: 'system.status';
@@ -384,6 +399,7 @@ interface SystemStatusEvent {
 ## System Endpoints
 
 ### GET /health
+
 ```typescript
 // Response 200
 interface HealthResponse {
@@ -406,6 +422,7 @@ interface HealthResponse {
 ```
 
 ### GET /metrics
+
 ```typescript
 // Response 200 (requires admin role)
 interface MetricsResponse {
@@ -430,43 +447,46 @@ interface MetricsResponse {
 ## Error Handling Standards
 
 ### Standard Error Response
+
 ```typescript
 interface ApiError {
-  error: string;                   // Human-readable message
-  code: string;                    // Machine-readable code
-  details?: any;                   // Additional context
+  error: string; // Human-readable message
+  code: string; // Machine-readable code
+  details?: any; // Additional context
   timestamp: string;
   requestId: string;
 }
 ```
 
 ### Error Codes
+
 ```typescript
 enum ErrorCodes {
   // Authentication
   UNAUTHORIZED = 'UNAUTHORIZED',
   INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
   TOKEN_EXPIRED = 'TOKEN_EXPIRED',
-  
+
   // Validation
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   INVALID_INPUTS = 'INVALID_INPUTS',
-  
+
   // Resources
   NOT_FOUND = 'NOT_FOUND',
   CONFLICT = 'CONFLICT',
-  
+
   // Quota & Limits
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-  
+
   // System
   INTERNAL_ERROR = 'INTERNAL_ERROR',
-  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE'
+  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
 }
 ```
 
 ### HTTP Status Code Mapping
+
 ```
 200: Success
 201: Created
@@ -487,36 +507,36 @@ enum ErrorCodes {
 enum PromptStatus {
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
-  ARCHIVED = 'ARCHIVED'
+  ARCHIVED = 'ARCHIVED',
 }
 
 enum ExecutionStatus {
   PENDING = 'PENDING',
-  RUNNING = 'RUNNING', 
+  RUNNING = 'RUNNING',
   COMPLETED = 'COMPLETED',
   FAILED = 'FAILED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 enum ValidationStatus {
   PENDING = 'PENDING',
   PASSED = 'PASSED',
   FAILED = 'FAILED',
-  SKIPPED = 'SKIPPED'
+  SKIPPED = 'SKIPPED',
 }
 
 enum Priority {
   LOW = 'LOW',
   NORMAL = 'NORMAL',
   HIGH = 'HIGH',
-  CRITICAL = 'CRITICAL'
+  CRITICAL = 'CRITICAL',
 }
 
 enum LogLevel {
   DEBUG = 'DEBUG',
   INFO = 'INFO',
   WARN = 'WARN',
-  ERROR = 'ERROR'
+  ERROR = 'ERROR',
 }
 
 interface TokenUsage {

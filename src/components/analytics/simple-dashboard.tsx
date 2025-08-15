@@ -2,9 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 import { Button } from '../ui/button';
-import { LoadingSpinner, LoadingState, ErrorState } from '../ui/loading-spinner';
+import {
+  LoadingSpinner,
+  LoadingState,
+  ErrorState,
+} from '../ui/loading-spinner';
 import { Badge } from '../ui/badge';
 import { formatCurrency } from '../../lib/utils';
 import type { CostMetrics } from '../../lib/monitoring/cost-tracker';
@@ -47,20 +57,27 @@ const DATE_RANGES: DateRangeFilter[] = [
   { label: 'Last 90 days', days: 90 },
 ];
 
-export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Element {
+export function SimpleDashboard({
+  userId,
+  dateRange,
+}: DashboardProps): JSX.Element {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRange, setSelectedRange] = useState<DateRangeFilter>(DATE_RANGES[1]); // Default: 30 days
+  const [selectedRange, setSelectedRange] = useState<DateRangeFilter>(
+    DATE_RANGES[1]
+  ); // Default: 30 days
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = async (days: number = selectedRange.days): Promise<void> => {
+  const fetchAnalytics = async (
+    days: number = selectedRange.days
+  ): Promise<void> => {
     try {
       setError(null);
-      
+
       const from = dateRange?.from || startOfDay(subDays(new Date(), days));
       const to = dateRange?.to || endOfDay(new Date());
-      
+
       const params = new URLSearchParams({
         from: from.toISOString(),
         to: to.toISOString(),
@@ -72,18 +89,23 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Analytics request failed: ${response.status}`);
+        throw new Error(
+          errorData.message || `Analytics request failed: ${response.status}`
+        );
       }
 
       const analyticsData = await response.json();
-      
+
       if (!analyticsData.success) {
-        throw new Error(analyticsData.message || 'Failed to fetch analytics data');
+        throw new Error(
+          analyticsData.message || 'Failed to fetch analytics data'
+        );
       }
 
       setData(analyticsData.data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load analytics';
+      const message =
+        err instanceof Error ? err.message : 'Failed to load analytics';
       setError(message);
       console.error('Analytics fetch error:', err);
     }
@@ -133,12 +155,7 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
   }
 
   if (error) {
-    return (
-      <ErrorState 
-        message={error} 
-        onRetry={handleRefresh}
-      />
-    );
+    return <ErrorState message={error} onRetry={handleRefresh} />;
   }
 
   if (!data) {
@@ -171,10 +188,12 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
             <div className="flex items-center gap-2">
               {/* Date Range Selector */}
               <div className="flex gap-1">
-                {DATE_RANGES.map((range) => (
+                {DATE_RANGES.map(range => (
                   <Button
                     key={range.days}
-                    variant={selectedRange.days === range.days ? 'default' : 'outline'}
+                    variant={
+                      selectedRange.days === range.days ? 'default' : 'outline'
+                    }
                     size="sm"
                     onClick={() => handleRangeChange(range)}
                     disabled={loading}
@@ -208,7 +227,9 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
         {/* Total Executions */}
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Total Executions</CardDescription>
+            <CardDescription className="text-xs">
+              Total Executions
+            </CardDescription>
             <CardTitle className="text-2xl font-bold">
               {formatNumber(metrics.totalExecutions)}
             </CardTitle>
@@ -226,8 +247,20 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
             <CardDescription className="text-xs">Success Rate</CardDescription>
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
               {formatPercentage(metrics.successRate)}
-              <Badge variant={metrics.successRate > 0.9 ? 'default' : metrics.successRate > 0.7 ? 'secondary' : 'destructive'}>
-                {metrics.successRate > 0.9 ? 'Excellent' : metrics.successRate > 0.7 ? 'Good' : 'Needs Attention'}
+              <Badge
+                variant={
+                  metrics.successRate > 0.9
+                    ? 'default'
+                    : metrics.successRate > 0.7
+                      ? 'secondary'
+                      : 'destructive'
+                }
+              >
+                {metrics.successRate > 0.9
+                  ? 'Excellent'
+                  : metrics.successRate > 0.7
+                    ? 'Good'
+                    : 'Needs Attention'}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -251,7 +284,9 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
         {/* Avg Cost per Execution */}
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="text-xs">Avg Cost/Execution</CardDescription>
+            <CardDescription className="text-xs">
+              Avg Cost/Execution
+            </CardDescription>
             <CardTitle className="text-2xl font-bold">
               {formatCurrency(metrics.avgCostPerExecution)}
             </CardTitle>
@@ -294,31 +329,37 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Model Breakdown</CardTitle>
-            <CardDescription>
-              Usage and costs by AI model
-            </CardDescription>
+            <CardDescription>Usage and costs by AI model</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {Object.entries(costMetrics.modelBreakdown).length > 0 ? (
-                Object.entries(costMetrics.modelBreakdown).map(([model, stats]) => (
-                  <div key={model} className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium">{model}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {stats.executions} executions • {formatTokens(stats.inputTokens + stats.outputTokens)} tokens
+                Object.entries(costMetrics.modelBreakdown).map(
+                  ([model, stats]) => (
+                    <div
+                      key={model}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">{model}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {stats.executions} executions •{' '}
+                          {formatTokens(stats.inputTokens + stats.outputTokens)}{' '}
+                          tokens
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium">
+                          {formatCurrency(stats.costUsd)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {formatCurrency(stats.costUsd / stats.executions)}
+                          /exec
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">
-                        {formatCurrency(stats.costUsd)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {formatCurrency(stats.costUsd / stats.executions)}/exec
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  )
+                )
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-4">
                   No model data available
@@ -340,7 +381,10 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
             <div className="space-y-4">
               {topPrompts && topPrompts.length > 0 ? (
                 topPrompts.slice(0, 5).map((prompt, index) => (
-                  <div key={prompt.promptId} className="flex items-center justify-between">
+                  <div
+                    key={prompt.promptId}
+                    className="flex items-center justify-between"
+                  >
                     <div className="space-y-1 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
@@ -351,7 +395,8 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
                         </div>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {prompt.executions} executions • {formatTokens(prompt.totalTokens)} tokens
+                        {prompt.executions} executions •{' '}
+                        {formatTokens(prompt.totalTokens)} tokens
                       </div>
                     </div>
                     <div className="text-right">
@@ -385,8 +430,11 @@ export function SimpleDashboard({ userId, dateRange }: DashboardProps): JSX.Elem
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {costMetrics.dailyTrend.map((day) => (
-                <div key={day.date} className="flex items-center justify-between">
+              {costMetrics.dailyTrend.map(day => (
+                <div
+                  key={day.date}
+                  className="flex items-center justify-between"
+                >
                   <div className="text-sm">
                     {format(new Date(day.date), 'MMM dd')}
                   </div>

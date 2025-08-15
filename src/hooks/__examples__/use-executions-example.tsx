@@ -3,7 +3,12 @@
 import React, { useState } from 'react';
 import { useExecutions } from '../use-executions';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 
 /**
@@ -46,12 +51,14 @@ export function UseExecutionsExample(): JSX.Element {
         maxTokens: 150,
         temperature: 0.7,
       });
-      
+
       console.log('Execution result:', result);
       alert(`Execution completed! ID: ${result.executionId}`);
     } catch (err) {
       console.error('Execution failed:', err);
-      alert(`Execution failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(
+        `Execution failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     }
   };
 
@@ -62,19 +69,25 @@ export function UseExecutionsExample(): JSX.Element {
       alert(`Execution ${executionId} retried successfully!`);
     } catch (err) {
       console.error('Retry failed:', err);
-      alert(`Retry failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(
+        `Retry failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     }
   };
 
   // Example 4: Get execution details
-  const handleGetExecutionDetails = async (executionId: string): Promise<void> => {
+  const handleGetExecutionDetails = async (
+    executionId: string
+  ): Promise<void> => {
     try {
       const execution = await getExecutionById(executionId);
       console.log('Execution details:', execution);
       alert(`Execution details logged to console`);
     } catch (err) {
       console.error('Failed to get execution details:', err);
-      alert(`Failed to get details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      alert(
+        `Failed to get details: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     }
   };
 
@@ -102,7 +115,7 @@ export function UseExecutionsExample(): JSX.Element {
               <Input
                 placeholder="Enter prompt ID"
                 value={promptId}
-                onChange={(e) => setPromptId(e.target.value)}
+                onChange={e => setPromptId(e.target.value)}
               />
             </div>
             <div>
@@ -110,11 +123,11 @@ export function UseExecutionsExample(): JSX.Element {
               <Input
                 placeholder='{"message": "Hello!"}'
                 value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
+                onChange={e => setUserInput(e.target.value)}
               />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Button onClick={handleExecutePrompt} disabled={!promptId}>
               Execute Prompt
@@ -126,17 +139,13 @@ export function UseExecutionsExample(): JSX.Element {
               <input
                 type="checkbox"
                 checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
+                onChange={e => setAutoRefresh(e.target.checked)}
               />
               Auto-refresh (5s)
             </label>
           </div>
 
-          {error && (
-            <div className="text-red-600 text-sm">
-              Error: {error}
-            </div>
-          )}
+          {error && <div className="text-red-600 text-sm">Error: {error}</div>}
         </CardContent>
       </Card>
 
@@ -152,7 +161,7 @@ export function UseExecutionsExample(): JSX.Element {
             </div>
           ) : (
             <div className="space-y-2">
-              {executions.map((execution) => (
+              {executions.map(execution => (
                 <div
                   key={execution.id}
                   className="border rounded-lg p-4 space-y-2"
@@ -165,10 +174,10 @@ export function UseExecutionsExample(): JSX.Element {
                           execution.status === 'COMPLETED'
                             ? 'bg-green-100 text-green-800'
                             : execution.status === 'FAILED'
-                            ? 'bg-red-100 text-red-800'
-                            : execution.status === 'RUNNING'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
+                              ? 'bg-red-100 text-red-800'
+                              : execution.status === 'RUNNING'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
                         }`}
                       >
                         {execution.status}
@@ -193,15 +202,15 @@ export function UseExecutionsExample(): JSX.Element {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="text-sm text-muted-foreground">
-                    Prompt: {execution.prompt.name} • 
-                    Created: {new Date(execution.createdAt).toLocaleString()}
+                    Prompt: {execution.prompt.name} • Created:{' '}
+                    {new Date(execution.createdAt).toLocaleString()}
                     {execution.costUsd && (
                       <> • Cost: ${execution.costUsd.toFixed(4)}</>
                     )}
                   </div>
-                  
+
                   {execution.output && (
                     <div className="text-sm">
                       <strong>Output:</strong> {execution.output.slice(0, 100)}

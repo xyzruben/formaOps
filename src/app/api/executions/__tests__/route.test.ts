@@ -151,9 +151,7 @@ describe('/api/executions', () => {
   it('should validate input types', async () => {
     const mockPrompt = {
       id: 'prompt-1',
-      variables: [
-        { name: 'age', type: 'number', required: true },
-      ],
+      variables: [{ name: 'age', type: 'number', required: true }],
       userId: 'user-123',
     };
 
@@ -220,9 +218,7 @@ describe('/api/executions', () => {
       result: 'Hello John',
       tokenUsage: { input: 10, output: 5, total: 15 },
     });
-    mockPrisma.execution.create.mockRejectedValue(
-      new Error('Database error')
-    );
+    mockPrisma.execution.create.mockRejectedValue(new Error('Database error'));
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
       method: 'GET',
@@ -283,9 +279,9 @@ describe('/api/executions', () => {
     };
 
     mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
-    mockPriorityManager.boostPriorityForAI.mockReturnValue({ 
-      success: false, 
-      error: 'System overloaded' 
+    mockPriorityManager.boostPriorityForAI.mockReturnValue({
+      success: false,
+      error: 'System overloaded',
     });
 
     const request = new NextRequest('http://localhost:3000/api/executions', {

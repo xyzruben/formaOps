@@ -2,8 +2,24 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Wifi, WifiOff, RefreshCw, Search, Inbox, ShieldAlert, Clock, Database } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  AlertCircle,
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  Search,
+  Inbox,
+  ShieldAlert,
+  Clock,
+  Database,
+} from 'lucide-react';
 
 interface FallbackUIProps {
   title?: string;
@@ -16,33 +32,31 @@ interface FallbackUIProps {
   children?: React.ReactNode;
 }
 
-function BaseFallback({ title, description, icon, action, children }: FallbackUIProps) {
+function BaseFallback({
+  title,
+  description,
+  icon,
+  action,
+  children,
+}: FallbackUIProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
-      {icon && (
-        <div className="mb-4 text-muted-foreground">
-          {icon}
-        </div>
-      )}
-      
+      {icon && <div className="mb-4 text-muted-foreground">{icon}</div>}
+
       {title && (
-        <h2 className="text-xl font-semibold text-foreground mb-2">
-          {title}
-        </h2>
+        <h2 className="text-xl font-semibold text-foreground mb-2">{title}</h2>
       )}
-      
+
       {description && (
-        <p className="text-muted-foreground max-w-md mb-6">
-          {description}
-        </p>
+        <p className="text-muted-foreground max-w-md mb-6">{description}</p>
       )}
-      
+
       {action && (
         <Button onClick={action.onClick} variant="outline">
           {action.label}
         </Button>
       )}
-      
+
       {children}
     </div>
   );
@@ -71,10 +85,10 @@ export function OfflineFallback() {
 }
 
 // Data States
-export function EmptyStateFallback({ 
-  title = "No data available",
+export function EmptyStateFallback({
+  title = 'No data available',
   description = "There's nothing to show here yet.",
-  action
+  action,
 }: Partial<FallbackUIProps>) {
   return (
     <BaseFallback
@@ -86,10 +100,10 @@ export function EmptyStateFallback({
   );
 }
 
-export function NoSearchResultsFallback({ 
+export function NoSearchResultsFallback({
   searchTerm,
-  onClear 
-}: { 
+  onClear,
+}: {
   searchTerm?: string;
   onClear?: () => void;
 }) {
@@ -98,9 +112,9 @@ export function NoSearchResultsFallback({
       icon={<Search size={48} />}
       title="No results found"
       description={
-        searchTerm 
+        searchTerm
           ? `No results found for "${searchTerm}". Try different keywords or clear your search.`
-          : "No results found. Try adjusting your search criteria."
+          : 'No results found. Try adjusting your search criteria.'
       }
       action={onClear ? { label: 'Clear Search', onClick: onClear } : undefined}
     />
@@ -141,7 +155,11 @@ export function TimeoutFallback({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-export function ProcessingFallback({ message = "Processing your request..." }: { message?: string }) {
+export function ProcessingFallback({
+  message = 'Processing your request...',
+}: {
+  message?: string;
+}) {
   return (
     <BaseFallback
       icon={<RefreshCw size={48} className="animate-spin" />}
@@ -163,10 +181,10 @@ export function DatabaseErrorFallback({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-export function APIErrorFallback({ 
+export function APIErrorFallback({
   error,
-  onRetry 
-}: { 
+  onRetry,
+}: {
   error?: string;
   onRetry?: () => void;
 }) {
@@ -174,7 +192,10 @@ export function APIErrorFallback({
     <BaseFallback
       icon={<AlertCircle size={48} />}
       title="Service Unavailable"
-      description={error || "Our service is temporarily unavailable. Please try again later."}
+      description={
+        error ||
+        'Our service is temporarily unavailable. Please try again later.'
+      }
       action={onRetry ? { label: 'Retry', onClick: onRetry } : undefined}
     />
   );
@@ -191,7 +212,11 @@ export function MaintenanceFallback() {
 }
 
 // Page-Specific Fallbacks
-export function PromptNotFoundFallback({ onGoBack }: { onGoBack?: () => void }) {
+export function PromptNotFoundFallback({
+  onGoBack,
+}: {
+  onGoBack?: () => void;
+}) {
   return (
     <BaseFallback
       icon={<Search size={48} />}
@@ -202,10 +227,10 @@ export function PromptNotFoundFallback({ onGoBack }: { onGoBack?: () => void }) 
   );
 }
 
-export function ExecutionFailedFallback({ 
+export function ExecutionFailedFallback({
   error,
-  onRetry 
-}: { 
+  onRetry,
+}: {
   error?: string;
   onRetry?: () => void;
 }) {
@@ -217,7 +242,8 @@ export function ExecutionFailedFallback({
           <CardTitle className="text-destructive">Execution Failed</CardTitle>
         </div>
         <CardDescription>
-          {error || "The AI service encountered an error while processing your request."}
+          {error ||
+            'The AI service encountered an error while processing your request.'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -230,7 +256,7 @@ export function ExecutionFailedFallback({
               <li>• Try again in a moment - this may be a temporary issue</li>
             </ul>
           </div>
-          
+
           {onRetry && (
             <Button onClick={onRetry} className="w-full">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -244,12 +270,12 @@ export function ExecutionFailedFallback({
 }
 
 // Generic error card component
-export function ErrorCard({ 
+export function ErrorCard({
   title,
   description,
   error,
   onRetry,
-  onDismiss 
+  onDismiss,
 }: {
   title: string;
   description?: string;
@@ -273,7 +299,7 @@ export function ErrorCard({
         </div>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      
+
       {(error || onRetry) && (
         <CardContent>
           {error && (
@@ -281,7 +307,7 @@ export function ErrorCard({
               <p className="text-sm font-mono text-muted-foreground">{error}</p>
             </div>
           )}
-          
+
           {onRetry && (
             <Button onClick={onRetry} variant="outline">
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -307,8 +333,8 @@ export function useFallbackState() {
   }, []);
 
   const setError = React.useCallback((error: Error | string) => {
-    setState({ 
-      type: 'error', 
+    setState({
+      type: 'error',
       error: typeof error === 'string' ? new Error(error) : error,
       message: typeof error === 'string' ? error : error.message,
     });

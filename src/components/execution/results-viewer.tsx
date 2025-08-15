@@ -3,7 +3,13 @@
 import React, { useState } from 'react';
 import { formatDate } from '../../lib/utils';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 import { Badge } from '../ui/badge';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import type { ExecutionWithDetails } from '../../lib/database/queries';
@@ -13,13 +19,16 @@ interface ResultsViewerProps {
   onRetry?: () => void;
 }
 
-export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.Element {
+export function ResultsViewer({
+  execution,
+  onRetry,
+}: ResultsViewerProps): JSX.Element {
   const [isRetrying, setIsRetrying] = useState(false);
   const [copyStatus, setCopyStatus] = useState<{ [key: string]: boolean }>({});
 
   const handleRetry = async (): Promise<void> => {
     if (!onRetry) return;
-    
+
     try {
       setIsRetrying(true);
       await onRetry();
@@ -45,7 +54,7 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      
+
       setCopyStatus(prev => ({ ...prev, [key]: true }));
       setTimeout(() => {
         setCopyStatus(prev => ({ ...prev, [key]: false }));
@@ -96,24 +105,28 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
     return `${(latency / 1000).toFixed(2)}s`;
   };
 
-  const formatTokens = (tokenUsage: any): { display: string; breakdown: string } => {
-    if (!tokenUsage) return { display: 'N/A', breakdown: 'No token information available' };
-    
+  const formatTokens = (
+    tokenUsage: any
+  ): { display: string; breakdown: string } => {
+    if (!tokenUsage)
+      return { display: 'N/A', breakdown: 'No token information available' };
+
     const total = tokenUsage.total || tokenUsage.totalTokens || 0;
     const input = tokenUsage.input || tokenUsage.inputTokens || 0;
     const output = tokenUsage.output || tokenUsage.outputTokens || 0;
-    
+
     if (total === 0) return { display: 'N/A', breakdown: 'No tokens used' };
-    
+
     return {
       display: total.toLocaleString(),
-      breakdown: `${input.toLocaleString()} input + ${output.toLocaleString()} output tokens`
+      breakdown: `${input.toLocaleString()} input + ${output.toLocaleString()} output tokens`,
     };
   };
 
   const formatInputs = (inputs: any): string => {
-    if (!inputs || typeof inputs !== 'object') return JSON.stringify(inputs, null, 2);
-    
+    if (!inputs || typeof inputs !== 'object')
+      return JSON.stringify(inputs, null, 2);
+
     try {
       return JSON.stringify(inputs, null, 2);
     } catch {
@@ -130,31 +143,33 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
     }
   };
 
-  const formatOutput = (output: string | null): { formatted: string; isJson: boolean } => {
+  const formatOutput = (
+    output: string | null
+  ): { formatted: string; isJson: boolean } => {
     if (!output) return { formatted: 'No output generated', isJson: false };
-    
+
     if (isJsonString(output)) {
       try {
         const parsed = JSON.parse(output);
         return {
           formatted: JSON.stringify(parsed, null, 2),
-          isJson: true
+          isJson: true,
         };
       } catch {
         return { formatted: output, isJson: false };
       }
     }
-    
+
     return { formatted: output, isJson: false };
   };
 
   const getDuration = (): string => {
     if (!execution.startedAt || !execution.completedAt) return 'N/A';
-    
+
     const start = new Date(execution.startedAt).getTime();
     const end = new Date(execution.completedAt).getTime();
     const duration = end - start;
-    
+
     if (duration < 1000) return `${duration}ms`;
     return `${(duration / 1000).toFixed(2)}s`;
   };
@@ -180,8 +195,8 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
               </CardDescription>
             </div>
             {execution.status === 'FAILED' && onRetry && (
-              <Button 
-                onClick={handleRetry} 
+              <Button
+                onClick={handleRetry}
                 disabled={isRetrying}
                 variant="outline"
               >
@@ -235,7 +250,9 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
           <CardHeader className="pb-2">
             <CardDescription className="text-xs">Validation</CardDescription>
             <CardTitle className="text-lg">
-              <Badge variant={getValidationBadgeVariant(execution.validationStatus)}>
+              <Badge
+                variant={getValidationBadgeVariant(execution.validationStatus)}
+              >
                 {execution.validationStatus}
               </Badge>
             </CardTitle>
@@ -253,7 +270,9 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleCopy(formatInputs(execution.inputs), 'inputs')}
+                onClick={() =>
+                  handleCopy(formatInputs(execution.inputs), 'inputs')
+                }
               >
                 {copyStatus.inputs ? 'Copied!' : 'Copy'}
               </Button>
@@ -311,7 +330,9 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
             <CardTitle className="text-lg">
               Output
               {outputInfo.isJson && (
-                <Badge variant="outline" className="ml-2">JSON</Badge>
+                <Badge variant="outline" className="ml-2">
+                  JSON
+                </Badge>
               )}
             </CardTitle>
             <Button
@@ -344,22 +365,27 @@ export function ResultsViewer({ execution, onRetry }: ResultsViewerProps): JSX.E
           </CardHeader>
           <CardContent>
             <div className="space-y-2 max-h-96 overflow-auto">
-              {execution.logs.map((log) => (
+              {execution.logs.map(log => (
                 <div
                   key={log.id}
                   className={`p-3 rounded-md text-sm border-l-4 ${
-                    log.level === 'ERROR' ? 'border-destructive bg-destructive/5' :
-                    log.level === 'WARN' ? 'border-yellow-500 bg-yellow-50' :
-                    log.level === 'INFO' ? 'border-blue-500 bg-blue-50' :
-                    'border-muted bg-muted/50'
+                    log.level === 'ERROR'
+                      ? 'border-destructive bg-destructive/5'
+                      : log.level === 'WARN'
+                        ? 'border-yellow-500 bg-yellow-50'
+                        : log.level === 'INFO'
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-muted bg-muted/50'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <Badge 
+                    <Badge
                       variant={
-                        log.level === 'ERROR' ? 'destructive' :
-                        log.level === 'WARN' ? 'secondary' :
-                        'outline'
+                        log.level === 'ERROR'
+                          ? 'destructive'
+                          : log.level === 'WARN'
+                            ? 'secondary'
+                            : 'outline'
                       }
                       className="text-xs"
                     >

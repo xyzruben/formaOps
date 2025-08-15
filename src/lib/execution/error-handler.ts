@@ -21,7 +21,7 @@ export class ExecutionErrorHandler {
         type: 'RATE_LIMIT',
         message: 'Rate limit exceeded. Please try again later.',
         retryable: true,
-        retryAfter: this.extractRetryAfter(error) || 60
+        retryAfter: this.extractRetryAfter(error) || 60,
       };
     }
 
@@ -30,16 +30,20 @@ export class ExecutionErrorHandler {
       return {
         type: 'API_ERROR',
         message: error.message || 'API service temporarily unavailable',
-        retryable: true
+        retryable: true,
       };
     }
 
     // Timeout errors
-    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.name === 'TimeoutError') {
+    if (
+      error.code === 'ECONNRESET' ||
+      error.code === 'ETIMEDOUT' ||
+      error.name === 'TimeoutError'
+    ) {
       return {
         type: 'TIMEOUT',
         message: 'Request timed out. Please try again.',
-        retryable: true
+        retryable: true,
       };
     }
 
@@ -48,7 +52,7 @@ export class ExecutionErrorHandler {
       return {
         type: 'VALIDATION_ERROR',
         message: error.message || 'Invalid request parameters',
-        retryable: false
+        retryable: false,
       };
     }
 
@@ -56,7 +60,7 @@ export class ExecutionErrorHandler {
     return {
       type: 'API_ERROR',
       message: error.message || 'An unexpected error occurred',
-      retryable: true
+      retryable: true,
     };
   }
 
@@ -96,17 +100,21 @@ export class ExecutionErrorHandler {
 
     // Exponential backoff: 1s, 2s, 4s, 8s...
     const exponentialDelay = this.baseDelayMs * Math.pow(2, attemptCount - 1);
-    
+
     // Add jitter to prevent thundering herd
     const jitter = Math.random() * 0.1 * exponentialDelay;
-    
+
     return Math.floor(exponentialDelay + jitter);
   }
 
   /**
    * Logs execution errors for monitoring and debugging
    */
-  logError(executionId: string, error: ExecutionError, attemptCount: number = 1): void {
+  logError(
+    executionId: string,
+    error: ExecutionError,
+    attemptCount: number = 1
+  ): void {
     const logData = {
       executionId,
       errorType: error.type,
@@ -114,7 +122,7 @@ export class ExecutionErrorHandler {
       retryable: error.retryable,
       attemptCount,
       retryAfter: error.retryAfter,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     if (error.retryable && attemptCount < this.maxRetries) {
@@ -133,29 +141,29 @@ export class ExecutionErrorHandler {
     onRetry?: (attempt: number, delay: number) => void
   ): Promise<T> {
     let lastError: ExecutionError | null = null;
-    
+
     for (let attempt = 1; attempt <= this.maxRetries + 1; attempt++) {
       try {
         return await operation();
       } catch (error) {
         const executionError = this.handleError(error);
         lastError = executionError;
-        
+
         this.logError(executionId, executionError, attempt);
-        
+
         if (!this.shouldRetry(executionError, attempt)) {
           throw this.createFinalError(executionError, attempt);
         }
-        
+
         if (attempt <= this.maxRetries) {
           const delay = this.getRetryDelay(attempt, executionError);
           onRetry?.(attempt, delay);
-          
+
           await this.sleep(delay);
         }
       }
     }
-    
+
     // This should never be reached due to the throw above, but for type safety
     throw this.createFinalError(lastError!, this.maxRetries + 1);
   }
@@ -167,11 +175,11 @@ export class ExecutionErrorHandler {
     const finalError = new Error(
       `Execution failed after ${attemptCount} attempts: ${error.message}`
     );
-    
+
     // Attach error metadata for API responses
     (finalError as any).executionError = error;
     (finalError as any).attemptCount = attemptCount;
-    
+
     return finalError;
   }
 
@@ -183,12 +191,12 @@ export class ExecutionErrorHandler {
       const retryAfter = parseInt(error.headers['retry-after'], 10);
       return isNaN(retryAfter) ? null : retryAfter;
     }
-    
+
     if (error.response?.headers && error.response.headers['retry-after']) {
       const retryAfter = parseInt(error.response.headers['retry-after'], 10);
       return isNaN(retryAfter) ? null : retryAfter;
     }
-    
+
     return null;
   }
 

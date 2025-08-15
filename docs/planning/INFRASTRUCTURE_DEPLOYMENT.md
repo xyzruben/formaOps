@@ -3,6 +3,7 @@
 ## Environment Strategy
 
 ### Environment Hierarchy
+
 ```
 Development → Staging → Production
     ↓           ↓           ↓
@@ -10,6 +11,7 @@ Development → Staging → Production
 ```
 
 ### Environment Configuration
+
 ```bash
 # .env.local (Development)
 NODE_ENV=development
@@ -17,7 +19,7 @@ DATABASE_URL="postgresql://localhost:5432/formaops_dev"
 NEXT_PUBLIC_SUPABASE_URL="http://localhost:54321"
 OPENAI_API_KEY="sk-test-..."
 
-# .env.staging (Preview Deployments)  
+# .env.staging (Preview Deployments)
 NODE_ENV=staging
 DATABASE_URL="postgresql://staging.supabase.co/..."
 NEXT_PUBLIC_SUPABASE_URL="https://staging.supabase.co"
@@ -33,6 +35,7 @@ OPENAI_API_KEY="sk-prod-..."
 ## CI/CD Pipeline (GitHub Actions)
 
 ### Workflow Overview
+
 ```yaml
 # .github/workflows/ci-cd.yml
 name: CI/CD Pipeline
@@ -51,19 +54,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Type check
         run: npm run type-check
-      
+
       - name: Lint
         run: npm run lint
-      
+
       - name: Unit tests
         run: npm run test
-      
+
       - name: Build
         run: npm run build
 
@@ -94,23 +97,25 @@ jobs:
 ```
 
 ### Quality Gates
+
 ```yaml
 # Additional quality checks
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      
-      - name: Audit dependencies
-        run: npm audit --audit-level moderate
+security-scan:
+  runs-on: ubuntu-latest
+  steps:
+    - name: Run Snyk to check for vulnerabilities
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+    - name: Audit dependencies
+      run: npm audit --audit-level moderate
 ```
 
 ## Deployment Configuration
 
 ### Vercel Configuration
+
 ```json
 // vercel.json
 {
@@ -134,6 +139,7 @@ jobs:
 ```
 
 ### Database Migrations Strategy
+
 ```bash
 # Migration workflow
 npm run db:deploy    # Apply pending migrations
@@ -142,6 +148,7 @@ npm run db:backup    # Create backup point
 ```
 
 ### Supabase Edge Functions Deployment
+
 ```bash
 # Deploy edge functions
 supabase functions deploy agent-executor
@@ -156,9 +163,10 @@ supabase secrets set DATABASE_URL=postgresql://...
 ## Monitoring & Error Tracking
 
 ### Sentry Configuration
+
 ```typescript
 // sentry.client.config.ts
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -173,6 +181,7 @@ Sentry.init({
 ```
 
 ### Performance Monitoring
+
 ```typescript
 // lib/analytics.ts
 import { Analytics } from '@vercel/analytics/react';
@@ -189,46 +198,51 @@ export const trackPerformance = (metric: string, value: number) => {
   if (typeof window !== 'undefined') {
     window.gtag?.('event', 'timing_complete', {
       name: metric,
-      value: Math.round(value)
+      value: Math.round(value),
     });
   }
 };
 ```
 
 ### Health Check Implementation
+
 ```typescript
 // app/api/health/route.ts
 export async function GET() {
   const checks = await Promise.allSettled([
     // Database connectivity
     prisma.prompt.count(),
-    
+
     // Supabase status
     fetch(process.env.NEXT_PUBLIC_SUPABASE_URL + '/health'),
-    
+
     // OpenAI API availability
-    openai.models.list()
+    openai.models.list(),
   ]);
 
   const isHealthy = checks.every(check => check.status === 'fulfilled');
-  
-  return Response.json({
-    status: isHealthy ? 'healthy' : 'degraded',
-    timestamp: new Date().toISOString(),
-    checks: {
-      database: checks[0].status === 'fulfilled',
-      supabase: checks[1].status === 'fulfilled',
-      openai: checks[2].status === 'fulfilled'
+
+  return Response.json(
+    {
+      status: isHealthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: checks[0].status === 'fulfilled',
+        supabase: checks[1].status === 'fulfilled',
+        openai: checks[2].status === 'fulfilled',
+      },
+    },
+    {
+      status: isHealthy ? 200 : 503,
     }
-  }, { 
-    status: isHealthy ? 200 : 503 
-  });
+  );
 }
 ```
 
 ## Security Configuration
 
 ### Environment Variable Security
+
 ```bash
 # Vercel Environment Variables
 OPENAI_API_KEY=sk-...           # Encrypted, server-only
@@ -240,35 +254,37 @@ supabase secrets set --env-file .env.production
 ```
 
 ### Content Security Policy
+
 ```typescript
 // next.config.js security headers
 const securityHeaders = [
   {
     key: 'X-DNS-Prefetch-Control',
-    value: 'on'
+    value: 'on',
   },
   {
     key: 'X-XSS-Protection',
-    value: '1; mode=block'
+    value: '1; mode=block',
   },
   {
     key: 'X-Frame-Options',
-    value: 'SAMEORIGIN'
+    value: 'SAMEORIGIN',
   },
   {
     key: 'X-Content-Type-Options',
-    value: 'nosniff'
+    value: 'nosniff',
   },
   {
     key: 'Referrer-Policy',
-    value: 'origin-when-cross-origin'
-  }
+    value: 'origin-when-cross-origin',
+  },
 ];
 ```
 
 ## Backup & Recovery
 
 ### Automated Backups
+
 ```sql
 -- Supabase automatic daily backups (built-in)
 -- Manual backup for critical deployments
@@ -276,11 +292,13 @@ SELECT pg_dump('postgresql://...') > backup_$(date +%Y%m%d).sql
 ```
 
 ### Disaster Recovery Plan
+
 1. **Database Recovery**: Restore from latest Supabase backup (< 4 hours)
 2. **Application Recovery**: Redeploy from Git main branch (< 10 minutes)
 3. **Edge Function Recovery**: Redeploy functions with stored config (< 15 minutes)
 
 ### Rollback Procedures
+
 ```bash
 # Quick rollback to previous deployment
 vercel --prod --yes rollback
@@ -293,6 +311,7 @@ npx prisma db push --schema previous_schema.prisma
 ## Performance Optimization
 
 ### Build Optimization
+
 ```javascript
 // next.config.js
 const nextConfig = {
@@ -301,21 +320,23 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['@supabase/supabase-js', 'openai']
+    optimizePackageImports: ['@supabase/supabase-js', 'openai'],
   },
   images: {
     formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200]
-  }
+    deviceSizes: [640, 750, 828, 1080, 1200],
+  },
 };
 ```
 
 ### CDN & Caching Strategy
+
 - Static assets: 1 year cache via Vercel Edge Network
 - API responses: No cache (real-time data)
 - Database queries: 5-minute Redis cache for read-heavy operations
 
 ### Bundle Analysis
+
 ```bash
 # Analyze bundle size
 npm run build

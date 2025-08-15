@@ -3,14 +3,16 @@
 ## Development Environment Setup
 
 ### Prerequisites
+
 ```bash
-- Node.js 18+ 
+- Node.js 18+
 - npm 9+
 - Docker Desktop
 - Git
 ```
 
 ### One-Command Setup
+
 ```bash
 # Clone and setup
 git clone <repo>
@@ -19,6 +21,7 @@ npm run setup
 ```
 
 **Setup Script** (`package.json`):
+
 ```json
 {
   "scripts": {
@@ -33,6 +36,7 @@ npm run setup
 ```
 
 ### Local Environment Stack
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -43,17 +47,18 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: formaops
     ports:
-      - "5432:5432"
-    
+      - '5432:5432'
+
   redis:
     image: redis:7
     ports:
-      - "6379:6379"
+      - '6379:6379'
 ```
 
 ## Git Workflow Strategy
 
 ### Branch Naming Convention
+
 ```
 feature/prompt-editor-ui
 fix/validation-error-handling
@@ -62,34 +67,40 @@ docs/api-documentation
 ```
 
 ### Commit Message Format
+
 ```
 type(scope): description
 
 feat(prompts): add variable validation
-fix(api): handle OpenAI timeout errors  
+fix(api): handle OpenAI timeout errors
 refactor(db): optimize execution queries
 docs(readme): add setup instructions
 ```
 
 ### PR Template
+
 ```markdown
 ## Changes
+
 - [ ] Feature implementation
 - [ ] Tests added/updated
 - [ ] Documentation updated
 
 ## Testing
+
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Manual testing completed
 
 ## Screenshots
+
 [Add screenshots for UI changes]
 ```
 
 ## Code Standards & Linting
 
 ### TypeScript Configuration
+
 ```json
 // tsconfig.json
 {
@@ -103,6 +114,7 @@ docs(readme): add setup instructions
 ```
 
 ### ESLint Configuration
+
 ```json
 // .eslintrc.json
 {
@@ -121,6 +133,7 @@ docs(readme): add setup instructions
 ```
 
 ### Prettier Configuration
+
 ```json
 // .prettierrc
 {
@@ -135,6 +148,7 @@ docs(readme): add setup instructions
 ## File Organization Patterns
 
 ### Component Structure
+
 ```typescript
 // components/prompts/PromptEditor.tsx
 interface PromptEditorProps {
@@ -142,9 +156,9 @@ interface PromptEditorProps {
   onSave: (prompt: Prompt) => void;
 }
 
-export const PromptEditor: React.FC<PromptEditorProps> = ({ 
-  prompt, 
-  onSave 
+export const PromptEditor: React.FC<PromptEditorProps> = ({
+  prompt,
+  onSave,
 }) => {
   // Component implementation
 };
@@ -153,6 +167,7 @@ export default PromptEditor;
 ```
 
 ### API Route Pattern
+
 ```typescript
 // app/api/prompts/route.ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -167,9 +182,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
     const data = CreatePromptSchema.parse(body);
-    
+
     // Implementation
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
@@ -178,16 +193,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 ```
 
 ### Custom Hook Pattern
+
 ```typescript
 // hooks/use-prompts.ts
 export const usePrompts = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const createPrompt = useCallback(async (data: CreatePromptData) => {
     // Implementation with error handling
   }, []);
-  
+
   return { prompts, loading, createPrompt };
 };
 ```
@@ -195,6 +211,7 @@ export const usePrompts = () => {
 ## Testing Strategy
 
 ### Test Structure
+
 ```
 tests/
 ├── unit/
@@ -209,6 +226,7 @@ tests/
 ```
 
 ### Unit Test Example
+
 ```typescript
 // tests/unit/components/PromptEditor.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -218,9 +236,9 @@ describe('PromptEditor', () => {
   it('validates required fields', async () => {
     const onSave = jest.fn();
     render(<PromptEditor onSave={onSave} />);
-    
+
     fireEvent.click(screen.getByText('Save'));
-    
+
     expect(screen.getByText('Name is required')).toBeInTheDocument();
     expect(onSave).not.toHaveBeenCalled();
   });
@@ -228,6 +246,7 @@ describe('PromptEditor', () => {
 ```
 
 ### API Test Example
+
 ```typescript
 // tests/integration/api/prompts.test.ts
 import { createMocks } from 'node-mocks-http';
@@ -273,6 +292,7 @@ describe('/api/prompts', () => {
 ## Code Review Checklist
 
 **Before Submitting PR:**
+
 - [ ] All tests pass (`npm test`)
 - [ ] No TypeScript errors (`npm run type-check`)
 - [ ] Code follows style guide (`npm run lint`)
@@ -281,6 +301,7 @@ describe('/api/prompts', () => {
 - [ ] Performance considerations addressed
 
 **Review Criteria:**
+
 - Code readability and maintainability
 - Proper error boundaries and loading states
 - Accessibility considerations (ARIA labels, keyboard navigation)

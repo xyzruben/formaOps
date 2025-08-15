@@ -21,7 +21,7 @@ module.exports = {
         // Custom assertions for Core Web Vitals
         'first-contentful-paint': ['warn', { maxNumericValue: 2000 }],
         'largest-contentful-paint': ['warn', { maxNumericValue: 2500 }],
-        'interactive': ['warn', { maxNumericValue: 3000 }],
+        interactive: ['warn', { maxNumericValue: 3000 }],
         'cumulative-layout-shift': ['warn', { maxNumericValue: 0.1 }],
         // Performance budgets
         'total-byte-weight': ['warn', { maxNumericValue: 2000000 }], // 2MB

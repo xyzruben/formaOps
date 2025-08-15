@@ -6,15 +6,15 @@ const nextConfig = {
     optimizePackageImports: ['@supabase/supabase-js', 'openai', 'lucide-react'],
     optimizeServerReact: true,
   },
-  
+
   typescript: {
-    ignoreBuildErrors: true
+    ignoreBuildErrors: true,
   },
-  
+
   eslint: {
-    ignoreDuringBuilds: true
+    ignoreDuringBuilds: true,
   },
-  
+
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -22,14 +22,14 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
-  
+
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
+    removeConsole: process.env.NODE_ENV === 'production',
   },
-  
+
   // Bundle analyzer (only when ANALYZE=true)
   ...(process.env.ANALYZE === 'true' && {
-    webpack: (config) => {
+    webpack: config => {
       const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
       config.plugins.push(
         new BundleAnalyzerPlugin({
@@ -40,7 +40,7 @@ const nextConfig = {
       return config;
     },
   }),
-  
+
   // Webpack optimizations
   webpack: (config, { isServer }) => {
     // Optimize bundle splitting
@@ -69,10 +69,10 @@ const nextConfig = {
         },
       };
     }
-    
+
     return config;
   },
-  
+
   // Optimize headers for caching
   async headers() {
     return [
@@ -96,13 +96,13 @@ const nextConfig = {
       },
     ];
   },
-  
+
   // Compress responses
   compress: true,
-  
+
   // Power packed with React strict mode for development
   reactStrictMode: true,
-  
+
   // Output optimization
   output: 'standalone',
 };

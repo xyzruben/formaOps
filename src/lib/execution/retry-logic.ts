@@ -32,7 +32,7 @@ export class RetryManager {
     jitterMs: 100,
     retryableErrors: [
       'ECONNRESET',
-      'ENOTFOUND', 
+      'ENOTFOUND',
       'TIMEOUT',
       'RATE_LIMIT_EXCEEDED',
       'SERVICE_UNAVAILABLE',
@@ -51,10 +51,9 @@ export class RetryManager {
     let lastError: Error | undefined;
 
     for (let attempt = 1; attempt <= finalConfig.maxAttempts; attempt++) {
-
       try {
         const result = await operation();
-        
+
         return {
           success: true,
           result,
@@ -64,7 +63,7 @@ export class RetryManager {
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
         lastError = err;
-        
+
         attempts.push({
           attemptNumber: attempt,
           delayMs: 0,
@@ -128,7 +127,7 @@ export class RetryManager {
     // In a real implementation, this would track failures across requests
     // For this simulation, we'll just check if the system is overloaded
     const systemLoad = this.getSystemLoad();
-    
+
     if (systemLoad.isOverloaded) {
       throw new Error('Circuit breaker open - system overloaded');
     }
@@ -140,23 +139,25 @@ export class RetryManager {
     const errorMessage = error.message.toUpperCase();
     const errorName = error.name.toUpperCase();
 
-    return retryableErrors.some(pattern => 
-      errorMessage.includes(pattern) || 
-      errorName.includes(pattern) ||
-      errorMessage.includes(pattern.toUpperCase())
+    return retryableErrors.some(
+      pattern =>
+        errorMessage.includes(pattern) ||
+        errorName.includes(pattern) ||
+        errorMessage.includes(pattern.toUpperCase())
     );
   }
 
   private calculateDelay(attempt: number, config: RetryConfig): number {
     // Exponential backoff: baseDelay * (backoffMultiplier ^ (attempt - 1))
-    const exponentialDelay = config.baseDelayMs * Math.pow(config.backoffMultiplier, attempt - 1);
-    
+    const exponentialDelay =
+      config.baseDelayMs * Math.pow(config.backoffMultiplier, attempt - 1);
+
     // Apply maximum delay limit
     const cappedDelay = Math.min(exponentialDelay, config.maxDelayMs);
-    
+
     // Add jitter to prevent thundering herd
     const jitter = config.jitterMs ? Math.random() * config.jitterMs : 0;
-    
+
     return Math.max(cappedDelay + jitter, 0);
   }
 
@@ -212,7 +213,7 @@ export const retryConfigs = {
     jitterMs: 1000,
     retryableErrors: [
       'RATE_LIMIT_EXCEEDED',
-      'SERVICE_UNAVAILABLE', 
+      'SERVICE_UNAVAILABLE',
       'TIMEOUT',
       'INTERNAL_ERROR',
       'AI_ERROR',

@@ -22,7 +22,7 @@ export async function POST(): Promise<NextResponse> {
         },
       }
     );
-    
+
     const { error } = await supabase.auth.signOut();
 
     if (error) {

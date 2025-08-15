@@ -1,6 +1,10 @@
 import { SchemaValidator, type SchemaValidationRule } from './schema-validator';
 import { RegexValidator, type RegexValidationRule } from './regex-validator';
-import { FunctionValidator, type FunctionValidationRule, type ValidationContext } from './function-validator';
+import {
+  FunctionValidator,
+  type FunctionValidationRule,
+  type ValidationContext,
+} from './function-validator';
 import type { ValidationType } from '@prisma/client';
 
 export interface ValidationRule {
@@ -47,12 +51,12 @@ export class ValidationEngine {
   ): Promise<ValidationSummary> {
     const startTime = Date.now();
     const results: ValidationResult[] = [];
-    
+
     const activeRules = rules.filter(rule => rule.isActive);
 
     for (const rule of activeRules) {
       const ruleStartTime = Date.now();
-      
+
       try {
         const result = await this.validateSingleRule(output, rule, context);
         results.push({
@@ -65,9 +69,12 @@ export class ValidationEngine {
           ruleName: rule.name,
           type: rule.type,
           isValid: false,
-          errors: [{
-            message: error instanceof Error ? error.message : 'Validation error',
-          }],
+          errors: [
+            {
+              message:
+                error instanceof Error ? error.message : 'Validation error',
+            },
+          ],
           executionTime: Date.now() - ruleStartTime,
         });
       }
@@ -95,13 +102,13 @@ export class ValidationEngine {
     switch (rule.type) {
       case 'SCHEMA':
         return this.validateWithSchema(output, rule);
-      
+
       case 'REGEX':
         return this.validateWithRegex(output, rule);
-      
+
       case 'FUNCTION':
         return await this.validateWithFunction(output, rule, context);
-      
+
       default:
         throw new Error(`Unsupported validation type: ${rule.type}`);
     }
@@ -130,8 +137,12 @@ export class ValidationEngine {
     const results = await Promise.all(
       testCases.map(async testCase => {
         try {
-          const result = await this.validateSingleRule(testCase.input, rule, testCase.context);
-          
+          const result = await this.validateSingleRule(
+            testCase.input,
+            rule,
+            testCase.context
+          );
+
           return {
             description: testCase.description,
             input: testCase.input,
@@ -160,9 +171,12 @@ export class ValidationEngine {
     };
   }
 
-  private validateWithSchema(output: string, rule: ValidationRule): Omit<ValidationResult, 'executionTime'> {
+  private validateWithSchema(
+    output: string,
+    rule: ValidationRule
+  ): Omit<ValidationResult, 'executionTime'> {
     let data: unknown;
-    
+
     try {
       data = JSON.parse(output);
     } catch {
@@ -175,8 +189,11 @@ export class ValidationEngine {
       };
     }
 
-    const result = this.schemaValidator.validate(data, rule.config as SchemaValidationRule);
-    
+    const result = this.schemaValidator.validate(
+      data,
+      rule.config as SchemaValidationRule
+    );
+
     return {
       ruleId: rule.id,
       ruleName: rule.name,
@@ -191,9 +208,15 @@ export class ValidationEngine {
     };
   }
 
-  private validateWithRegex(output: string, rule: ValidationRule): Omit<ValidationResult, 'executionTime'> {
-    const result = this.regexValidator.validate(output, rule.config as RegexValidationRule);
-    
+  private validateWithRegex(
+    output: string,
+    rule: ValidationRule
+  ): Omit<ValidationResult, 'executionTime'> {
+    const result = this.regexValidator.validate(
+      output,
+      rule.config as RegexValidationRule
+    );
+
     return {
       ruleId: rule.id,
       ruleName: rule.name,
@@ -205,16 +228,16 @@ export class ValidationEngine {
   }
 
   private async validateWithFunction(
-    output: string, 
+    output: string,
     rule: ValidationRule,
     context?: Partial<ValidationContext>
   ): Promise<Omit<ValidationResult, 'executionTime'>> {
     const result = await this.functionValidator.validate(
-      output, 
+      output,
       rule.config as FunctionValidationRule,
       context
     );
-    
+
     return {
       ruleId: rule.id,
       ruleName: rule.name,

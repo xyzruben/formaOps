@@ -32,7 +32,7 @@ export function Skeleton({
   }
 
   const baseClasses = 'bg-muted animate-pulse';
-  
+
   const variantClasses = {
     default: 'rounded-md',
     circular: 'rounded-full',
@@ -42,11 +42,7 @@ export function Skeleton({
 
   return (
     <div
-      className={cn(
-        baseClasses,
-        variantClasses[variant],
-        className
-      )}
+      className={cn(baseClasses, variantClasses[variant], className)}
       style={{
         width: width || (variant === 'circular' ? height : undefined),
         height: height || (variant === 'text' ? '1rem' : undefined),
@@ -57,7 +53,10 @@ export function Skeleton({
 }
 
 // Specialized skeleton components
-export function CardSkeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function CardSkeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('p-6 border rounded-lg', className)} {...props}>
       <div className="space-y-4">
@@ -72,11 +71,11 @@ export function CardSkeleton({ className, ...props }: React.HTMLAttributes<HTMLD
   );
 }
 
-export function TableSkeleton({ 
-  rows = 5, 
+export function TableSkeleton({
+  rows = 5,
   columns = 4,
   className,
-  ...props 
+  ...props
 }: {
   rows?: number;
   columns?: number;
@@ -89,7 +88,7 @@ export function TableSkeleton({
           <Skeleton key={index} className="h-8 flex-1" />
         ))}
       </div>
-      
+
       {/* Rows */}
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <div key={rowIndex} className="flex gap-4">
@@ -102,7 +101,10 @@ export function TableSkeleton({
   );
 }
 
-export function PromptCardSkeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function PromptCardSkeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('p-4 border rounded-lg', className)} {...props}>
       <div className="space-y-3">
@@ -111,17 +113,17 @@ export function PromptCardSkeleton({ className, ...props }: React.HTMLAttributes
           <Skeleton className="h-6 w-2/3" />
           <Skeleton variant="circular" width={32} height={32} />
         </div>
-        
+
         {/* Content */}
         <Skeleton variant="text" lines={2} />
-        
+
         {/* Variables */}
         <div className="flex gap-2">
           <Skeleton className="h-6 w-16" />
           <Skeleton className="h-6 w-20" />
           <Skeleton className="h-6 w-14" />
         </div>
-        
+
         {/* Footer */}
         <div className="flex items-center justify-between pt-2">
           <Skeleton className="h-4 w-24" />
@@ -135,7 +137,10 @@ export function PromptCardSkeleton({ className, ...props }: React.HTMLAttributes
   );
 }
 
-export function ExecutionResultSkeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function ExecutionResultSkeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('p-4 border rounded-lg', className)} {...props}>
       <div className="space-y-4">
@@ -144,12 +149,12 @@ export function ExecutionResultSkeleton({ className, ...props }: React.HTMLAttri
           <Skeleton className="h-5 w-32" />
           <Skeleton className="h-5 w-20" />
         </div>
-        
+
         {/* Result content */}
         <div className="p-4 bg-muted/30 rounded">
           <Skeleton variant="text" lines={4} />
         </div>
-        
+
         {/* Metrics */}
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
@@ -170,7 +175,10 @@ export function ExecutionResultSkeleton({ className, ...props }: React.HTMLAttri
   );
 }
 
-export function NavigationSkeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function NavigationSkeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('p-4', className)} {...props}>
       <div className="space-y-2">
@@ -194,7 +202,7 @@ export function DashboardSkeleton() {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-32" />
       </div>
-      
+
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, index) => (
@@ -204,7 +212,7 @@ export function DashboardSkeleton() {
           </div>
         ))}
       </div>
-      
+
       {/* Content */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {Array.from({ length: 6 }).map((_, index) => (
@@ -224,7 +232,7 @@ export function PromptListSkeleton() {
         <Skeleton className="h-10 w-32" />
         <Skeleton className="h-10 w-24" />
       </div>
-      
+
       {/* Prompt cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {Array.from({ length: 9 }).map((_, index) => (

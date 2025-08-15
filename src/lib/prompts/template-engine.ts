@@ -23,9 +23,9 @@ export interface TemplateResult {
 //   z.array(z.unknown()),
 // ]);
 
-
 export class TemplateEngine {
-  private static readonly VARIABLE_PATTERN = /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
+  private static readonly VARIABLE_PATTERN =
+    /\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}/g;
   private static readonly INVALID_CHARS = /<script|javascript:|data:/gi;
 
   public processTemplate(
@@ -39,10 +39,13 @@ export class TemplateEngine {
 
       // Extract variables from template
       this.extractVariables(template);
-      
+
       // Validate provided variables against definitions
-      const validationResult = this.validateVariables(variables, variableDefinitions);
-      
+      const validationResult = this.validateVariables(
+        variables,
+        variableDefinitions
+      );
+
       if (!validationResult.isValid) {
         return {
           processedTemplate: template,
@@ -52,11 +55,15 @@ export class TemplateEngine {
       }
 
       // Process template with variable substitution
-      const processedTemplate = this.substituteVariables(template, variables, variableDefinitions);
-      
+      const processedTemplate = this.substituteVariables(
+        template,
+        variables,
+        variableDefinitions
+      );
+
       // Check for any remaining unsubstituted variables
       const remainingVariables = this.extractVariables(processedTemplate);
-      const missingVariables = remainingVariables.filter(varName => 
+      const missingVariables = remainingVariables.filter(varName =>
         variableDefinitions.find(def => def.name === varName && def.required)
       );
 
@@ -79,7 +86,9 @@ export class TemplateEngine {
 
     // Security check: prevent injection attacks
     if (TemplateEngine.INVALID_CHARS.test(template)) {
-      throw new ValidationError('Template contains potentially dangerous content');
+      throw new ValidationError(
+        'Template contains potentially dangerous content'
+      );
     }
 
     // Check for valid handlebars syntax
@@ -97,7 +106,7 @@ export class TemplateEngine {
   public extractVariables(template: string): string[] {
     const variables: string[] = [];
     let match;
-    
+
     const regex = new RegExp(TemplateEngine.VARIABLE_PATTERN);
     while ((match = regex.exec(template)) !== null) {
       const variableName = match[1].trim();
@@ -105,7 +114,7 @@ export class TemplateEngine {
         variables.push(variableName);
       }
     }
-    
+
     return variables;
   }
 
@@ -118,13 +127,20 @@ export class TemplateEngine {
     typeErrors: Array<{ name: string; expected: string; received: string }>;
   } {
     const missingRequired: string[] = [];
-    const typeErrors: Array<{ name: string; expected: string; received: string }> = [];
+    const typeErrors: Array<{
+      name: string;
+      expected: string;
+      received: string;
+    }> = [];
 
     for (const definition of definitions) {
       const value = variables[definition.name];
-      
+
       // Check required variables
-      if (definition.required && (value === undefined || value === null || value === '')) {
+      if (
+        definition.required &&
+        (value === undefined || value === null || value === '')
+      ) {
         missingRequired.push(definition.name);
         continue;
       }
@@ -137,7 +153,7 @@ export class TemplateEngine {
       // Type validation
       const expectedType = definition.type;
       const actualType = this.getValueType(value);
-      
+
       if (expectedType !== actualType) {
         // Try type coercion for common cases
         const coercedValue = this.coerceType(value, expectedType);
@@ -170,11 +186,15 @@ export class TemplateEngine {
 
     // First, apply default values for missing optional variables
     const definitionMap = new Map(definitions.map(def => [def.name, def]));
-    
+
     const templateVariables = this.extractVariables(template);
     for (const varName of templateVariables) {
       const definition = definitionMap.get(varName);
-      if (definition && variables[varName] === undefined && definition.defaultValue !== undefined) {
+      if (
+        definition &&
+        variables[varName] === undefined &&
+        definition.defaultValue !== undefined
+      ) {
         variables[varName] = definition.defaultValue;
       }
     }
@@ -185,7 +205,7 @@ export class TemplateEngine {
       (match, variableName) => {
         const trimmedName = variableName.trim();
         const value = variables[trimmedName];
-        
+
         if (value === undefined || value === null) {
           return match; // Keep original placeholder if no value
         }
@@ -216,8 +236,10 @@ export class TemplateEngine {
         case 'boolean':
           if (typeof value === 'string') {
             const lower = value.toLowerCase();
-            if (lower === 'true' || lower === '1' || lower === 'yes') return true;
-            if (lower === 'false' || lower === '0' || lower === 'no') return false;
+            if (lower === 'true' || lower === '1' || lower === 'yes')
+              return true;
+            if (lower === 'false' || lower === '0' || lower === 'no')
+              return false;
             return null;
           }
           return Boolean(value);
@@ -233,17 +255,20 @@ export class TemplateEngine {
     if (Array.isArray(value)) {
       return value.map(v => String(v)).join(', ');
     }
-    
+
     if (typeof value === 'object' && value !== null) {
       return JSON.stringify(value);
     }
-    
+
     return String(value);
   }
 
   public validateVariableDefinition(definition: VariableDefinition): void {
     const schema = z.object({
-      name: z.string().min(1).regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid variable name'),
+      name: z
+        .string()
+        .min(1)
+        .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid variable name'),
       type: z.enum(['string', 'number', 'boolean', 'array']),
       required: z.boolean(),
       description: z.string().optional(),
@@ -256,7 +281,9 @@ export class TemplateEngine {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const messages = error.errors.map(e => e.message).join(', ');
-        throw new ValidationError(`Variable definition validation failed: ${messages}`);
+        throw new ValidationError(
+          `Variable definition validation failed: ${messages}`
+        );
       }
       throw error;
     }
@@ -295,13 +322,18 @@ export class TemplateEngine {
         type = 'number';
       } else if (def.type === 'boolean') {
         type = 'checkbox';
-      } else if (def.type === 'string' && (!def.description || def.description.length > 50)) {
+      } else if (
+        def.type === 'string' &&
+        (!def.description || def.description.length > 50)
+      ) {
         type = 'textarea';
       }
 
       return {
         name: def.name,
-        label: def.description || def.name.charAt(0).toUpperCase() + def.name.slice(1),
+        label:
+          def.description ||
+          def.name.charAt(0).toUpperCase() + def.name.slice(1),
         type,
         required: def.required,
         defaultValue: def.defaultValue,
@@ -325,7 +357,9 @@ export class TemplateEngine {
 
     // Add warnings for missing variables
     if (result.missingVariables.length > 0) {
-      warnings.push(`Missing required variables: ${result.missingVariables.join(', ')}`);
+      warnings.push(
+        `Missing required variables: ${result.missingVariables.join(', ')}`
+      );
     }
 
     // Estimate token count (rough approximation: 1 token ≈ 4 characters)

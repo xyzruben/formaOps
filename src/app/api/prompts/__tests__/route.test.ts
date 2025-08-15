@@ -222,7 +222,7 @@ describe('/api/prompts', () => {
       });
 
       await POST(request);
-      
+
       // Should create prompt with auto-detected variables
       expect(mockPrisma.prompt.create).toHaveBeenCalledWith({
         data: expect.objectContaining({

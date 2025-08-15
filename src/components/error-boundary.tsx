@@ -2,7 +2,14 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { logger } from '@/lib/monitoring/logger';
 
@@ -33,7 +40,10 @@ interface ErrorFallbackProps {
   errorId?: string;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   private resetTimeoutId?: NodeJS.Timeout;
 
   constructor(props: ErrorBoundaryProps) {
@@ -90,7 +100,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     if (this.resetTimeoutId) {
       clearTimeout(this.resetTimeoutId);
     }
-    
+
     this.setState({
       hasError: false,
       error: undefined,
@@ -102,7 +112,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   render() {
     if (this.state.hasError) {
       const FallbackComponent = this.props.fallback || DefaultErrorFallback;
-      
+
       return (
         <FallbackComponent
           error={this.state.error}
@@ -117,7 +127,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFallbackProps) {
+function DefaultErrorFallback({
+  error,
+  errorInfo,
+  resetError,
+  errorId,
+}: ErrorFallbackProps) {
   const handleReload = () => {
     window.location.reload();
   };
@@ -137,10 +152,11 @@ function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFa
             <CardTitle>Something went wrong</CardTitle>
           </div>
           <CardDescription>
-            We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.
+            We encountered an unexpected error. Please try refreshing the page
+            or contact support if the problem persists.
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent className="space-y-4">
           {errorId && (
             <div className="p-3 bg-muted rounded-lg">
@@ -149,7 +165,7 @@ function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFa
               </p>
             </div>
           )}
-          
+
           {isDevelopment && error && (
             <details className="p-3 bg-destructive/10 rounded-lg">
               <summary className="cursor-pointer text-sm font-medium text-destructive">
@@ -164,7 +180,9 @@ function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFa
                 </div>
                 {error.stack && (
                   <div>
-                    <p className="text-xs font-medium text-destructive">Stack Trace:</p>
+                    <p className="text-xs font-medium text-destructive">
+                      Stack Trace:
+                    </p>
                     <pre className="text-xs font-mono bg-destructive/5 p-2 rounded overflow-auto max-h-32">
                       {error.stack}
                     </pre>
@@ -172,7 +190,9 @@ function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFa
                 )}
                 {errorInfo?.componentStack && (
                   <div>
-                    <p className="text-xs font-medium text-destructive">Component Stack:</p>
+                    <p className="text-xs font-medium text-destructive">
+                      Component Stack:
+                    </p>
                     <pre className="text-xs font-mono bg-destructive/5 p-2 rounded overflow-auto max-h-32">
                       {errorInfo.componentStack}
                     </pre>
@@ -182,7 +202,7 @@ function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFa
             </details>
           )}
         </CardContent>
-        
+
         <CardFooter className="flex gap-2">
           <Button onClick={resetError} variant="outline" className="flex-1">
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -205,10 +225,7 @@ function DefaultErrorFallback({ error, errorInfo, resetError, errorId }: ErrorFa
 // Specialized error boundary for API calls
 export function APIErrorBoundary({ children, onError }: ErrorBoundaryProps) {
   return (
-    <ErrorBoundary
-      onError={onError}
-      fallback={APIErrorFallback}
-    >
+    <ErrorBoundary onError={onError} fallback={APIErrorFallback}>
       {children}
     </ErrorBoundary>
   );
@@ -224,10 +241,10 @@ function APIErrorFallback({ error, resetError }: ErrorFallbackProps) {
           <p className="text-sm text-muted-foreground mt-1">
             {error?.message || 'Failed to load data. Please try again.'}
           </p>
-          <Button 
-            onClick={resetError} 
-            variant="outline" 
-            size="sm" 
+          <Button
+            onClick={resetError}
+            variant="outline"
+            size="sm"
             className="mt-2"
           >
             Retry
@@ -241,11 +258,7 @@ function APIErrorFallback({ error, resetError }: ErrorFallbackProps) {
 // Specialized error boundary for forms
 export function FormErrorBoundary({ children, onError }: ErrorBoundaryProps) {
   return (
-    <ErrorBoundary
-      onError={onError}
-      fallback={FormErrorFallback}
-      isolate
-    >
+    <ErrorBoundary onError={onError} fallback={FormErrorFallback} isolate>
       {children}
     </ErrorBoundary>
   );
@@ -259,14 +272,10 @@ function FormErrorFallback({ error, resetError }: ErrorFallbackProps) {
         <p className="text-sm font-medium text-destructive">Form Error</p>
       </div>
       <p className="text-sm text-muted-foreground mt-2">
-        {error?.message || 'There was an issue with the form. Please refresh and try again.'}
+        {error?.message ||
+          'There was an issue with the form. Please refresh and try again.'}
       </p>
-      <Button 
-        onClick={resetError} 
-        variant="outline" 
-        size="sm" 
-        className="mt-3"
-      >
+      <Button onClick={resetError} variant="outline" size="sm" className="mt-3">
         Reset Form
       </Button>
     </div>
@@ -282,7 +291,7 @@ export function withErrorBoundary<T extends Record<string, any>>(
     isolate?: boolean;
   } = {}
 ): React.ComponentType<T> {
-  const WrappedComponent: React.ComponentType<T> = (props) => {
+  const WrappedComponent: React.ComponentType<T> = props => {
     return (
       <ErrorBoundary {...options}>
         <Component {...props} />
@@ -291,7 +300,7 @@ export function withErrorBoundary<T extends Record<string, any>>(
   };
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 }
 
@@ -320,7 +329,7 @@ export function useErrorHandler() {
 
 // Async error handler for promises
 export function handleAsyncError(promise: Promise<any>): Promise<any> {
-  return promise.catch((error) => {
+  return promise.catch(error => {
     logger.error('Async operation failed', error);
     throw error;
   });

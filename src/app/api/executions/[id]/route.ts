@@ -14,12 +14,13 @@ export async function GET(
     const { id: executionId } = params;
 
     // Validate execution ID format (basic UUID validation)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(executionId)) {
       return NextResponse.json(
-        { 
-          error: 'Invalid execution ID format', 
-          code: 'VALIDATION_ERROR' 
+        {
+          error: 'Invalid execution ID format',
+          code: 'VALIDATION_ERROR',
         },
         { status: 400 }
       );
@@ -27,12 +28,12 @@ export async function GET(
 
     // Get execution details
     const execution = await getExecutionById(executionId, user.id);
-    
+
     if (!execution) {
       return NextResponse.json(
-        { 
-          error: 'Execution not found', 
-          code: 'NOT_FOUND' 
+        {
+          error: 'Execution not found',
+          code: 'NOT_FOUND',
         },
         { status: 404 }
       );
@@ -48,7 +49,6 @@ export async function GET(
         canRetry,
       },
     });
-
   } catch (error) {
     const apiError = handleApiError(error);
     return NextResponse.json(apiError, { status: apiError.statusCode });

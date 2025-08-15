@@ -2,13 +2,13 @@
 import { validateOpenAIConfig } from './openai';
 
 // Export OpenAI configuration management
-export { 
-  openAIConfig, 
+export {
+  openAIConfig,
   OpenAIConfigManager,
   getOpenAIConfig,
   validateOpenAIConfig,
   type OpenAIEnvironment,
-  type OpenAIConfigValidationResult 
+  type OpenAIConfigValidationResult,
 } from './openai';
 
 // Helper to validate all configurations

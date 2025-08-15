@@ -7,7 +7,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Verify cron job authorization
   const authHeader = request.headers.get('authorization');
   const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'default-cron-secret'}`;
-  
+
   if (authHeader !== expectedAuth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // 1. Clean up old executions (older than 90 days)
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    
+
     try {
       const deletedExecutions = await prisma.execution.deleteMany({
         where: {
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // 2. Clean up old execution logs (older than 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
+
     try {
       const deletedLogs = await prisma.executionLog.deleteMany({
         where: {
@@ -117,20 +117,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       results,
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = `Cleanup job failed: ${error}`;
-    
+
     logger.error(errorMessage);
-    
-    return NextResponse.json({
-      success: false,
-      error: errorMessage,
-      duration: `${duration}ms`,
-      results,
-      timestamp: new Date().toISOString(),
-    }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: errorMessage,
+        duration: `${duration}ms`,
+        results,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    );
   }
 }
 

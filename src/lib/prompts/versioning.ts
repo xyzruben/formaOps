@@ -58,9 +58,12 @@ export class PromptVersionManager {
     }
 
     // Check if there are actually changes
-    const hasTemplateChanges = updates.template && updates.template !== currentPrompt.template;
-    const hasVariableChanges = updates.variables && 
-      JSON.stringify(updates.variables) !== JSON.stringify(currentPrompt.variables);
+    const hasTemplateChanges =
+      updates.template && updates.template !== currentPrompt.template;
+    const hasVariableChanges =
+      updates.variables &&
+      JSON.stringify(updates.variables) !==
+        JSON.stringify(currentPrompt.variables);
 
     if (!hasTemplateChanges && !hasVariableChanges) {
       throw new Error('No changes detected');
@@ -97,7 +100,8 @@ export class PromptVersionManager {
         version: newVersionNumber,
         template: updates.template || currentPrompt.template,
         variables: (updates.variables || currentPrompt.variables || []) as any,
-        changeLog: updates.changeLog || `Updated to version ${newVersionNumber}`,
+        changeLog:
+          updates.changeLog || `Updated to version ${newVersionNumber}`,
       },
     });
 
@@ -148,7 +152,7 @@ export class PromptVersionManager {
 
     // Remove duplicates and sort
     const uniqueVersions = allVersions.filter(
-      (version, index, array) => 
+      (version, index, array) =>
         array.findIndex(v => v.version === version.version) === index
     );
 
@@ -162,7 +166,7 @@ export class PromptVersionManager {
     newVersion: number
   ): Promise<VersionComparison> {
     const versions = await this.getVersionHistory(promptId, userId);
-    
+
     const oldVersionInfo = versions.find(v => v.version === oldVersion);
     const newVersionInfo = versions.find(v => v.version === newVersion);
 
@@ -171,16 +175,24 @@ export class PromptVersionManager {
     }
 
     const templateChanged = oldVersionInfo.template !== newVersionInfo.template;
-    const variablesChanged = JSON.stringify(oldVersionInfo.variables) !== JSON.stringify(newVersionInfo.variables);
+    const variablesChanged =
+      JSON.stringify(oldVersionInfo.variables) !==
+      JSON.stringify(newVersionInfo.variables);
 
     let templateDiff;
     if (templateChanged) {
-      templateDiff = this.generateTemplateDiff(oldVersionInfo.template, newVersionInfo.template);
+      templateDiff = this.generateTemplateDiff(
+        oldVersionInfo.template,
+        newVersionInfo.template
+      );
     }
 
     let variablesDiff;
     if (variablesChanged) {
-      variablesDiff = this.generateVariablesDiff(oldVersionInfo.variables, newVersionInfo.variables);
+      variablesDiff = this.generateVariablesDiff(
+        oldVersionInfo.variables,
+        newVersionInfo.variables
+      );
     }
 
     return {
@@ -259,7 +271,10 @@ export class PromptVersionManager {
     }
   }
 
-  private generateTemplateDiff(oldTemplate: string, newTemplate: string): {
+  private generateTemplateDiff(
+    oldTemplate: string,
+    newTemplate: string
+  ): {
     additions: string[];
     deletions: string[];
     modifications: string[];
@@ -273,7 +288,7 @@ export class PromptVersionManager {
 
     // Simple line-by-line diff (basic implementation)
     const maxLines = Math.max(oldLines.length, newLines.length);
-    
+
     for (let i = 0; i < maxLines; i++) {
       const oldLine = oldLines[i];
       const newLine = newLines[i];
@@ -345,7 +360,10 @@ export class PromptVersionManager {
 
 // Export utility functions for version management
 export const promptVersions = {
-  async getCurrentVersion(promptId: string, userId: string): Promise<VersionInfo | null> {
+  async getCurrentVersion(
+    promptId: string,
+    userId: string
+  ): Promise<VersionInfo | null> {
     const prompt = await prisma.prompt.findFirst({
       where: { id: promptId, userId },
     });
@@ -361,14 +379,21 @@ export const promptVersions = {
     };
   },
 
-  async getVersionStats(promptId: string, userId: string): Promise<{
+  async getVersionStats(
+    promptId: string,
+    userId: string
+  ): Promise<{
     totalVersions: number;
     oldestVersion: Date;
     newestVersion: Date;
     averageTimeBetweenVersions: number; // in hours
   }> {
-    const versions = await new PromptVersionManager().getVersionHistory(promptId, userId, 100);
-    
+    const versions = await new PromptVersionManager().getVersionHistory(
+      promptId,
+      userId,
+      100
+    );
+
     if (versions.length === 0) {
       return {
         totalVersions: 0,
@@ -378,14 +403,17 @@ export const promptVersions = {
       };
     }
 
-    const sortedVersions = versions.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    const sortedVersions = versions.sort(
+      (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+    );
     const oldestVersion = sortedVersions[0].createdAt;
     const newestVersion = sortedVersions[sortedVersions.length - 1].createdAt;
-    
+
     const totalTimeMs = newestVersion.getTime() - oldestVersion.getTime();
-    const averageTimeBetweenVersions = versions.length > 1 
-      ? totalTimeMs / (versions.length - 1) / (1000 * 60 * 60) // Convert to hours
-      : 0;
+    const averageTimeBetweenVersions =
+      versions.length > 1
+        ? totalTimeMs / (versions.length - 1) / (1000 * 60 * 60) // Convert to hours
+        : 0;
 
     return {
       totalVersions: versions.length,

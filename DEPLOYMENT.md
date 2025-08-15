@@ -20,6 +20,7 @@ FormaOps supports multiple deployment strategies:
    - Connect to Vercel via GitHub integration
 
 2. **Configure environment variables**
+
    ```bash
    DATABASE_URL=postgresql://user:password@host:5432/database
    OPENAI_API_KEY=sk-...
@@ -36,11 +37,12 @@ FormaOps supports multiple deployment strategies:
 ### Netlify
 
 1. **Build settings**
+
    ```toml
    [build]
    command = "npm run build"
    publish = ".next"
-   
+
    [build.environment]
    NODE_ENV = "production"
    ```
@@ -55,11 +57,13 @@ FormaOps supports multiple deployment strategies:
 ### Production Docker Setup
 
 1. **Build the image**
+
    ```bash
    docker build -t formaops:latest .
    ```
 
 2. **Run with environment variables**
+
    ```bash
    docker run -d \
      --name formaops \
@@ -72,20 +76,21 @@ FormaOps supports multiple deployment strategies:
    ```
 
 3. **Docker Compose (Recommended)**
+
    ```yaml
    version: '3.8'
    services:
      app:
        build: .
        ports:
-         - "3000:3000"
+         - '3000:3000'
        environment:
          - NODE_ENV=production
          - DATABASE_URL=postgresql://postgres:password@db:5432/formaops
        depends_on:
          - db
        restart: unless-stopped
-   
+
      db:
        image: postgres:15
        environment:
@@ -95,19 +100,19 @@ FormaOps supports multiple deployment strategies:
        volumes:
          - postgres_data:/var/lib/postgresql/data
        restart: unless-stopped
-   
+
      nginx:
        image: nginx:alpine
        ports:
-         - "80:80"
-         - "443:443"
+         - '80:80'
+         - '443:443'
        volumes:
          - ./nginx.conf:/etc/nginx/nginx.conf
          - ./ssl:/etc/ssl/certs
        depends_on:
          - app
        restart: unless-stopped
-   
+
    volumes:
      postgres_data:
    ```
@@ -116,28 +121,29 @@ FormaOps supports multiple deployment strategies:
 
 ### Required Environment Variables
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
-| `OPENAI_API_KEY` | OpenAI API key | `sk-...` |
-| `SUPABASE_URL` | Supabase project URL | `https://xxx.supabase.co` |
-| `SUPABASE_ANON_KEY` | Supabase anonymous key | `eyJ...` |
+| Variable            | Description                  | Example                               |
+| ------------------- | ---------------------------- | ------------------------------------- |
+| `DATABASE_URL`      | PostgreSQL connection string | `postgresql://user:pass@host:5432/db` |
+| `OPENAI_API_KEY`    | OpenAI API key               | `sk-...`                              |
+| `SUPABASE_URL`      | Supabase project URL         | `https://xxx.supabase.co`             |
+| `SUPABASE_ANON_KEY` | Supabase anonymous key       | `eyJ...`                              |
 
 ### Optional Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `production` |
-| `CRON_SECRET` | Cron job authentication | `random-string` |
-| `ENABLE_REQUEST_LOGGING` | Enable detailed logging | `false` |
-| `RETRY_LIMIT` | API retry attempts | `3` |
-| `RATE_LIMIT_WINDOW` | Rate limit window (ms) | `3600000` |
+| Variable                 | Description             | Default         |
+| ------------------------ | ----------------------- | --------------- |
+| `NODE_ENV`               | Environment mode        | `production`    |
+| `CRON_SECRET`            | Cron job authentication | `random-string` |
+| `ENABLE_REQUEST_LOGGING` | Enable detailed logging | `false`         |
+| `RETRY_LIMIT`            | API retry attempts      | `3`             |
+| `RATE_LIMIT_WINDOW`      | Rate limit window (ms)  | `3600000`       |
 
 ### Environment Files
 
 Create environment-specific files:
 
 **.env.production**
+
 ```env
 NODE_ENV=production
 DATABASE_URL=postgresql://prod-user:prod-pass@prod-host:5432/formaops
@@ -149,6 +155,7 @@ ENABLE_REQUEST_LOGGING=true
 ```
 
 **.env.staging**
+
 ```env
 NODE_ENV=production
 DATABASE_URL=postgresql://staging-user:staging-pass@staging-host:5432/formaops
@@ -163,6 +170,7 @@ CRON_SECRET=staging-secret
 ### PostgreSQL Configuration
 
 1. **Create database and user**
+
    ```sql
    CREATE DATABASE formaops;
    CREATE USER formaops_user WITH PASSWORD 'secure_password';
@@ -170,6 +178,7 @@ CRON_SECRET=staging-secret
    ```
 
 2. **Apply database schema**
+
    ```bash
    npx prisma db push
    ```
@@ -218,20 +227,22 @@ log_min_duration_statement = 1000
 ### SSL/TLS Setup
 
 1. **Obtain SSL certificates**
+
    ```bash
    # Using Let's Encrypt with Certbot
    certbot certonly --webroot -w /var/www/html -d formaops.com
    ```
 
 2. **Nginx SSL configuration**
+
    ```nginx
    server {
        listen 443 ssl http2;
        server_name formaops.com;
-   
+
        ssl_certificate /etc/letsencrypt/live/formaops.com/fullchain.pem;
        ssl_certificate_key /etc/letsencrypt/live/formaops.com/privkey.pem;
-   
+
        # Security headers (handled by Next.js middleware)
        location / {
            proxy_pass http://localhost:3000;
@@ -299,6 +310,7 @@ readinessProbe:
 ### Application Monitoring
 
 1. **Performance monitoring**
+
    ```bash
    # Built-in performance monitoring
    curl https://your-app.com/api/health
@@ -355,6 +367,7 @@ ENVIRONMENT=staging ./scripts/deploy.sh
 ### Build Optimization
 
 1. **Bundle analysis**
+
    ```bash
    npm run analyze
    ```
@@ -368,6 +381,7 @@ ENVIRONMENT=staging ./scripts/deploy.sh
 ### Database Optimization
 
 1. **Connection pooling**
+
    ```typescript
    // Prisma connection pooling
    const prisma = new PrismaClient({
@@ -403,6 +417,7 @@ module.exports = {
 ### Database Backups
 
 1. **Automated backups**
+
    ```bash
    # Daily backup script
    #!/bin/bash
@@ -426,13 +441,14 @@ module.exports = {
 ### Horizontal Scaling
 
 1. **Load balancer configuration**
+
    ```nginx
    upstream formaops {
        server app1:3000;
        server app2:3000;
        server app3:3000;
    }
-   
+
    server {
        location / {
            proxy_pass http://formaops;
@@ -447,6 +463,7 @@ module.exports = {
 ### Database Scaling
 
 1. **Read replicas**
+
    ```typescript
    const readOnlyPrisma = new PrismaClient({
      datasources: {
@@ -466,12 +483,14 @@ module.exports = {
 ### Common Issues
 
 1. **Database connection issues**
+
    ```bash
    # Test database connection
    npx prisma db push --preview-feature
    ```
 
 2. **Build failures**
+
    ```bash
    # Clear Next.js cache
    rm -rf .next

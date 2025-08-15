@@ -54,6 +54,7 @@ FormaOps follows a modern, scalable architecture:
 ## 🛠️ Tech Stack
 
 ### Core Technologies
+
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript (strict mode)
 - **Database**: PostgreSQL with Prisma ORM
@@ -62,12 +63,14 @@ FormaOps follows a modern, scalable architecture:
 - **Styling**: Tailwind CSS + shadcn/ui
 
 ### Development & Testing
+
 - **Testing**: Jest, React Testing Library, Playwright
 - **Linting**: ESLint + Prettier
 - **Type Checking**: TypeScript strict mode
 - **Git Hooks**: Husky + lint-staged
 
 ### Production & DevOps
+
 - **Deployment**: Vercel / Netlify / Docker
 - **CI/CD**: GitHub Actions
 - **Monitoring**: Custom performance monitoring
@@ -85,22 +88,26 @@ FormaOps follows a modern, scalable architecture:
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/username/formaops.git
    cd formaops
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    ```
-   
+
    Fill in your environment variables:
+
    ```env
    DATABASE_URL="postgresql://username:password@localhost:5432/formaops"
    OPENAI_API_KEY="your-openai-api-key"
@@ -109,6 +116,7 @@ FormaOps follows a modern, scalable architecture:
    ```
 
 4. **Set up the database**
+
    ```bash
    npm run db:setup
    ```
@@ -216,7 +224,7 @@ Content-Type: application/json
       "required": true
     },
     {
-      "name": "company", 
+      "name": "company",
       "type": "string",
       "required": true
     }
@@ -248,14 +256,14 @@ For complete API documentation, visit [api.formaops.com/docs](https://api.formao
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `OPENAI_API_KEY` | OpenAI API key for AI integration | Yes |
-| `SUPABASE_URL` | Supabase project URL | Yes |
-| `SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
-| `CRON_SECRET` | Secret for cron job authentication | No |
-| `ENABLE_REQUEST_LOGGING` | Enable detailed request logging | No |
+| Variable                 | Description                        | Required |
+| ------------------------ | ---------------------------------- | -------- |
+| `DATABASE_URL`           | PostgreSQL connection string       | Yes      |
+| `OPENAI_API_KEY`         | OpenAI API key for AI integration  | Yes      |
+| `SUPABASE_URL`           | Supabase project URL               | Yes      |
+| `SUPABASE_ANON_KEY`      | Supabase anonymous key             | Yes      |
+| `CRON_SECRET`            | Secret for cron job authentication | No       |
+| `ENABLE_REQUEST_LOGGING` | Enable detailed request logging    | No       |
 
 ### Performance Configuration
 
@@ -285,22 +293,26 @@ async headers() {
 FormaOps implements multiple layers of security:
 
 ### Input Validation & Sanitization
+
 - XSS prevention with DOMPurify
 - SQL injection protection
 - Path traversal prevention
 - Command injection protection
 
 ### Rate Limiting
+
 - API endpoint rate limiting
 - User-based and IP-based limits
 - Configurable time windows
 
 ### Security Headers
+
 - Content Security Policy (CSP)
 - X-Frame-Options, X-XSS-Protection
 - Strict Transport Security (HSTS)
 
 ### Authentication & Authorization
+
 - Supabase authentication integration
 - JWT token validation
 - Role-based access control
@@ -308,18 +320,21 @@ FormaOps implements multiple layers of security:
 ## 📊 Monitoring & Analytics
 
 ### Performance Monitoring
+
 - Real-time performance metrics
 - Response time tracking
 - Success rate monitoring
 - Resource utilization metrics
 
 ### Cost Tracking
+
 - OpenAI API usage tracking
 - Cost per execution monitoring
 - Budget alerts and limits
 - Model usage breakdown
 
 ### Error Tracking
+
 - Comprehensive error logging
 - Error boundaries with fallbacks
 - Performance degradation alerts

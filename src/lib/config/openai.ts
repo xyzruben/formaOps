@@ -4,14 +4,22 @@ import { z } from 'zod';
 const OpenAIEnvironmentSchema = z.object({
   apiKey: z.string().min(1, 'OpenAI API key is required'),
   defaultModel: z.enum(['gpt-3.5-turbo', 'gpt-4'], {
-    errorMap: () => ({ message: 'Model must be either gpt-3.5-turbo or gpt-4' })
+    errorMap: () => ({
+      message: 'Model must be either gpt-3.5-turbo or gpt-4',
+    }),
   }),
-  maxTokens: z.number().min(1).max(4000, 'Max tokens must be between 1 and 4000'),
+  maxTokens: z
+    .number()
+    .min(1)
+    .max(4000, 'Max tokens must be between 1 and 4000'),
   temperature: z.number().min(0).max(2, 'Temperature must be between 0 and 2'),
-  costConfig: z.record(z.string(), z.object({
-    input: z.number().min(0, 'Input cost must be non-negative'),
-    output: z.number().min(0, 'Output cost must be non-negative'),
-  })),
+  costConfig: z.record(
+    z.string(),
+    z.object({
+      input: z.number().min(0, 'Input cost must be non-negative'),
+      output: z.number().min(0, 'Output cost must be non-negative'),
+    })
+  ),
 });
 
 export interface OpenAIEnvironment {
@@ -83,11 +91,15 @@ class OpenAIConfigManager {
       // Validate cost configuration
       Object.entries(rawConfig.costConfig).forEach(([model, costs]) => {
         if (isNaN(costs.input)) {
-          errors.push(`${model.toUpperCase()}_COST_PER_1K_INPUT must be a valid number`);
+          errors.push(
+            `${model.toUpperCase()}_COST_PER_1K_INPUT must be a valid number`
+          );
           costs.input = model === 'gpt-3.5-turbo' ? 0.0015 : 0.03; // fallback
         }
         if (isNaN(costs.output)) {
-          errors.push(`${model.toUpperCase()}_COST_PER_1K_OUTPUT must be a valid number`);
+          errors.push(
+            `${model.toUpperCase()}_COST_PER_1K_OUTPUT must be a valid number`
+          );
           costs.output = model === 'gpt-3.5-turbo' ? 0.002 : 0.06; // fallback
         }
       });
@@ -103,26 +115,37 @@ class OpenAIConfigManager {
 
       // Generate warnings for default values
       if (!process.env.OPENAI_DEFAULT_MODEL) {
-        warnings.push('Using default model: gpt-3.5-turbo (set OPENAI_DEFAULT_MODEL to customize)');
+        warnings.push(
+          'Using default model: gpt-3.5-turbo (set OPENAI_DEFAULT_MODEL to customize)'
+        );
       }
 
       if (!process.env.OPENAI_MAX_TOKENS) {
-        warnings.push('Using default max tokens: 2000 (set OPENAI_MAX_TOKENS to customize)');
+        warnings.push(
+          'Using default max tokens: 2000 (set OPENAI_MAX_TOKENS to customize)'
+        );
       }
 
       if (!process.env.OPENAI_TEMPERATURE) {
-        warnings.push('Using default temperature: 0.7 (set OPENAI_TEMPERATURE to customize)');
+        warnings.push(
+          'Using default temperature: 0.7 (set OPENAI_TEMPERATURE to customize)'
+        );
       }
 
       // Check for environment-specific warnings
-      if (process.env.NODE_ENV === 'production' && rawConfig.apiKey.includes('your-key-here')) {
-        errors.push('Production environment detected but API key appears to be placeholder');
+      if (
+        process.env.NODE_ENV === 'production' &&
+        rawConfig.apiKey.includes('your-key-here')
+      ) {
+        errors.push(
+          'Production environment detected but API key appears to be placeholder'
+        );
       }
 
       const isValid = errors.length === 0;
       const result: OpenAIConfigValidationResult = {
         isValid,
-        config: isValid ? rawConfig as OpenAIEnvironment : undefined,
+        config: isValid ? (rawConfig as OpenAIEnvironment) : undefined,
         errors,
         warnings,
       };
@@ -134,9 +157,10 @@ class OpenAIConfigManager {
 
       return result;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown configuration error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown configuration error';
       errors.push(`Configuration loading failed: ${errorMessage}`);
-      
+
       const result: OpenAIConfigValidationResult = {
         isValid: false,
         errors,
@@ -156,7 +180,9 @@ class OpenAIConfigManager {
     if (!this._config) {
       const result = this.loadConfig();
       if (!result.isValid) {
-        throw new Error(`Invalid OpenAI configuration: ${result.errors.join(', ')}`);
+        throw new Error(
+          `Invalid OpenAI configuration: ${result.errors.join(', ')}`
+        );
       }
     }
     return this._config!;
@@ -185,19 +211,24 @@ class OpenAIConfigManager {
   public getModelCost(model: string): { input: number; output: number } {
     const config = this.getConfig();
     const cost = config.costConfig[model];
-    
+
     if (!cost) {
       // Fallback to GPT-3.5 costs for unknown models
-      return config.costConfig['gpt-3.5-turbo'] || { input: 0.0015, output: 0.002 };
+      return (
+        config.costConfig['gpt-3.5-turbo'] || { input: 0.0015, output: 0.002 }
+      );
     }
-    
+
     return cost;
   }
 
   /**
    * Get all supported models and their costs
    */
-  public getSupportedModels(): Record<string, { input: number; output: number }> {
+  public getSupportedModels(): Record<
+    string,
+    { input: number; output: number }
+  > {
     const config = this.getConfig();
     return config.costConfig;
   }
@@ -206,7 +237,11 @@ class OpenAIConfigManager {
    * Validate API key format without loading full config
    */
   public static validateApiKeyFormat(apiKey: string): boolean {
-    return typeof apiKey === 'string' && apiKey.startsWith('sk-') && apiKey.length > 10;
+    return (
+      typeof apiKey === 'string' &&
+      apiKey.startsWith('sk-') &&
+      apiKey.length > 10
+    );
   }
 
   /**

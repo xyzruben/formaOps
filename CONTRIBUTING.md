@@ -29,28 +29,33 @@ Before contributing, make sure you have:
 ### Setting Up Your Development Environment
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/your-username/formaops.git
    cd formaops
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env.local
    # Fill in your environment variables
    ```
 
 4. **Set up the database**
+
    ```bash
    npm run db:setup
    ```
 
 5. **Run the development server**
+
    ```bash
    npm run dev
    ```
@@ -128,11 +133,13 @@ All contributions should include appropriate tests:
 // Unit test example
 describe('InputValidator', () => {
   it('should validate email format correctly', () => {
-    expect(() => InputValidator.validateEmail('invalid-email'))
-      .toThrow('Invalid email format');
-    
-    expect(InputValidator.validateEmail('test@example.com'))
-      .toBe('test@example.com');
+    expect(() => InputValidator.validateEmail('invalid-email')).toThrow(
+      'Invalid email format'
+    );
+
+    expect(InputValidator.validateEmail('test@example.com')).toBe(
+      'test@example.com'
+    );
   });
 });
 ```
@@ -167,6 +174,7 @@ git commit -m "test: add integration tests for auth"
 ```
 
 **Commit Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -224,10 +232,10 @@ describe('Feature Name', () => {
     it('should do something specific', () => {
       // Arrange
       const input = 'test input';
-      
+
       // Act
       const result = functionUnderTest(input);
-      
+
       // Assert
       expect(result).toBe('expected output');
     });
@@ -254,24 +262,29 @@ Before submitting your PR, ensure:
 
 ```markdown
 ## Description
+
 Brief description of the changes.
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Unit tests added/updated
 - [ ] Integration tests added/updated
 - [ ] E2E tests added/updated
 - [ ] Manual testing completed
 
 ## Screenshots (if applicable)
+
 Add screenshots for UI changes.
 
 ## Additional Notes
+
 Any additional information for reviewers.
 ```
 
@@ -283,26 +296,32 @@ When reporting bugs, please include:
 
 ```markdown
 ## Bug Description
+
 Clear and concise description of the bug.
 
 ## Steps to Reproduce
+
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
 ## Expected Behavior
+
 What you expected to happen.
 
 ## Actual Behavior
+
 What actually happened.
 
 ## Environment
+
 - OS: [e.g. macOS, Windows, Linux]
 - Browser: [e.g. Chrome, Firefox, Safari]
 - Version: [e.g. 1.0.0]
 
 ## Additional Context
+
 - Screenshots
 - Console errors
 - Network requests
@@ -317,18 +336,23 @@ For feature requests, please include:
 
 ```markdown
 ## Feature Summary
+
 Brief description of the feature.
 
 ## Problem Statement
+
 What problem does this solve?
 
 ## Proposed Solution
+
 Detailed description of the proposed feature.
 
 ## Alternative Solutions
+
 Any alternative approaches considered.
 
 ## Additional Context
+
 - Use cases
 - Examples
 - Mockups/wireframes
@@ -348,15 +372,15 @@ Any alternative approaches considered.
 
 When documenting APIs:
 
-```typescript
+````typescript
 /**
  * Executes a prompt with the specified inputs
- * 
+ *
  * @param promptId - UUID of the prompt to execute
  * @param inputs - Input variables for the prompt
  * @param options - Optional execution parameters
  * @returns Promise resolving to execution result
- * 
+ *
  * @example
  * ```typescript
  * const result = await executePrompt('uuid', {
@@ -369,8 +393,8 @@ export async function executePrompt(
   promptId: string,
   inputs: Record<string, unknown>,
   options?: ExecutionOptions
-): Promise<ExecutionResult>
-```
+): Promise<ExecutionResult>;
+````
 
 ## 🏗️ Architecture Decisions
 

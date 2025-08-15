@@ -35,7 +35,7 @@ describe('CostTracker', () => {
       };
 
       const cost = costTracker.calculateExecutionCost(tokenUsage);
-      
+
       // (1000 * 0.0015 / 1000) + (500 * 0.002 / 1000) = 0.0015 + 0.001 = 0.0025
       expect(cost).toBeCloseTo(0.0025, 4);
     });
@@ -49,7 +49,7 @@ describe('CostTracker', () => {
       };
 
       const cost = costTracker.calculateExecutionCost(tokenUsage);
-      
+
       // (1000 * 0.03 / 1000) + (500 * 0.06 / 1000) = 0.03 + 0.03 = 0.06
       expect(cost).toBeCloseTo(0.06, 4);
     });
@@ -63,7 +63,7 @@ describe('CostTracker', () => {
       };
 
       const cost = costTracker.calculateExecutionCost(tokenUsage);
-      
+
       // Should use GPT-3.5 pricing
       expect(cost).toBeCloseTo(0.0025, 4);
     });
@@ -73,9 +73,12 @@ describe('CostTracker', () => {
     it('should estimate execution cost based on template length', () => {
       const templateLength = 400; // characters
       const expectedOutputLength = 200; // characters
-      
-      const estimate = costTracker.estimateExecutionCost(templateLength, expectedOutputLength);
-      
+
+      const estimate = costTracker.estimateExecutionCost(
+        templateLength,
+        expectedOutputLength
+      );
+
       expect(estimate.estimatedInputTokens).toBe(100); // 400/4
       expect(estimate.estimatedOutputTokens).toBe(50); // 200/4
       expect(estimate.estimatedCost).toBeCloseTo(0.00025, 5); // Based on GPT-3.5 pricing
@@ -83,7 +86,7 @@ describe('CostTracker', () => {
 
     it('should estimate cost for different models', () => {
       const estimate = costTracker.estimateExecutionCost(400, 200, 'gpt-4');
-      
+
       expect(estimate.estimatedInputTokens).toBe(100);
       expect(estimate.estimatedOutputTokens).toBe(50);
       expect(estimate.estimatedCost).toBeCloseTo(0.006, 4); // GPT-4 pricing
@@ -95,7 +98,12 @@ describe('CostTracker', () => {
       const mockExecutions = [
         {
           costUsd: { toNumber: () => 0.01 },
-          tokenUsage: { model: 'gpt-3.5-turbo', input: 100, output: 50, total: 150 },
+          tokenUsage: {
+            model: 'gpt-3.5-turbo',
+            input: 100,
+            output: 50,
+            total: 150,
+          },
           createdAt: new Date('2024-01-01'),
         },
         {
@@ -110,7 +118,7 @@ describe('CostTracker', () => {
 
     it('should calculate user cost metrics correctly', async () => {
       const metrics = await costTracker.getUserCostMetrics('user-1');
-      
+
       expect(metrics.totalCostUsd).toBeCloseTo(0.06, 2);
       expect(metrics.avgCostPerExecution).toBe(0.03);
       expect(metrics.tokenUsage.totalInput).toBe(300);
@@ -120,14 +128,14 @@ describe('CostTracker', () => {
 
     it('should calculate model breakdown correctly', async () => {
       const metrics = await costTracker.getUserCostMetrics('user-1');
-      
+
       expect(metrics.modelBreakdown['gpt-3.5-turbo']).toEqual({
         executions: 1,
         costUsd: 0.01,
         inputTokens: 100,
         outputTokens: 50,
       });
-      
+
       expect(metrics.modelBreakdown['gpt-4']).toEqual({
         executions: 1,
         costUsd: 0.05,
@@ -138,7 +146,7 @@ describe('CostTracker', () => {
 
     it('should generate daily trend data', async () => {
       const metrics = await costTracker.getUserCostMetrics('user-1');
-      
+
       expect(metrics.dailyTrend).toHaveLength(7); // Last 7 days
       expect(metrics.dailyTrend[0]).toMatchObject({
         date: expect.any(String),
@@ -150,10 +158,8 @@ describe('CostTracker', () => {
 
   describe('Budget Alerts', () => {
     beforeEach(() => {
-      const mockTodayExecutions = [
-        { costUsd: { toNumber: () => 0.08 } },
-      ];
-      
+      const mockTodayExecutions = [{ costUsd: { toNumber: () => 0.08 } }];
+
       const mockMonthExecutions = [
         { costUsd: { toNumber: () => 0.08 } },
         { costUsd: { toNumber: () => 0.12 } },
@@ -165,13 +171,13 @@ describe('CostTracker', () => {
     });
 
     it('should generate daily budget alerts', async () => {
-      const budgets = { dailyLimit: 0.10 };
+      const budgets = { dailyLimit: 0.1 };
       const alerts = await costTracker.checkBudgetAlerts('user-1', budgets);
-      
+
       expect(alerts).toHaveLength(1);
       expect(alerts[0]).toMatchObject({
         type: 'daily',
-        threshold: 0.10,
+        threshold: 0.1,
         current: 0.08,
         percentage: 80,
         message: expect.stringContaining('Daily budget 80.0% used'),
@@ -181,21 +187,21 @@ describe('CostTracker', () => {
     it('should generate monthly budget alerts', async () => {
       const budgets = { monthlyLimit: 0.25 };
       const alerts = await costTracker.checkBudgetAlerts('user-1', budgets);
-      
+
       expect(alerts).toHaveLength(1);
       expect(alerts[0]).toMatchObject({
         type: 'monthly',
         threshold: 0.25,
-        current: 0.20,
+        current: 0.2,
         percentage: 80,
         message: expect.stringContaining('Monthly budget 80.0% used'),
       });
     });
 
     it('should not generate alerts below 80% threshold', async () => {
-      const budgets = { dailyLimit: 1.00 }; // High limit
+      const budgets = { dailyLimit: 1.0 }; // High limit
       const alerts = await costTracker.checkBudgetAlerts('user-1', budgets);
-      
+
       expect(alerts).toHaveLength(0);
     });
   });
@@ -211,24 +217,19 @@ describe('CostTracker', () => {
         {
           promptId: 'prompt-2',
           _count: { id: 2 },
-          _sum: { costUsd: { toNumber: () => 0.10 } },
+          _sum: { costUsd: { toNumber: () => 0.1 } },
         },
       ];
 
       mockPrisma.execution.groupBy.mockResolvedValue(mockGroupedResults);
-      
+
       mockPrisma.prompt.findUnique
         .mockResolvedValueOnce({ name: 'Expensive Prompt' })
         .mockResolvedValueOnce({ name: 'Cheap Prompt' });
 
       const mockExecutionsForTokens = [
-        [
-          { tokenUsage: { total: 1000 } },
-          { tokenUsage: { total: 1500 } },
-        ],
-        [
-          { tokenUsage: { total: 500 } },
-        ],
+        [{ tokenUsage: { total: 1000 } }, { tokenUsage: { total: 1500 } }],
+        [{ tokenUsage: { total: 500 } }],
       ];
 
       mockPrisma.execution.findMany
@@ -238,7 +239,7 @@ describe('CostTracker', () => {
 
     it('should return top expensive prompts', async () => {
       const results = await costTracker.getTopExpensivePrompts('user-1', 10);
-      
+
       expect(results).toHaveLength(2);
       expect(results[0]).toMatchObject({
         promptId: 'prompt-1',
@@ -248,12 +249,12 @@ describe('CostTracker', () => {
         avgCost: 0.05,
         totalTokens: 2500,
       });
-      
+
       expect(results[1]).toMatchObject({
         promptId: 'prompt-2',
         promptName: 'Cheap Prompt',
         executions: 2,
-        totalCost: 0.10,
+        totalCost: 0.1,
         avgCost: 0.05,
         totalTokens: 500,
       });
@@ -261,7 +262,7 @@ describe('CostTracker', () => {
 
     it('should sort results by total cost descending', async () => {
       const results = await costTracker.getTopExpensivePrompts('user-1');
-      
+
       expect(results[0].totalCost).toBeGreaterThanOrEqual(results[1].totalCost);
     });
   });

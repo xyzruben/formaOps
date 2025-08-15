@@ -4,17 +4,23 @@ import React, { useState } from 'react';
 import { formatDate } from '../../lib/utils';
 import { useExecutions } from '../../hooks/use-executions';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 // Note: Using a simple select for now to avoid Radix dependency
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '../ui/table';
 import { LoadingState, ErrorState, EmptyState } from '../ui/loading-spinner';
 import type { ExecutionStatus } from '../../types/database';
@@ -25,32 +31,29 @@ interface ExecutionHistoryProps {
   onExecutionSelect?: (executionId: string) => void;
 }
 
-
-export function ExecutionHistory({ 
-  promptId, 
-  userId: _userId, 
-  onExecutionSelect 
+export function ExecutionHistory({
+  promptId,
+  userId: _userId,
+  onExecutionSelect,
 }: ExecutionHistoryProps): JSX.Element {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<ExecutionStatus | undefined>(undefined);
-  const [dateFilter, setDateFilter] = useState<{ from?: string; to?: string }>({});
+  const [statusFilter, setStatusFilter] = useState<ExecutionStatus | undefined>(
+    undefined
+  );
+  const [dateFilter, setDateFilter] = useState<{ from?: string; to?: string }>(
+    {}
+  );
   const limit = 20;
 
-  const { 
-    executions, 
-    pagination, 
-    loading, 
-    error, 
-    refetch, 
-    retryExecution 
-  } = useExecutions({
-    promptId,
-    status: statusFilter,
-    page,
-    limit,
-    from: dateFilter.from,
-    to: dateFilter.to,
-  });
+  const { executions, pagination, loading, error, refetch, retryExecution } =
+    useExecutions({
+      promptId,
+      status: statusFilter,
+      page,
+      limit,
+      from: dateFilter.from,
+      to: dateFilter.to,
+    });
 
   const handleRetry = async (executionId: string): Promise<void> => {
     try {
@@ -111,7 +114,7 @@ export function ExecutionHistory({
     const total = tokenUsage.total || tokenUsage.totalTokens || 0;
     const input = tokenUsage.input || tokenUsage.inputTokens || 0;
     const output = tokenUsage.output || tokenUsage.outputTokens || 0;
-    
+
     if (total === 0) return '-';
     return `${total} (${input}+${output})`;
   };
@@ -176,24 +179,28 @@ export function ExecutionHistory({
                 </Button>
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <Input
                 type="date"
                 placeholder="From date"
                 value={dateFilter.from || ''}
-                onChange={(e) => setDateFilter(prev => ({ ...prev, from: e.target.value }))}
+                onChange={e =>
+                  setDateFilter(prev => ({ ...prev, from: e.target.value }))
+                }
                 className="w-40"
               />
               <Input
                 type="date"
                 placeholder="To date"
                 value={dateFilter.to || ''}
-                onChange={(e) => setDateFilter(prev => ({ ...prev, to: e.target.value }))}
+                onChange={e =>
+                  setDateFilter(prev => ({ ...prev, to: e.target.value }))
+                }
                 className="w-40"
               />
             </div>
-            
+
             <Button variant="outline" onClick={refetch}>
               Refresh
             </Button>
@@ -205,11 +212,14 @@ export function ExecutionHistory({
               title="No executions found"
               description="No executions match your current filters"
               action={
-                <Button variant="outline" onClick={() => {
-                  setStatusFilter(undefined);
-                  setDateFilter({});
-                  setPage(1);
-                }}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStatusFilter(undefined);
+                    setDateFilter({});
+                    setPage(1);
+                  }}
+                >
                   Clear Filters
                 </Button>
               }
@@ -231,14 +241,16 @@ export function ExecutionHistory({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {executions.map((execution) => (
-                      <TableRow 
+                    {executions.map(execution => (
+                      <TableRow
                         key={execution.id}
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => handleRowClick(execution.id)}
                       >
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(execution.status)}>
+                          <Badge
+                            variant={getStatusBadgeVariant(execution.status)}
+                          >
                             {execution.status}
                           </Badge>
                         </TableCell>
@@ -270,7 +282,11 @@ export function ExecutionHistory({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getValidationBadgeVariant(execution.validationStatus)}>
+                          <Badge
+                            variant={getValidationBadgeVariant(
+                              execution.validationStatus
+                            )}
+                          >
                             {execution.validationStatus}
                           </Badge>
                         </TableCell>
@@ -280,7 +296,7 @@ export function ExecutionHistory({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation();
                                   handleRetry(execution.id);
                                 }}
@@ -291,7 +307,7 @@ export function ExecutionHistory({
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation();
                                 handleRowClick(execution.id);
                               }}
@@ -310,7 +326,9 @@ export function ExecutionHistory({
               {pagination && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-sm text-muted-foreground">
-                    Showing {(page - 1) * limit + 1} to {Math.min(page * limit, pagination.total)} of {pagination.total} executions
+                    Showing {(page - 1) * limit + 1} to{' '}
+                    {Math.min(page * limit, pagination.total)} of{' '}
+                    {pagination.total} executions
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -321,26 +339,29 @@ export function ExecutionHistory({
                     >
                       Previous
                     </Button>
-                    
+
                     {/* Page numbers */}
                     <div className="flex gap-1">
-                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                        const pageNum = Math.max(1, page - 2) + i;
-                        if (pageNum > pagination.totalPages) return null;
-                        
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === page ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setPage(pageNum)}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      })}
+                      {Array.from(
+                        { length: Math.min(5, pagination.totalPages) },
+                        (_, i) => {
+                          const pageNum = Math.max(1, page - 2) + i;
+                          if (pageNum > pagination.totalPages) return null;
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={pageNum === page ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setPage(pageNum)}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                      )}
                     </div>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"

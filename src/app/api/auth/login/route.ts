@@ -29,7 +29,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     );
     const body = await request.json();
-    
+
     const { email, password } = LoginSchema.parse(body);
 
     const { data, error } = await supabase.auth.signInWithPassword({

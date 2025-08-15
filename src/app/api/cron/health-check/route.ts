@@ -8,16 +8,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   // Verify cron job authorization
   const authHeader = request.headers.get('authorization');
   const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'default-cron-secret'}`;
-  
+
   if (authHeader !== expectedAuth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const startTime = Date.now();
   const healthChecks = {
-    database: { status: 'unknown', responseTime: 0, error: null as string | null },
+    database: {
+      status: 'unknown',
+      responseTime: 0,
+      error: null as string | null,
+    },
     memory: { status: 'unknown', usage: 0, total: 0 },
-    performance: { status: 'unknown', metrics: null as Record<string, unknown> | null },
+    performance: {
+      status: 'unknown',
+      metrics: null as Record<string, unknown> | null,
+    },
     errors: [] as string[],
   };
 
@@ -28,15 +35,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       await prisma.$queryRaw`SELECT 1 as health_check`;
       healthChecks.database.responseTime = Date.now() - dbStart;
       healthChecks.database.status = 'healthy';
-      
+
       // Check database connection pool
-      const activeConnections = await prisma.$queryRaw`
+      const activeConnections = (await prisma.$queryRaw`
         SELECT count(*) as active_connections 
         FROM pg_stat_activity 
         WHERE state = 'active'
-      ` as Array<{ count: number }>;
-      
-      logger.info(`Database health check passed. Active connections: ${activeConnections[0]?.count || 'unknown'}`);
+      `) as Array<{ count: number }>;
+
+      logger.info(
+        `Database health check passed. Active connections: ${activeConnections[0]?.count || 'unknown'}`
+      );
     } catch (error) {
       healthChecks.database.status = 'unhealthy';
       healthChecks.database.error = String(error);
@@ -49,20 +58,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const memUsage = process.memoryUsage();
       const memUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
       const memTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
-      
+
       healthChecks.memory.usage = memUsedMB;
       healthChecks.memory.total = memTotalMB;
-      
+
       // Alert if memory usage is high
       const memoryUsagePercent = (memUsedMB / memTotalMB) * 100;
       if (memoryUsagePercent > 80) {
         healthChecks.memory.status = 'warning';
-        healthChecks.errors.push(`High memory usage: ${memoryUsagePercent.toFixed(1)}%`);
-        logger.warn(`High memory usage: ${memUsedMB}MB/${memTotalMB}MB (${memoryUsagePercent.toFixed(1)}%)`);
+        healthChecks.errors.push(
+          `High memory usage: ${memoryUsagePercent.toFixed(1)}%`
+        );
+        logger.warn(
+          `High memory usage: ${memUsedMB}MB/${memTotalMB}MB (${memoryUsagePercent.toFixed(1)}%)`
+        );
       } else {
         healthChecks.memory.status = 'healthy';
       }
-      
+
       // Record memory metrics
       performanceMonitor.recordMetric({
         name: 'memory_usage',
@@ -70,7 +83,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         unit: 'bytes',
         timestamp: new Date(),
       });
-      
     } catch (error) {
       healthChecks.memory.status = 'error';
       healthChecks.errors.push(`Memory check failed: ${error}`);
@@ -80,21 +92,31 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // 3. Performance metrics check
     try {
       const metrics = performanceMonitor.getSystemMetrics(1); // Last hour
-      healthChecks.performance.metrics = metrics as unknown as Record<string, unknown>;
-      
+      healthChecks.performance.metrics = metrics as unknown as Record<
+        string,
+        unknown
+      >;
+
       // Check for performance issues
       if (metrics.executionMetrics.successRate < 95) {
         healthChecks.performance.status = 'warning';
-        healthChecks.errors.push(`Low success rate: ${metrics.executionMetrics.successRate.toFixed(1)}%`);
-        logger.warn(`Low execution success rate: ${metrics.executionMetrics.successRate.toFixed(1)}%`);
+        healthChecks.errors.push(
+          `Low success rate: ${metrics.executionMetrics.successRate.toFixed(1)}%`
+        );
+        logger.warn(
+          `Low execution success rate: ${metrics.executionMetrics.successRate.toFixed(1)}%`
+        );
       } else if (metrics.executionMetrics.avgLatency > 5000) {
         healthChecks.performance.status = 'warning';
-        healthChecks.errors.push(`High average latency: ${metrics.executionMetrics.avgLatency}ms`);
-        logger.warn(`High average execution latency: ${metrics.executionMetrics.avgLatency}ms`);
+        healthChecks.errors.push(
+          `High average latency: ${metrics.executionMetrics.avgLatency}ms`
+        );
+        logger.warn(
+          `High average execution latency: ${metrics.executionMetrics.avgLatency}ms`
+        );
       } else {
         healthChecks.performance.status = 'healthy';
       }
-      
     } catch (error) {
       healthChecks.performance.status = 'error';
       healthChecks.errors.push(`Performance check failed: ${error}`);
@@ -122,8 +144,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // 5. Log system health summary
     const duration = Date.now() - startTime;
-    const overallStatus = healthChecks.errors.length === 0 ? 'healthy' : 'degraded';
-    
+    const overallStatus =
+      healthChecks.errors.length === 0 ? 'healthy' : 'degraded';
+
     logger.logSystemHealth({
       activeExecutions: 0, // Would be tracked by actual system monitor
       queuedExecutions: 0, // Would be tracked by actual system monitor
@@ -134,7 +157,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // 6. Cleanup old performance metrics
     // This would be implemented based on your storage strategy
-    
+
     const response = {
       success: true,
       status: overallStatus,
@@ -152,21 +175,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     logger.info(`Health check completed in ${duration}ms`, response.summary);
 
     return NextResponse.json(response);
-
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = `Health check job failed: ${error}`;
-    
+
     logger.error(errorMessage);
-    
-    return NextResponse.json({
-      success: false,
-      status: 'unhealthy',
-      error: errorMessage,
-      duration: `${duration}ms`,
-      timestamp: new Date().toISOString(),
-      checks: healthChecks,
-    }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        status: 'unhealthy',
+        error: errorMessage,
+        duration: `${duration}ms`,
+        timestamp: new Date().toISOString(),
+        checks: healthChecks,
+      },
+      { status: 500 }
+    );
   }
 }
 

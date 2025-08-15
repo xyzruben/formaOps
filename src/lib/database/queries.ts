@@ -1,9 +1,5 @@
 import { prisma } from './client';
-import type {
-  Execution,
-  PromptStatus,
-  ExecutionStatus,
-} from '@prisma/client';
+import type { Execution, PromptStatus, ExecutionStatus } from '@prisma/client';
 
 // User queries
 export const findUserByEmail = async (email: string) => {
@@ -12,10 +8,7 @@ export const findUserByEmail = async (email: string) => {
   });
 };
 
-export const createUser = async (data: {
-  email: string;
-  name?: string;
-}) => {
+export const createUser = async (data: { email: string; name?: string }) => {
   return prisma.user.create({
     data,
   });
@@ -302,13 +295,15 @@ export interface ExecutionWithDetails {
   }>;
 }
 
-export async function getExecutionHistory(filters: ExecutionFilters): Promise<PaginatedExecutions> {
+export async function getExecutionHistory(
+  filters: ExecutionFilters
+): Promise<PaginatedExecutions> {
   const { userId, promptId, status, dateRange, page = 1, limit = 20 } = filters;
-  
+
   // Validate pagination parameters
   const validatedPage = Math.max(1, page);
   const validatedLimit = Math.min(100, Math.max(1, limit));
-  
+
   // Build where clause
   const where = {
     userId,
@@ -368,7 +363,10 @@ export async function getExecutionHistory(filters: ExecutionFilters): Promise<Pa
   };
 }
 
-export async function getExecutionById(id: string, userId: string): Promise<ExecutionWithDetails | null> {
+export async function getExecutionById(
+  id: string,
+  userId: string
+): Promise<ExecutionWithDetails | null> {
   // Validate execution exists and user owns it
   const execution = await prisma.execution.findFirst({
     where: { id, userId },
@@ -412,7 +410,10 @@ export async function getExecutionById(id: string, userId: string): Promise<Exec
   } as ExecutionWithDetails;
 }
 
-export async function retryExecution(executionId: string, userId: string): Promise<Execution> {
+export async function retryExecution(
+  executionId: string,
+  userId: string
+): Promise<Execution> {
   // Validate execution exists and user owns it
   const existingExecution = await prisma.execution.findFirst({
     where: { id: executionId, userId },
@@ -443,7 +444,10 @@ export async function retryExecution(executionId: string, userId: string): Promi
 }
 
 // Additional helper functions
-export async function getExecutionStats(userId: string, dateRange?: { from: Date; to: Date }) {
+export async function getExecutionStats(
+  userId: string,
+  dateRange?: { from: Date; to: Date }
+) {
   const where = {
     userId,
     ...(dateRange && {
@@ -472,7 +476,10 @@ export async function getExecutionStats(userId: string, dateRange?: { from: Date
   };
 }
 
-export async function deleteExecution(executionId: string, userId: string): Promise<void> {
+export async function deleteExecution(
+  executionId: string,
+  userId: string
+): Promise<void> {
   // Verify user owns the execution
   const execution = await prisma.execution.findFirst({
     where: { id: executionId, userId },

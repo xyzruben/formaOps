@@ -10,9 +10,9 @@ describe('RetryManager', () => {
   describe('Basic Retry Logic', () => {
     it('should succeed on first attempt when operation succeeds', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       const result = await retryManager.executeWithRetry(operation);
-      
+
       expect(result.success).toBe(true);
       expect(result.result).toBe('success');
       expect(result.attempts).toBe(1);
@@ -21,13 +21,14 @@ describe('RetryManager', () => {
     });
 
     it('should retry on retryable errors', async () => {
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockRejectedValueOnce(new Error('ECONNRESET'))
         .mockRejectedValueOnce(new Error('TIMEOUT'))
         .mockResolvedValue('success');
-      
+
       const result = await retryManager.executeWithRetry(operation);
-      
+
       expect(result.success).toBe(true);
       expect(result.result).toBe('success');
       expect(result.attempts).toBe(3);
@@ -38,9 +39,11 @@ describe('RetryManager', () => {
     it('should fail after max attempts', async () => {
       const error = new Error('RATE_LIMIT_EXCEEDED');
       const operation = jest.fn().mockRejectedValue(error);
-      
-      const result = await retryManager.executeWithRetry(operation, { maxAttempts: 2 });
-      
+
+      const result = await retryManager.executeWithRetry(operation, {
+        maxAttempts: 2,
+      });
+
       expect(result.success).toBe(false);
       expect(result.error).toBe(error);
       expect(result.attempts).toBe(2);
@@ -50,9 +53,9 @@ describe('RetryManager', () => {
     it('should not retry non-retryable errors', async () => {
       const error = new Error('VALIDATION_ERROR');
       const operation = jest.fn().mockRejectedValue(error);
-      
+
       const result = await retryManager.executeWithRetry(operation);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBe(error);
       expect(result.attempts).toBe(1);
@@ -62,30 +65,30 @@ describe('RetryManager', () => {
 
   describe('Exponential Backoff', () => {
     it('should increase delay exponentially', async () => {
-      const operation = jest.fn()
+      const operation = jest
+        .fn()
         .mockRejectedValueOnce(new Error('TIMEOUT'))
         .mockRejectedValueOnce(new Error('TIMEOUT'))
         .mockResolvedValue('success');
-      
+
       const config = {
         baseDelayMs: 100,
         backoffMultiplier: 2,
         jitterMs: 0, // Remove jitter for predictable testing
       };
-      
+
       const startTime = Date.now();
       const result = await retryManager.executeWithRetry(operation, config);
       const endTime = Date.now();
-      
+
       expect(result.success).toBe(true);
       expect(result.totalDelayMs).toBeGreaterThanOrEqual(300); // 100 + 200
       expect(endTime - startTime).toBeGreaterThanOrEqual(300);
     });
 
     it('should respect maximum delay limit', async () => {
-      const operation = jest.fn()
-        .mockRejectedValue(new Error('TIMEOUT'));
-      
+      const operation = jest.fn().mockRejectedValue(new Error('TIMEOUT'));
+
       const config = {
         maxAttempts: 5,
         baseDelayMs: 1000,
@@ -93,9 +96,9 @@ describe('RetryManager', () => {
         backoffMultiplier: 3,
         jitterMs: 0,
       };
-      
+
       const result = await retryManager.executeWithRetry(operation, config);
-      
+
       // Even with high backoff multiplier, should not exceed maxDelayMs per retry
       expect(result.totalDelayMs).toBeLessThan(8000); // 4 retries * 2000ms max
     });
@@ -104,9 +107,9 @@ describe('RetryManager', () => {
   describe('Circuit Breaker', () => {
     it('should execute operation when system is not overloaded', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      
+
       const result = await retryManager.executeWithCircuitBreaker(operation);
-      
+
       expect(result).toBe('success');
       expect(operation).toHaveBeenCalledTimes(1);
     });
@@ -117,12 +120,13 @@ describe('RetryManager', () => {
         isOverloaded: true,
         activeOperations: 100,
       });
-      
+
       const operation = jest.fn().mockResolvedValue('success');
-      
-      await expect(retryManager.executeWithCircuitBreaker(operation))
-        .rejects.toThrow('Circuit breaker open - system overloaded');
-      
+
+      await expect(
+        retryManager.executeWithCircuitBreaker(operation)
+      ).rejects.toThrow('Circuit breaker open - system overloaded');
+
       expect(operation).not.toHaveBeenCalled();
     });
   });
@@ -147,7 +151,7 @@ describe('RetryManager', () => {
         jitterMs: 1000,
         retryableErrors: [
           'RATE_LIMIT_EXCEEDED',
-          'SERVICE_UNAVAILABLE', 
+          'SERVICE_UNAVAILABLE',
           'TIMEOUT',
           'INTERNAL_ERROR',
           'AI_ERROR',
@@ -162,18 +166,20 @@ describe('RetryManager', () => {
     it('should identify retryable errors correctly', async () => {
       const retryableErrors = [
         'ECONNRESET',
-        'RATE_LIMIT_EXCEEDED', 
+        'RATE_LIMIT_EXCEEDED',
         'SERVICE_UNAVAILABLE',
         'TIMEOUT',
       ];
-      
+
       for (const errorType of retryableErrors) {
         const operation = jest.fn().mockRejectedValue(new Error(errorType));
-        const result = await retryManager.executeWithRetry(operation, { maxAttempts: 2 });
-        
+        const result = await retryManager.executeWithRetry(operation, {
+          maxAttempts: 2,
+        });
+
         expect(result.attempts).toBe(2); // Should retry once
         expect(operation).toHaveBeenCalledTimes(2);
-        
+
         // Reset mock
         operation.mockClear();
       }
@@ -186,14 +192,14 @@ describe('RetryManager', () => {
         'NOT_FOUND',
         'BAD_REQUEST',
       ];
-      
+
       for (const errorType of nonRetryableErrors) {
         const operation = jest.fn().mockRejectedValue(new Error(errorType));
         const result = await retryManager.executeWithRetry(operation);
-        
+
         expect(result.attempts).toBe(1); // Should not retry
         expect(operation).toHaveBeenCalledTimes(1);
-        
+
         // Reset mock
         operation.mockClear();
       }

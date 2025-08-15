@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '../../../lib/auth/server';
-import { getExecutionHistory, type ExecutionFilters } from '../../../lib/database/queries';
+import {
+  getExecutionHistory,
+  type ExecutionFilters,
+} from '../../../lib/database/queries';
 import { handleApiError } from '../../../lib/utils/error-handler';
 
 const ExecutionsQuerySchema = z.object({
   page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(100).default(20),
-  status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED']).optional(),
+  status: z
+    .enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED'])
+    .optional(),
   promptId: z.string().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
@@ -17,7 +22,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await requireAuth();
     const { searchParams } = new URL(request.url);
-    
+
     const query = ExecutionsQuerySchema.parse({
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
@@ -44,7 +49,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       page: query.page,
       limit: query.limit,
     };
-    
+
     // Add date range filter if provided
     if (options.from || options.to) {
       filters.dateRange = {

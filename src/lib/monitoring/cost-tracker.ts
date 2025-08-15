@@ -12,12 +12,15 @@ export interface CostMetrics {
     totalOutput: number;
     totalTokens: number;
   };
-  modelBreakdown: Record<string, {
-    executions: number;
-    costUsd: number;
-    inputTokens: number;
-    outputTokens: number;
-  }>;
+  modelBreakdown: Record<
+    string,
+    {
+      executions: number;
+      costUsd: number;
+      inputTokens: number;
+      outputTokens: number;
+    }
+  >;
   dailyTrend: Array<{
     date: string;
     executions: number;
@@ -48,12 +51,15 @@ export interface CostSummary {
   totalCost: number;
   totalExecutions: number;
   avgCostPerExecution: number;
-  modelBreakdown: Record<string, {
-    executions: number;
-    costUsd: number;
-    inputTokens: number;
-    outputTokens: number;
-  }>;
+  modelBreakdown: Record<
+    string,
+    {
+      executions: number;
+      costUsd: number;
+      inputTokens: number;
+      outputTokens: number;
+    }
+  >;
   dateRange: DateRange;
 }
 
@@ -62,14 +68,20 @@ export class CostTracker {
    * Get model costs from configuration
    * Falls back to hardcoded values if config is not available
    */
-  private getConfiguredModelCosts(): Record<string, { input: number; output: number }> {
+  private getConfiguredModelCosts(): Record<
+    string,
+    { input: number; output: number }
+  > {
     try {
       // Try to get costs from configuration
       const config = openAIConfig.getConfig();
       return config.costConfig;
     } catch (error) {
       // Fallback to hardcoded costs if config fails
-      console.warn('Failed to load cost configuration, using fallback values:', error);
+      console.warn(
+        'Failed to load cost configuration, using fallback values:',
+        error
+      );
       return {
         'gpt-3.5-turbo': { input: 0.0015, output: 0.002 },
         'gpt-4': { input: 0.03, output: 0.06 },
@@ -80,26 +92,35 @@ export class CostTracker {
 
   public calculateExecutionCost(tokenUsage: TokenUsage): number {
     const modelCosts = this.getConfiguredModelCosts();
-    const costs = modelCosts[tokenUsage.model || 'gpt-3.5-turbo'] || modelCosts['gpt-3.5-turbo'];
-    
+    const costs =
+      modelCosts[tokenUsage.model || 'gpt-3.5-turbo'] ||
+      modelCosts['gpt-3.5-turbo'];
+
     return (
-      (tokenUsage.input * costs.input / 1000) +
-      (tokenUsage.output * costs.output / 1000)
+      (tokenUsage.input * costs.input) / 1000 +
+      (tokenUsage.output * costs.output) / 1000
     );
   }
 
   // New methods for Task 5
-  public calculateOpenAICost(tokens: { inputTokens: number; outputTokens: number; totalTokens: number }, model: string): number {
+  public calculateOpenAICost(
+    tokens: { inputTokens: number; outputTokens: number; totalTokens: number },
+    model: string
+  ): number {
     const modelCosts = this.getConfiguredModelCosts();
     const costs = modelCosts[model] || modelCosts['gpt-3.5-turbo'];
-    
+
     return (
-      (tokens.inputTokens * costs.input / 1000) +
-      (tokens.outputTokens * costs.output / 1000)
+      (tokens.inputTokens * costs.input) / 1000 +
+      (tokens.outputTokens * costs.output) / 1000
     );
   }
 
-  public async trackExecution(executionId: string, cost: number, tokens: { inputTokens: number; outputTokens: number; totalTokens: number }): Promise<void> {
+  public async trackExecution(
+    executionId: string,
+    cost: number,
+    tokens: { inputTokens: number; outputTokens: number; totalTokens: number }
+  ): Promise<void> {
     // Update the execution record with cost information
     await prisma.execution.update({
       where: { id: executionId },
@@ -128,8 +149,12 @@ export class CostTracker {
     });
   }
 
-  public async getExecutionCosts(userId: string, dateRange?: DateRange): Promise<CostSummary> {
-    const fromDate = dateRange?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
+  public async getExecutionCosts(
+    userId: string,
+    dateRange?: DateRange
+  ): Promise<CostSummary> {
+    const fromDate =
+      dateRange?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
     const toDate = dateRange?.to || new Date();
 
     // Get executions within date range
@@ -151,17 +176,21 @@ export class CostTracker {
     });
 
     // Calculate totals
-    const totalCost = executions.reduce((sum, exec) => sum + (exec.costUsd?.toNumber() || 0), 0);
+    const totalCost = executions.reduce(
+      (sum, exec) => sum + (exec.costUsd?.toNumber() || 0),
+      0
+    );
     const totalExecutions = executions.length;
-    const avgCostPerExecution = totalExecutions > 0 ? totalCost / totalExecutions : 0;
+    const avgCostPerExecution =
+      totalExecutions > 0 ? totalCost / totalExecutions : 0;
 
     // Group by model for breakdown
     const modelBreakdown: Record<string, any> = {};
-    
+
     for (const exec of executions) {
       const tokenData = exec.tokenUsage as any;
       const model = tokenData?.model || 'unknown';
-      
+
       if (!modelBreakdown[model]) {
         modelBreakdown[model] = {
           executions: 0,
@@ -170,7 +199,7 @@ export class CostTracker {
           outputTokens: 0,
         };
       }
-      
+
       modelBreakdown[model].executions += 1;
       modelBreakdown[model].costUsd += exec.costUsd?.toNumber() || 0;
       modelBreakdown[model].inputTokens += tokenData?.input || 0;
@@ -189,7 +218,7 @@ export class CostTracker {
   public getModelCosts(model: string): TokenCosts {
     const modelCosts = this.getConfiguredModelCosts();
     const costs = modelCosts[model] || modelCosts['gpt-3.5-turbo'];
-    
+
     return {
       model,
       inputCostPer1k: costs.input,
@@ -197,24 +226,29 @@ export class CostTracker {
     };
   }
 
-  public async getDailyCostTrend(userId: string, days: number = 7): Promise<Array<{
-    date: string;
-    executions: number;
-    costUsd: number;
-    inputTokens: number;
-    outputTokens: number;
-  }>> {
+  public async getDailyCostTrend(
+    userId: string,
+    days: number = 7
+  ): Promise<
+    Array<{
+      date: string;
+      executions: number;
+      costUsd: number;
+      inputTokens: number;
+      outputTokens: number;
+    }>
+  > {
     const trend = [];
     const now = new Date();
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
-      
+
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
-      
+
       const dayExecutions = await prisma.execution.findMany({
         where: {
           userId,
@@ -229,7 +263,7 @@ export class CostTracker {
           tokenUsage: true,
         },
       });
-      
+
       const dayStats = dayExecutions.reduce(
         (acc, exec) => {
           const tokenData = exec.tokenUsage as any;
@@ -241,25 +275,30 @@ export class CostTracker {
         },
         { executions: 0, costUsd: 0, inputTokens: 0, outputTokens: 0 }
       );
-      
+
       trend.push({
         date: date.toISOString().split('T')[0],
         ...dayStats,
       });
     }
-    
+
     return trend;
   }
 
-  public async getTopCostlyPrompts(userId: string, limit: number = 10): Promise<Array<{
-    promptId: string;
-    promptName: string;
-    executions: number;
-    totalCost: number;
-    avgCost: number;
-    totalInputTokens: number;
-    totalOutputTokens: number;
-  }>> {
+  public async getTopCostlyPrompts(
+    userId: string,
+    limit: number = 10
+  ): Promise<
+    Array<{
+      promptId: string;
+      promptName: string;
+      executions: number;
+      totalCost: number;
+      avgCost: number;
+      totalInputTokens: number;
+      totalOutputTokens: number;
+    }>
+  > {
     const results = await prisma.execution.groupBy({
       by: ['promptId'],
       where: {
@@ -272,7 +311,7 @@ export class CostTracker {
 
     // Get detailed information for each prompt
     const promptDetails = await Promise.all(
-      results.map(async (result) => {
+      results.map(async result => {
         const prompt = await prisma.prompt.findUnique({
           where: { id: result.promptId },
           select: { name: true },
@@ -315,10 +354,13 @@ export class CostTracker {
       .slice(0, limit);
   }
 
-  public async getUserCostMetrics(userId: string, days = 30): Promise<CostMetrics> {
+  public async getUserCostMetrics(
+    userId: string,
+    days = 30
+  ): Promise<CostMetrics> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -337,15 +379,17 @@ export class CostTracker {
     });
 
     // Calculate total metrics
-    const totalCostUsd = executions.reduce((sum, exec) => 
-      sum + (exec.costUsd?.toNumber() || 0), 0
+    const totalCostUsd = executions.reduce(
+      (sum, exec) => sum + (exec.costUsd?.toNumber() || 0),
+      0
     );
 
     const todayCostUsd = executions
       .filter(exec => exec.createdAt >= today)
       .reduce((sum, exec) => sum + (exec.costUsd?.toNumber() || 0), 0);
 
-    const avgCostPerExecution = executions.length > 0 ? totalCostUsd / executions.length : 0;
+    const avgCostPerExecution =
+      executions.length > 0 ? totalCostUsd / executions.length : 0;
 
     // Calculate token usage
     const tokenUsage = executions.reduce(
@@ -366,7 +410,7 @@ export class CostTracker {
     executions.forEach(exec => {
       const usage = exec.tokenUsage as any;
       const model = usage?.model || 'unknown';
-      
+
       if (!modelBreakdown[model]) {
         modelBreakdown[model] = {
           executions: 0,
@@ -375,7 +419,7 @@ export class CostTracker {
           outputTokens: 0,
         };
       }
-      
+
       modelBreakdown[model].executions += 1;
       modelBreakdown[model].costUsd += exec.costUsd?.toNumber() || 0;
       modelBreakdown[model].inputTokens += usage?.input || 0;
@@ -388,18 +432,21 @@ export class CostTracker {
       const date = new Date();
       date.setDate(date.getDate() - i);
       date.setHours(0, 0, 0, 0);
-      
+
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
-      
-      const dayExecutions = executions.filter(exec => 
-        exec.createdAt >= date && exec.createdAt < nextDate
+
+      const dayExecutions = executions.filter(
+        exec => exec.createdAt >= date && exec.createdAt < nextDate
       );
-      
+
       dailyTrend.push({
         date: date.toISOString().split('T')[0],
         executions: dayExecutions.length,
-        costUsd: dayExecutions.reduce((sum, exec) => sum + (exec.costUsd?.toNumber() || 0), 0),
+        costUsd: dayExecutions.reduce(
+          (sum, exec) => sum + (exec.costUsd?.toNumber() || 0),
+          0
+        ),
       });
     }
 
@@ -413,15 +460,18 @@ export class CostTracker {
     };
   }
 
-  public async checkBudgetAlerts(userId: string, budgets: {
-    dailyLimit?: number;
-    monthlyLimit?: number;
-    executionLimit?: number;
-  }): Promise<BudgetAlert[]> {
+  public async checkBudgetAlerts(
+    userId: string,
+    budgets: {
+      dailyLimit?: number;
+      monthlyLimit?: number;
+      executionLimit?: number;
+    }
+  ): Promise<BudgetAlert[]> {
     const alerts: BudgetAlert[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
     // Daily budget check
@@ -435,8 +485,9 @@ export class CostTracker {
         select: { costUsd: true },
       });
 
-      const todayCost = todayExecutions.reduce((sum, exec) => 
-        sum + (exec.costUsd?.toNumber() || 0), 0
+      const todayCost = todayExecutions.reduce(
+        (sum, exec) => sum + (exec.costUsd?.toNumber() || 0),
+        0
       );
 
       const percentage = (todayCost / budgets.dailyLimit) * 100;
@@ -463,8 +514,9 @@ export class CostTracker {
         select: { costUsd: true },
       });
 
-      const monthCost = monthExecutions.reduce((sum, exec) => 
-        sum + (exec.costUsd?.toNumber() || 0), 0
+      const monthCost = monthExecutions.reduce(
+        (sum, exec) => sum + (exec.costUsd?.toNumber() || 0),
+        0
       );
 
       const percentage = (monthCost / budgets.monthlyLimit) * 100;
@@ -483,14 +535,19 @@ export class CostTracker {
     return alerts;
   }
 
-  public async getTopExpensivePrompts(userId: string, limit = 10): Promise<Array<{
-    promptId: string;
-    promptName: string;
-    executions: number;
-    totalCost: number;
-    avgCost: number;
-    totalTokens: number;
-  }>> {
+  public async getTopExpensivePrompts(
+    userId: string,
+    limit = 10
+  ): Promise<
+    Array<{
+      promptId: string;
+      promptName: string;
+      executions: number;
+      totalCost: number;
+      avgCost: number;
+      totalTokens: number;
+    }>
+  > {
     const results = await prisma.execution.groupBy({
       by: ['promptId'],
       where: {
@@ -503,7 +560,7 @@ export class CostTracker {
 
     // Get prompt names and calculate averages
     const promptsWithDetails = await Promise.all(
-      results.map(async (result) => {
+      results.map(async result => {
         const prompt = await prisma.prompt.findUnique({
           where: { id: result.promptId },
           select: { name: true },
@@ -540,7 +597,7 @@ export class CostTracker {
   }
 
   public estimateExecutionCost(
-    templateLength: number, 
+    templateLength: number,
     expectedOutputLength: number,
     model = 'gpt-3.5-turbo'
   ): {
@@ -554,11 +611,10 @@ export class CostTracker {
 
     const modelCosts = this.getConfiguredModelCosts();
     const costs = modelCosts[model] || modelCosts['gpt-3.5-turbo'];
-    
-    const estimatedCost = (
-      (estimatedInputTokens * costs.input / 1000) +
-      (estimatedOutputTokens * costs.output / 1000)
-    );
+
+    const estimatedCost =
+      (estimatedInputTokens * costs.input) / 1000 +
+      (estimatedOutputTokens * costs.output) / 1000;
 
     return {
       estimatedInputTokens,

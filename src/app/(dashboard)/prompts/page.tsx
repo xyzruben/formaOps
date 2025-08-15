@@ -21,11 +21,11 @@ export default function PromptsPage(): JSX.Element {
   // In Phase 3, we'll add the actual create/edit forms
   return (
     <div className="container mx-auto py-8">
-      <PromptList 
+      <PromptList
         onCreatePrompt={handleCreatePrompt}
         onEditPrompt={handleEditPrompt}
       />
-      
+
       {showCreateForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
@@ -42,7 +42,7 @@ export default function PromptsPage(): JSX.Element {
           </div>
         </div>
       )}
-      
+
       {editingPromptId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">

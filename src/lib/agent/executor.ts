@@ -38,13 +38,13 @@ export class AIExecutor {
 
   constructor() {
     const apiKey = process.env.OPENAI_API_KEY;
-    
+
     if (!apiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
     this.openai = new OpenAI({ apiKey });
-    
+
     // Initialize available models
     this.initializeModels();
   }
@@ -72,17 +72,19 @@ export class AIExecutor {
 
     // Schedule execution through priority manager
     const scheduling = await priorityManager.scheduleExecution(job);
-    
+
     if (!scheduling.shouldExecuteNow) {
-      throw new Error(`Execution queued. Position: ${scheduling.queuePosition}, Estimated wait: ${scheduling.estimatedWaitTime}ms`);
+      throw new Error(
+        `Execution queued. Position: ${scheduling.queuePosition}, Estimated wait: ${scheduling.estimatedWaitTime}ms`
+      );
     }
 
     try {
       const result = await this.executePrompt(template, inputs, options);
-      
+
       // Mark execution as complete
       priorityManager.completeExecution(executionId, true);
-      
+
       return {
         ...result,
         executionId,
@@ -102,28 +104,34 @@ export class AIExecutor {
   ): Promise<Omit<ExecutionResult, 'executionId' | 'latencyMs'>> {
     const modelName = options.model || 'gpt-3.5-turbo';
     const modelConfig = this.models.get(modelName);
-    
+
     if (!modelConfig) {
       throw new Error(`Unsupported model: ${modelName}`);
     }
 
     // Process template with advanced variable substitution
     const processedPrompt = this.processTemplate(template, inputs);
-    
+
     try {
-      const completion = await this.openai.chat.completions.create({
-        model: modelName,
-        messages: [
-          {
-            role: 'user',
-            content: processedPrompt,
-          },
-        ],
-        temperature: options.temperature || 0.7,
-        max_tokens: Math.min(options.maxTokens || modelConfig.maxTokens, modelConfig.maxTokens),
-      }, {
-        timeout: options.timeout || 30000,
-      });
+      const completion = await this.openai.chat.completions.create(
+        {
+          model: modelName,
+          messages: [
+            {
+              role: 'user',
+              content: processedPrompt,
+            },
+          ],
+          temperature: options.temperature || 0.7,
+          max_tokens: Math.min(
+            options.maxTokens || modelConfig.maxTokens,
+            modelConfig.maxTokens
+          ),
+        },
+        {
+          timeout: options.timeout || 30000,
+        }
+      );
 
       const output = completion.choices[0]?.message?.content || '';
       const usage = completion.usage;
@@ -133,7 +141,11 @@ export class AIExecutor {
       }
 
       // Calculate cost
-      const costUsd = this.calculateCost(usage.prompt_tokens, usage.completion_tokens, modelConfig);
+      const costUsd = this.calculateCost(
+        usage.prompt_tokens,
+        usage.completion_tokens,
+        modelConfig
+      );
 
       return {
         output,
@@ -188,26 +200,37 @@ export class AIExecutor {
     });
   }
 
-  private processTemplate(template: string, inputs: Record<string, unknown>): string {
+  private processTemplate(
+    template: string,
+    inputs: Record<string, unknown>
+  ): string {
     let processed = template;
 
     // Handle array iteration (simple Handlebars-like syntax)
-    processed = processed.replace(/{{#each\s+(\w+)}}([\s\S]*?){{\/each}}/g, (match, arrayName, content) => {
-      const array = inputs[arrayName];
-      if (!Array.isArray(array)) {
-        return '';
+    processed = processed.replace(
+      /{{#each\s+(\w+)}}([\s\S]*?){{\/each}}/g,
+      (match, arrayName, content) => {
+        const array = inputs[arrayName];
+        if (!Array.isArray(array)) {
+          return '';
+        }
+
+        return array
+          .map(item => {
+            return content.replace(/{{this}}/g, String(item));
+          })
+          .join('\n');
       }
-      
-      return array.map(item => {
-        return content.replace(/{{this}}/g, String(item));
-      }).join('\n');
-    });
+    );
 
     // Handle conditional blocks
-    processed = processed.replace(/{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g, (match, varName, content) => {
-      const value = inputs[varName];
-      return value ? content : '';
-    });
+    processed = processed.replace(
+      /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g,
+      (match, varName, content) => {
+        const value = inputs[varName];
+        return value ? content : '';
+      }
+    );
 
     // Handle simple variable substitution
     Object.entries(inputs).forEach(([key, value]) => {
@@ -218,10 +241,14 @@ export class AIExecutor {
     return processed;
   }
 
-  private calculateCost(inputTokens: number, outputTokens: number, model: ModelConfig): number {
+  private calculateCost(
+    inputTokens: number,
+    outputTokens: number,
+    model: ModelConfig
+  ): number {
     return (
-      (inputTokens * model.costPer1kInput / 1000) +
-      (outputTokens * model.costPer1kOutput / 1000)
+      (inputTokens * model.costPer1kInput) / 1000 +
+      (outputTokens * model.costPer1kOutput) / 1000
     );
   }
 
@@ -232,8 +259,10 @@ export class AIExecutor {
       'gpt-4': 8000,
       'gpt-4-turbo-preview': 5000,
     };
-    
-    return baseTimes[model as keyof typeof baseTimes] || baseTimes['gpt-3.5-turbo'];
+
+    return (
+      baseTimes[model as keyof typeof baseTimes] || baseTimes['gpt-3.5-turbo']
+    );
   }
 }
 

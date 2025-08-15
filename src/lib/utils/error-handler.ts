@@ -65,7 +65,12 @@ export function handleApiError(error: unknown): {
   statusCode: number;
 } {
   // Handle custom app errors
-  if (error && typeof error === 'object' && 'code' in error && 'statusCode' in error) {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    'statusCode' in error
+  ) {
     const appError = error as AppError;
     return {
       error: appError.message,
@@ -78,7 +83,7 @@ export function handleApiError(error: unknown): {
   // Handle Prisma errors
   if (error && typeof error === 'object' && 'code' in error) {
     const prismaError = error as { code: string; message: string };
-    
+
     switch (prismaError.code) {
       case 'P2002':
         return {
@@ -104,7 +109,7 @@ export function handleApiError(error: unknown): {
   // Handle OpenAI errors
   if (error && typeof error === 'object' && 'status' in error) {
     const openaiError = error as { status: number; message: string };
-    
+
     if (openaiError.status === 429) {
       return {
         error: 'AI service rate limit exceeded',
@@ -112,7 +117,7 @@ export function handleApiError(error: unknown): {
         statusCode: 429,
       };
     }
-    
+
     return {
       error: 'AI service error',
       code: 'AI_ERROR',

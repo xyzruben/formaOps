@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 import { usePrompts } from '@/hooks/use-prompts';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
@@ -14,11 +20,16 @@ interface PromptListProps {
   onEditPrompt?: (id: string) => void;
 }
 
-export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): JSX.Element {
+export function PromptList({
+  onCreatePrompt,
+  onEditPrompt,
+}: PromptListProps): JSX.Element {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | undefined>(undefined);
-  
+  const [status, setStatus] = useState<
+    'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | undefined
+  >(undefined);
+
   const { prompts, loading, error, deletePrompt } = usePrompts({
     search: search || undefined,
     status,
@@ -59,9 +70,7 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Prompts</h2>
-        <Button onClick={onCreatePrompt}>
-          Create Prompt
-        </Button>
+        <Button onClick={onCreatePrompt}>Create Prompt</Button>
       </div>
 
       {/* Filters */}
@@ -70,7 +79,7 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
           <Input
             placeholder="Search prompts..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
           />
         </div>
         <div className="flex gap-2">
@@ -111,16 +120,17 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
           <CardContent className="flex items-center justify-center p-12">
             <div className="text-center space-y-2">
               <p className="text-muted-foreground">No prompts found</p>
-              <Button onClick={onCreatePrompt}>
-                Create your first prompt
-              </Button>
+              <Button onClick={onCreatePrompt}>Create your first prompt</Button>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {prompts.map((prompt) => (
-            <Card key={prompt.id} className="group hover:shadow-md transition-shadow cursor-pointer">
+          {prompts.map(prompt => (
+            <Card
+              key={prompt.id}
+              className="group hover:shadow-md transition-shadow cursor-pointer"
+            >
               <div onClick={() => handleViewPrompt(prompt.id)}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
@@ -129,10 +139,13 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
                         {prompt.name}
                       </CardTitle>
                       <div className="flex items-center gap-2">
-                        <Badge 
+                        <Badge
                           variant={
-                            prompt.status === 'PUBLISHED' ? 'default' :
-                            prompt.status === 'DRAFT' ? 'secondary' : 'outline'
+                            prompt.status === 'PUBLISHED'
+                              ? 'default'
+                              : prompt.status === 'DRAFT'
+                                ? 'secondary'
+                                : 'outline'
                           }
                           className="text-xs"
                         >
@@ -156,13 +169,13 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
                   </div>
                 </CardContent>
               </div>
-              
+
               <CardContent className="pt-0">
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     size="sm"
                     variant="default"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleViewPrompt(prompt.id);
                     }}
@@ -172,7 +185,7 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       onEditPrompt?.(prompt.id);
                     }}
@@ -182,7 +195,7 @@ export function PromptList({ onCreatePrompt, onEditPrompt }: PromptListProps): J
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleDelete(prompt.id);
                     }}

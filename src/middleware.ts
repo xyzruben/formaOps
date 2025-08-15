@@ -36,27 +36,30 @@ function getClientId(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
   const ip = forwarded?.split(',')[0] || realIp || 'unknown';
-  
+
   // Add user agent for better identification (optional)
   const userAgent = request.headers.get('user-agent') || 'unknown';
-  
+
   return `${ip}:${userAgent.substring(0, 50)}`;
 }
 
-function isRateLimited(clientId: string, config: { limit: number; window: number }): boolean {
+function isRateLimited(
+  clientId: string,
+  config: { limit: number; window: number }
+): boolean {
   const now = Date.now();
   const clientData = rateLimitMap.get(clientId);
-  
+
   if (!clientData || now > clientData.resetTime) {
     // Reset or initialize
     rateLimitMap.set(clientId, { count: 1, resetTime: now + config.window });
     return false;
   }
-  
+
   if (clientData.count >= config.limit) {
     return true;
   }
-  
+
   clientData.count++;
   return false;
 }
@@ -75,7 +78,7 @@ setInterval(cleanupRateLimit, 10 * 60 * 1000);
 
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
-  
+
   // Skip middleware for static files and certain paths
   if (
     pathname.startsWith('/_next/') ||
@@ -85,21 +88,21 @@ export function middleware(request: NextRequest): NextResponse {
   ) {
     return NextResponse.next();
   }
-  
+
   // Security checks
   const response = NextResponse.next();
-  
+
   // Add security headers
   Object.entries(securityHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
-  
+
   // CORS for API routes
   if (pathname.startsWith('/api/')) {
     // Rate limiting for API routes
     const clientId = getClientId(request);
     const rateLimit = getRateLimit(pathname);
-    
+
     if (isRateLimited(clientId, rateLimit)) {
       return new NextResponse(
         JSON.stringify({
@@ -117,7 +120,7 @@ export function middleware(request: NextRequest): NextResponse {
         }
       );
     }
-    
+
     // CORS headers
     if (process.env.NODE_ENV === 'development') {
       response.headers.set('Access-Control-Allow-Origin', '*');
@@ -130,13 +133,13 @@ export function middleware(request: NextRequest): NextResponse {
         'Content-Type, Authorization'
       );
     }
-    
+
     // Handle preflight requests
     if (request.method === 'OPTIONS') {
       return new NextResponse(null, { status: 200, headers: response.headers });
     }
   }
-  
+
   // Content Security Policy
   const cspHeader = `
     default-src 'self';
@@ -149,34 +152,38 @@ export function middleware(request: NextRequest): NextResponse {
     base-uri 'self';
     form-action 'self';
     upgrade-insecure-requests;
-  `.replace(/\s{2,}/g, ' ').trim();
-  
+  `
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
   response.headers.set('Content-Security-Policy', cspHeader);
-  
+
   // Additional security for production
   if (process.env.NODE_ENV === 'production') {
     // Block common attack patterns
     const suspiciousPatterns = [
-      /\.\.\//,  // Path traversal
-      /<script/i,  // XSS attempts
-      /union.*select/i,  // SQL injection
-      /javascript:/i,  // Javascript protocol
-      /vbscript:/i,  // VBScript protocol
+      /\.\.\//, // Path traversal
+      /<script/i, // XSS attempts
+      /union.*select/i, // SQL injection
+      /javascript:/i, // Javascript protocol
+      /vbscript:/i, // VBScript protocol
     ];
-    
+
     const url = request.url;
-    const hasUserInput = request.nextUrl.searchParams.toString() || 
-                        request.headers.get('referer') || '';
-    
+    const hasUserInput =
+      request.nextUrl.searchParams.toString() ||
+      request.headers.get('referer') ||
+      '';
+
     for (const pattern of suspiciousPatterns) {
       if (pattern.test(url) || pattern.test(hasUserInput)) {
-        return new NextResponse('Blocked', { 
+        return new NextResponse('Blocked', {
           status: 403,
           headers: securityHeaders,
         });
       }
     }
-    
+
     // Block requests with suspicious user agents
     const userAgent = request.headers.get('user-agent') || '';
     const suspiciousUserAgents = [
@@ -187,7 +194,7 @@ export function middleware(request: NextRequest): NextResponse {
       /wget/i,
       /curl/i,
     ];
-    
+
     // Allow legitimate bots (optional - comment out if you want to block all bots)
     const legitimateBots = [
       /googlebot/i,
@@ -196,18 +203,22 @@ export function middleware(request: NextRequest): NextResponse {
       /twitterbot/i,
       /facebookexternalhit/i,
     ];
-    
-    const isSuspicious = suspiciousUserAgents.some(pattern => pattern.test(userAgent));
-    const isLegitimate = legitimateBots.some(pattern => pattern.test(userAgent));
-    
+
+    const isSuspicious = suspiciousUserAgents.some(pattern =>
+      pattern.test(userAgent)
+    );
+    const isLegitimate = legitimateBots.some(pattern =>
+      pattern.test(userAgent)
+    );
+
     if (isSuspicious && !isLegitimate && pathname.startsWith('/api/')) {
-      return new NextResponse('Blocked', { 
+      return new NextResponse('Blocked', {
         status: 403,
         headers: securityHeaders,
       });
     }
   }
-  
+
   // Request logging for monitoring
   if (process.env.ENABLE_REQUEST_LOGGING === 'true') {
     const requestInfo = {
@@ -217,10 +228,10 @@ export function middleware(request: NextRequest): NextResponse {
       ip: getClientId(request),
       timestamp: new Date().toISOString(),
     };
-    
+
     console.log('Request:', JSON.stringify(requestInfo));
   }
-  
+
   return response;
 }
 

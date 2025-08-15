@@ -8,7 +8,7 @@ describe('PriorityManager', () => {
     const manager = new PriorityManager();
     expect(manager).toBeDefined();
   });
-  
+
   it('should handle execution scheduling', async () => {
     const manager = new PriorityManager();
     const job = {
@@ -19,9 +19,9 @@ describe('PriorityManager', () => {
       type: 'AGENT_OPERATION' as const,
       promptId: 'test-prompt',
       inputs: {},
-      createdAt: new Date()
+      createdAt: new Date(),
     };
-    
+
     const result = await manager.scheduleExecution(job);
     expect(result).toBeDefined();
     expect(typeof result.shouldExecuteNow).toBe('boolean');

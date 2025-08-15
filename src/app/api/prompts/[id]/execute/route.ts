@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '../../../../../lib/auth/server';
-import { getPromptById, createExecution, updateExecution } from '../../../../../lib/database/queries';
+import {
+  getPromptById,
+  createExecution,
+  updateExecution,
+} from '../../../../../lib/database/queries';
 import { openAIClient } from '../../../../../lib/openai/client';
 import { templateEngine } from '../../../../../lib/prompts/template-engine';
 import { schemaValidator } from '../../../../../lib/validation/schema-validator';
 import { logger } from '../../../../../lib/monitoring/logger';
-import { executionErrorHandler, ExecutionError } from '../../../../../lib/execution/error-handler';
+import {
+  executionErrorHandler,
+  ExecutionError,
+} from '../../../../../lib/execution/error-handler';
 
 const ExecutePromptSchema = z.object({
   inputs: z.record(z.unknown()),
@@ -21,9 +28,9 @@ export async function POST(
 ): Promise<NextResponse> {
   const params = await context.params;
   const { id: promptId } = params;
-  
+
   let execution: any = null;
-  
+
   try {
     // Authentication
     const user = await requireAuth();
@@ -53,9 +60,9 @@ export async function POST(
       model: data.model || 'gpt-3.5-turbo',
       priority: 'NORMAL' as const,
     };
-    
+
     execution = await createExecution(user.id, promptId, executionData);
-    
+
     // Log execution start
     await logger.logExecutionStart(execution.id, {
       promptId,
@@ -72,10 +79,10 @@ export async function POST(
     });
 
     // Process template with variables
-    const variableDefinitions = Array.isArray(prompt.variables) 
-      ? prompt.variables as any[] 
+    const variableDefinitions = Array.isArray(prompt.variables)
+      ? (prompt.variables as any[])
       : [];
-      
+
     const templateResult = templateEngine.processTemplate(
       prompt.template,
       data.inputs,
@@ -101,15 +108,15 @@ export async function POST(
     // Execute with OpenAI using error handler and retry logic
     const startTime = Date.now();
     let attemptCount = 0;
-    
+
     const aiResult = await executionErrorHandler.executeWithRetry(
       execution.id,
       async () => {
         attemptCount++;
-        
+
         // Note: Retry count tracking would be implemented via logs/metadata
         // The retryCount field doesn't exist in the current Execution model
-        
+
         return await openAIClient.executePrompt(
           templateResult.processedTemplate,
           {
@@ -142,7 +149,12 @@ export async function POST(
       );
     } catch (validationError) {
       // Log validation error but don't fail the execution
-      await logger.error('Output validation failed', validationError, {}, execution.id);
+      await logger.error(
+        'Output validation failed',
+        validationError,
+        {},
+        execution.id
+      );
     }
 
     // Update execution with successful results
@@ -188,11 +200,10 @@ export async function POST(
       validationStatus: validationResult?.validationStatus || 'SKIPPED',
       validationErrors: validationResult?.errors || [],
     });
-
   } catch (error) {
     // Process error through execution error handler
     let executionError: ExecutionError;
-    
+
     // Check if this is a final error from retry handler
     if ((error as any).executionError) {
       executionError = (error as any).executionError;
@@ -202,8 +213,9 @@ export async function POST(
 
     // Update execution status to FAILED if we have an execution record
     if (execution) {
-      const latencyMs = Date.now() - (execution.startedAt?.getTime() || Date.now());
-      
+      const latencyMs =
+        Date.now() - (execution.startedAt?.getTime() || Date.now());
+
       await updateExecution(execution.id, {
         status: 'FAILED',
         completedAt: new Date(),
@@ -218,16 +230,24 @@ export async function POST(
     }
 
     // Return error response based on execution error type
-    const statusCode = executionError.type === 'VALIDATION_ERROR' ? 400 :
-                      executionError.type === 'RATE_LIMIT' ? 429 :
-                      executionError.type === 'TIMEOUT' ? 408 : 500;
+    const statusCode =
+      executionError.type === 'VALIDATION_ERROR'
+        ? 400
+        : executionError.type === 'RATE_LIMIT'
+          ? 429
+          : executionError.type === 'TIMEOUT'
+            ? 408
+            : 500;
 
-    return NextResponse.json({
-      error: executionError.message,
-      code: executionError.type,
-      retryable: executionError.retryable,
-      retryAfter: executionError.retryAfter,
-      executionId: execution?.id,
-    }, { status: statusCode });
+    return NextResponse.json(
+      {
+        error: executionError.message,
+        code: executionError.type,
+        retryable: executionError.retryable,
+        retryAfter: executionError.retryAfter,
+        executionId: execution?.id,
+      },
+      { status: statusCode }
+    );
   }
 }

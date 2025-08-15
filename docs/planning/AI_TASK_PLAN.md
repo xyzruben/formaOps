@@ -9,12 +9,15 @@ This document breaks down the AI Features Implementation Plan into 18 specific, 
 ## **Phase 1: Core AI Engine (Tasks 1-8)**
 
 ### **Task 1: Implement OpenAI Client Integration**
+
 **Dependencies:** None
 
 **Technical Specifications:**
+
 - **File Path:** `src/lib/openai/client.ts`
 - **Dependencies:** `openai` (already in package.json), `@/lib/monitoring/cost-tracker`, `@/lib/monitoring/logger`
 - **Interfaces:**
+
 ```typescript
 interface OpenAIConfig {
   apiKey: string;
@@ -36,6 +39,7 @@ interface ExecutionResult {
 ```
 
 **Integration Points:**
+
 - Connect to existing cost tracking system in `src/lib/monitoring/cost-tracker.ts`
 - Use existing logger in `src/lib/monitoring/logger.ts`
 - Follow existing error handling patterns from `src/lib/utils/error-handler.ts`
@@ -45,12 +49,14 @@ interface ExecutionResult {
 **API Specifications:** Internal library, no API changes
 
 **Validation Logic:**
+
 - Validate API key format (starts with 'sk-')
 - Validate model is supported OpenAI model
 - Validate maxTokens is between 1-4000
 - Validate temperature is between 0-2
 
 **Success Criteria:**
+
 - OpenAI API calls execute successfully
 - Token usage tracking works
 - Cost calculation integrates with existing monitoring
@@ -59,12 +65,15 @@ interface ExecutionResult {
 ---
 
 ### **Task 2: Implement Template Engine with Variable Injection**
+
 **Dependencies:** Task 1
 
 **Technical Specifications:**
+
 - **File Path:** `src/lib/prompts/template-engine.ts`
 - **Dependencies:** `@/types/database` (existing Prisma types), `zod`
 - **Interfaces:**
+
 ```typescript
 interface TemplateVariable {
   name: string;
@@ -81,6 +90,7 @@ interface TemplateResult {
 ```
 
 **Integration Points:**
+
 - Use existing `Prompt` type from `src/types/database.ts`
 - Integrate with existing variable definitions in database schema
 - Connect to validation system patterns
@@ -90,12 +100,14 @@ interface TemplateResult {
 **API Specifications:** Internal library, no API changes
 
 **Validation Logic:**
+
 - Check all required variables are provided
 - Validate variable types match expected types
 - Sanitize template for injection attacks
 - Validate handlebars syntax {{variable}}
 
 **Success Criteria:**
+
 - Variables inject correctly into templates
 - Missing variables are identified
 - Type validation prevents runtime errors
@@ -104,12 +116,15 @@ interface TemplateResult {
 ---
 
 ### **Task 3: Update Database Schema for AI Execution**
+
 **Dependencies:** None
 
 **Technical Specifications:**
+
 - **File Path:** `prisma/schema.prisma`
 - **Dependencies:** Existing Prisma schema
 - **Schema Changes:**
+
 ```prisma
 model Execution {
   // Add new fields to existing model
@@ -121,7 +136,7 @@ model Execution {
   rawOutput      String?
   validationStatus ValidationStatus @default(PENDING)
   validationErrors Json?
-  
+
   // Add relation to results
   results        ExecutionResult[]
 }
@@ -134,29 +149,32 @@ model ExecutionResult {
   tokenUsage   Json
   costUsd      Decimal   @db.Decimal(10,6)
   createdAt    DateTime  @default(now())
-  
+
   @@map("execution_results")
 }
 
 enum ValidationStatus {
   PENDING
-  PASSED  
+  PASSED
   FAILED
   SKIPPED
 }
 ```
 
 **Integration Points:**
+
 - Extend existing `Execution` model
 - Maintain existing relationships with `User` and `Prompt`
 - Add indexes for performance queries
 
-**Database Changes:** 
+**Database Changes:**
+
 - Add columns to existing `executions` table
 - Create new `execution_results` table
 - Add `ValidationStatus` enum
 
 **Success Criteria:**
+
 - Schema migration runs without errors
 - Existing data remains intact
 - New fields are queryable
@@ -165,12 +183,15 @@ enum ValidationStatus {
 ---
 
 ### **Task 4: Create Prompt Execution API Endpoint**
+
 **Dependencies:** Tasks 1, 2, 3
 
 **Technical Specifications:**
+
 - **File Path:** `src/app/api/prompts/[id]/execute/route.ts`
 - **Dependencies:** `@/lib/openai/client`, `@/lib/prompts/template-engine`, `@/lib/database/client`, `@/lib/auth/server`
 - **Interfaces:**
+
 ```typescript
 interface ExecuteRequest {
   inputs: Record<string, any>;
@@ -194,6 +215,7 @@ interface ExecuteResponse {
 ```
 
 **Integration Points:**
+
 - Use existing authentication from `src/lib/auth/server.ts`
 - Follow existing API route patterns in `src/app/api/`
 - Use existing database client from `src/lib/database/client.ts`
@@ -202,6 +224,7 @@ interface ExecuteResponse {
 **Database Changes:** None (uses schema from Task 3)
 
 **API Specifications:**
+
 - **Method:** POST
 - **Path:** `/api/prompts/[id]/execute`
 - **Auth:** Required (Bearer token)
@@ -209,12 +232,14 @@ interface ExecuteResponse {
 - **Response:** 200 (success), 400 (validation), 401 (auth), 404 (not found), 500 (server error)
 
 **Validation Logic:**
+
 - Validate user owns the prompt
 - Validate required inputs are provided
 - Validate model parameters are within limits
 - Validate prompt exists and is not archived
 
 **Success Criteria:**
+
 - API executes prompts successfully
 - Results are stored in database
 - Authentication works correctly
@@ -223,12 +248,15 @@ interface ExecuteResponse {
 ---
 
 ### **Task 5: Implement Cost Tracking Integration**
+
 **Dependencies:** Task 1
 
 **Technical Specifications:**
+
 - **File Path:** `src/lib/monitoring/cost-tracker.ts` (extend existing)
 - **Dependencies:** Existing cost-tracker implementation
 - **New Methods:**
+
 ```typescript
 interface TokenCosts {
   inputCostPer1k: number;
@@ -238,13 +266,21 @@ interface TokenCosts {
 
 class CostTracker {
   // Add new methods to existing class
-  calculateOpenAICost(tokens: TokenUsage, model: string): number
-  trackExecution(executionId: string, cost: number, tokens: TokenUsage): Promise<void>
-  getExecutionCosts(userId: string, dateRange?: DateRange): Promise<CostSummary>
+  calculateOpenAICost(tokens: TokenUsage, model: string): number;
+  trackExecution(
+    executionId: string,
+    cost: number,
+    tokens: TokenUsage
+  ): Promise<void>;
+  getExecutionCosts(
+    userId: string,
+    dateRange?: DateRange
+  ): Promise<CostSummary>;
 }
 ```
 
 **Integration Points:**
+
 - Extend existing `CostTracker` class
 - Use existing database patterns
 - Connect to existing monitoring infrastructure
@@ -254,11 +290,13 @@ class CostTracker {
 **API Specifications:** Internal library, no API changes
 
 **Validation Logic:**
+
 - Validate token counts are positive integers
 - Validate model exists in cost configuration
 - Validate cost calculations are reasonable
 
 **Success Criteria:**
+
 - Cost calculations are accurate
 - Integration with existing monitoring works
 - Database tracking functions correctly
@@ -267,12 +305,15 @@ class CostTracker {
 ---
 
 ### **Task 6: Create Execution History Database Queries**
+
 **Dependencies:** Task 3
 
 **Technical Specifications:**
+
 - **File Path:** `src/lib/database/queries.ts` (extend existing)
 - **Dependencies:** `@prisma/client`, existing query patterns
 - **New Functions:**
+
 ```typescript
 interface ExecutionFilters {
   userId: string;
@@ -294,12 +335,21 @@ interface PaginatedExecutions {
 }
 
 // Add to existing queries
-export async function getExecutionHistory(filters: ExecutionFilters): Promise<PaginatedExecutions>
-export async function getExecutionById(id: string, userId: string): Promise<ExecutionWithDetails | null>
-export async function retryExecution(executionId: string, userId: string): Promise<Execution>
+export async function getExecutionHistory(
+  filters: ExecutionFilters
+): Promise<PaginatedExecutions>;
+export async function getExecutionById(
+  id: string,
+  userId: string
+): Promise<ExecutionWithDetails | null>;
+export async function retryExecution(
+  executionId: string,
+  userId: string
+): Promise<Execution>;
 ```
 
 **Integration Points:**
+
 - Extend existing `queries.ts` file
 - Use existing Prisma client patterns
 - Follow existing pagination patterns
@@ -310,12 +360,14 @@ export async function retryExecution(executionId: string, userId: string): Promi
 **API Specifications:** Internal library, no API changes
 
 **Validation Logic:**
+
 - Validate user can only access own executions
 - Validate pagination parameters
 - Validate date ranges are logical
 - Validate execution exists before retry
 
 **Success Criteria:**
+
 - Queries return correct data
 - Pagination works efficiently
 - Authorization is enforced
@@ -324,12 +376,15 @@ export async function retryExecution(executionId: string, userId: string): Promi
 ---
 
 ### **Task 7: Create Basic JSON Schema Validation System**
+
 **Dependencies:** Task 3
 
 **Technical Specifications:**
+
 - **File Path:** `src/lib/validation/schema-validator.ts`
 - **Dependencies:** `zod`, `@/lib/database/client`
 - **Interfaces:**
+
 ```typescript
 interface ValidationRule {
   id: string;
@@ -346,17 +401,25 @@ interface ValidationResult {
 }
 
 class SchemaValidator {
-  validateOutput(output: string, rules: ValidationRule[]): Promise<ValidationResult>
-  createValidationRule(promptId: string, rule: Omit<ValidationRule, 'id'>): Promise<ValidationRule>
+  validateOutput(
+    output: string,
+    rules: ValidationRule[]
+  ): Promise<ValidationResult>;
+  createValidationRule(
+    promptId: string,
+    rule: Omit<ValidationRule, 'id'>
+  ): Promise<ValidationRule>;
 }
 ```
 
 **Integration Points:**
+
 - Connect to existing database patterns
 - Use existing error handling
 - Integrate with execution flow
 
 **Database Changes:**
+
 ```sql
 CREATE TABLE validation_rules (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -372,12 +435,14 @@ CREATE TABLE validation_rules (
 **API Specifications:** Internal library, no API changes
 
 **Validation Logic:**
+
 - Validate JSON schema is valid
 - Validate output is parseable JSON (for schema validation)
 - Handle validation errors gracefully
 - Support multiple validation rules per prompt
 
 **Success Criteria:**
+
 - Schema validation works correctly
 - Validation results are stored
 - Integration with executions works
@@ -386,12 +451,15 @@ CREATE TABLE validation_rules (
 ---
 
 ### **Task 8: Create Execution Results API Endpoints**
+
 **Dependencies:** Tasks 4, 6
 
 **Technical Specifications:**
+
 - **File Path:** `src/app/api/executions/route.ts`
 - **Dependencies:** `@/lib/database/queries`, `@/lib/auth/server`
 - **API Endpoints:**
+
 ```typescript
 // GET /api/executions
 interface ExecutionsQuery {
@@ -417,6 +485,7 @@ interface RetryResponse {
 ```
 
 **Integration Points:**
+
 - Use queries from Task 6
 - Follow existing API patterns
 - Use existing authentication
@@ -425,6 +494,7 @@ interface RetryResponse {
 **Database Changes:** None
 
 **API Specifications:**
+
 - **GET /api/executions**: Query parameters for filtering, pagination
 - **GET /api/executions/[id]**: Get single execution details
 - **POST /api/executions/[id]/retry**: Retry failed execution
@@ -432,12 +502,14 @@ interface RetryResponse {
 - **Status Codes:** 200, 400, 401, 404, 500
 
 **Validation Logic:**
+
 - Validate query parameters
 - Validate user owns executions
 - Validate execution can be retried
 - Validate pagination limits
 
 **Success Criteria:**
+
 - API returns correct execution data
 - Filtering and pagination work
 - Retry functionality works
@@ -448,12 +520,15 @@ interface RetryResponse {
 ## **Phase 2: User Interface (Tasks 9-14)**
 
 ### **Task 9: Create Execution Panel Component**
+
 **Dependencies:** Task 4
 
 **Technical Specifications:**
+
 - **File Path:** `src/components/execution/execution-panel.tsx`
 - **Dependencies:** `@/components/ui/button`, `@/components/ui/input`, `@/lib/hooks/use-prompts`, `react-hook-form`, `zod`
 - **Component Interface:**
+
 ```typescript
 interface ExecutionPanelProps {
   prompt: Prompt;
@@ -469,6 +544,7 @@ interface ExecutionForm {
 ```
 
 **Integration Points:**
+
 - Use existing UI components from `src/components/ui/`
 - Follow existing form patterns
 - Use existing loading states
@@ -479,12 +555,14 @@ interface ExecutionForm {
 **API Specifications:** Uses existing execution API
 
 **Validation Logic:**
+
 - Validate all required variables are provided
 - Validate variable types match prompt definition
 - Validate model parameters are within bounds
 - Show validation errors inline
 
 **Success Criteria:**
+
 - Form generates correctly from prompt variables
 - Execution calls API successfully
 - Loading states work properly
@@ -493,12 +571,15 @@ interface ExecutionForm {
 ---
 
 ### **Task 10: Create Execution History Component**
+
 **Dependencies:** Task 8
 
 **Technical Specifications:**
+
 - **File Path:** `src/components/execution/execution-history.tsx`
 - **Dependencies:** `@/components/ui/table`, `@/components/ui/badge`, `@/hooks/use-executions`, `date-fns`
 - **Component Interface:**
+
 ```typescript
 interface ExecutionHistoryProps {
   promptId?: string;
@@ -517,6 +598,7 @@ interface ExecutionListItem {
 ```
 
 **Integration Points:**
+
 - Use existing table components
 - Follow existing pagination patterns
 - Use existing date formatting utilities
@@ -527,12 +609,14 @@ interface ExecutionListItem {
 **API Specifications:** Uses existing executions API
 
 **Validation Logic:**
+
 - Handle loading states
 - Handle empty states
 - Handle error states
 - Validate pagination parameters
 
 **Success Criteria:**
+
 - History displays correctly
 - Pagination works
 - Filtering by prompt works
@@ -541,12 +625,15 @@ interface ExecutionListItem {
 ---
 
 ### **Task 11: Create Results Viewer Component**
+
 **Dependencies:** Task 8
 
 **Technical Specifications:**
+
 - **File Path:** `src/components/execution/results-viewer.tsx`
 - **Dependencies:** `@/components/ui/card`, `@/components/ui/textarea`, `@/lib/utils`, `react-syntax-highlighter`
 - **Component Interface:**
+
 ```typescript
 interface ResultsViewerProps {
   execution: ExecutionWithDetails;
@@ -562,6 +649,7 @@ interface ExecutionMetrics {
 ```
 
 **Integration Points:**
+
 - Use existing card components for layout
 - Use existing button components for actions
 - Follow existing typography patterns
@@ -572,12 +660,14 @@ interface ExecutionMetrics {
 **API Specifications:** Uses existing execution detail API
 
 **Validation Logic:**
+
 - Handle different output formats (text, JSON)
 - Handle validation errors display
 - Handle retry button state
 - Format costs and metrics properly
 
 **Success Criteria:**
+
 - Results display with proper formatting
 - Metrics show accurately
 - Retry functionality works
@@ -586,12 +676,15 @@ interface ExecutionMetrics {
 ---
 
 ### **Task 12: Create Simple Analytics Dashboard**
+
 **Dependencies:** Task 5
 
 **Technical Specifications:**
+
 - **File Path:** `src/components/analytics/simple-dashboard.tsx`
 - **Dependencies:** `@/components/ui/card`, `@/lib/monitoring/cost-tracker`, `recharts`, `date-fns`
 - **Component Interface:**
+
 ```typescript
 interface DashboardProps {
   userId: string;
@@ -609,6 +702,7 @@ interface DashboardMetrics {
 ```
 
 **Integration Points:**
+
 - Use existing card components for metrics
 - Use cost tracking from Task 5
 - Follow existing chart patterns (if any)
@@ -617,18 +711,21 @@ interface DashboardMetrics {
 **Database Changes:** None
 
 **API Specifications:**
+
 ```typescript
 // Add to existing API
 GET /api/analytics/dashboard?from=2024-01-01&to=2024-01-31
 ```
 
 **Validation Logic:**
+
 - Validate date ranges are logical
 - Handle empty data states
 - Handle loading states
 - Format numbers for display
 
 **Success Criteria:**
+
 - Metrics display accurately
 - Charts render correctly
 - Date filtering works
@@ -637,16 +734,19 @@ GET /api/analytics/dashboard?from=2024-01-01&to=2024-01-31
 ---
 
 ### **Task 13: Create Analytics API Endpoint**
+
 **Dependencies:** Task 5
 
 **Technical Specifications:**
+
 - **File Path:** `src/app/api/analytics/dashboard/route.ts`
 - **Dependencies:** `@/lib/database/queries`, `@/lib/auth/server`, `@/lib/monitoring/cost-tracker`
 - **API Interface:**
+
 ```typescript
 interface AnalyticsQuery {
   from?: string; // ISO date
-  to?: string;   // ISO date
+  to?: string; // ISO date
 }
 
 interface DashboardAnalytics {
@@ -664,12 +764,13 @@ interface DashboardAnalytics {
   usage: {
     totalTokens: number;
     avgTokensPerExecution: number;
-    topPrompts: { name: string; count: number; }[];
+    topPrompts: { name: string; count: number }[];
   };
 }
 ```
 
 **Integration Points:**
+
 - Use existing authentication patterns
 - Use cost tracking from Task 5
 - Follow existing API response formats
@@ -678,6 +779,7 @@ interface DashboardAnalytics {
 **Database Changes:** None
 
 **API Specifications:**
+
 - **Method:** GET
 - **Path:** `/api/analytics/dashboard`
 - **Query Params:** from, to (optional date range)
@@ -685,12 +787,14 @@ interface DashboardAnalytics {
 - **Response:** 200 (success), 401 (auth), 500 (error)
 
 **Validation Logic:**
+
 - Validate date range parameters
 - Validate user authentication
 - Handle empty data gracefully
 - Validate date ranges are reasonable
 
 **Success Criteria:**
+
 - API returns accurate analytics data
 - Date filtering works correctly
 - Performance is acceptable
@@ -699,12 +803,15 @@ interface DashboardAnalytics {
 ---
 
 ### **Task 14: Create Custom Hook for Executions**
+
 **Dependencies:** Task 8
 
 **Technical Specifications:**
+
 - **File Path:** `src/hooks/use-executions.ts`
 - **Dependencies:** `react`, `@/lib/api`, existing API patterns
 - **Hook Interface:**
+
 ```typescript
 interface UseExecutionsOptions {
   promptId?: string;
@@ -717,12 +824,16 @@ interface UseExecutionsReturn {
   loading: boolean;
   error: string | null;
   refetch: () => void;
-  executePrompt: (promptId: string, inputs: Record<string, any>) => Promise<ExecutionResult>;
+  executePrompt: (
+    promptId: string,
+    inputs: Record<string, any>
+  ) => Promise<ExecutionResult>;
   retryExecution: (executionId: string) => Promise<void>;
 }
 ```
 
 **Integration Points:**
+
 - Follow existing hook patterns in `src/hooks/`
 - Use existing API client patterns
 - Use existing error handling
@@ -733,12 +844,14 @@ interface UseExecutionsReturn {
 **API Specifications:** Uses existing execution APIs
 
 **Validation Logic:**
+
 - Handle loading states
-- Handle error states  
+- Handle error states
 - Handle empty states
 - Debounce API calls appropriately
 
 **Success Criteria:**
+
 - Hook provides reliable data
 - Loading states work correctly
 - Error handling is robust
@@ -749,12 +862,15 @@ interface UseExecutionsReturn {
 ## **Phase 3: Polish & Integration (Tasks 15-18)**
 
 ### **Task 15: Add Environment Variables and Configuration**
+
 **Dependencies:** Task 1
 
 **Technical Specifications:**
+
 - **File Path:** `.env.example` (update existing)
 - **Additional Files:** `src/lib/config/openai.ts`
 - **Configuration:**
+
 ```typescript
 // Add to existing .env.example
 OPENAI_API_KEY=sk-your-key-here
@@ -778,6 +894,7 @@ interface OpenAIEnvironment {
 ```
 
 **Integration Points:**
+
 - Update existing environment validation
 - Connect to OpenAI client from Task 1
 - Integrate with existing config patterns
@@ -785,12 +902,14 @@ interface OpenAIEnvironment {
 **Database Changes:** None
 
 **Validation Logic:**
+
 - Validate all required environment variables
 - Validate API key format
 - Validate numeric values are within bounds
 - Provide helpful error messages for missing config
 
 **Success Criteria:**
+
 - Environment variables are documented
 - Configuration validation works
 - Default values are reasonable
@@ -799,12 +918,15 @@ interface OpenAIEnvironment {
 ---
 
 ### **Task 16: Integrate Execution Flow with Existing Prompts**
+
 **Dependencies:** Tasks 9, 10, existing prompts functionality
 
 **Technical Specifications:**
+
 - **File Path:** `src/app/(dashboard)/prompts/[id]/page.tsx` (update existing)
 - **Dependencies:** Existing prompt page, new execution components
 - **Integration Changes:**
+
 ```typescript
 // Add to existing prompt detail page
 import ExecutionPanel from '@/components/execution/execution-panel';
@@ -814,12 +936,13 @@ import ExecutionHistory from '@/components/execution/execution-history';
 interface PromptTabs {
   details: boolean;
   executions: boolean; // New tab
-  history: boolean;    // New tab
+  history: boolean; // New tab
   settings: boolean;
 }
 ```
 
 **Integration Points:**
+
 - Extend existing prompt detail page
 - Use existing tab component patterns
 - Integrate with existing prompt loading
@@ -830,12 +953,14 @@ interface PromptTabs {
 **API Specifications:** Uses existing prompt and execution APIs
 
 **Validation Logic:**
+
 - Validate prompt exists
 - Validate user owns prompt
 - Handle loading states for executions
 - Handle empty execution history
 
 **Success Criteria:**
+
 - Execution panel integrates seamlessly
 - Tab navigation works correctly
 - Data loading is coordinated
@@ -844,12 +969,15 @@ interface PromptTabs {
 ---
 
 ### **Task 17: Add Basic Error Handling and Retry Logic**
+
 **Dependencies:** Tasks 4, 8
 
 **Technical Specifications:**
+
 - **File Path:** `src/lib/execution/error-handler.ts`
 - **Dependencies:** `@/lib/monitoring/logger`, existing error patterns
 - **Error Handler:**
+
 ```typescript
 interface ExecutionError {
   type: 'RATE_LIMIT' | 'API_ERROR' | 'TIMEOUT' | 'VALIDATION_ERROR';
@@ -859,20 +987,22 @@ interface ExecutionError {
 }
 
 class ExecutionErrorHandler {
-  handleError(error: any): ExecutionError
-  shouldRetry(error: ExecutionError, attemptCount: number): boolean
-  getRetryDelay(attemptCount: number): number
-  logError(executionId: string, error: ExecutionError): void
+  handleError(error: any): ExecutionError;
+  shouldRetry(error: ExecutionError, attemptCount: number): boolean;
+  getRetryDelay(attemptCount: number): number;
+  logError(executionId: string, error: ExecutionError): void;
 }
 ```
 
 **Integration Points:**
+
 - Integrate with execution API from Task 4
 - Use existing logger patterns
 - Connect to retry functionality from Task 8
 - Follow existing error response formats
 
 **Database Changes:**
+
 ```sql
 -- Add error tracking to executions table
 ALTER TABLE executions ADD COLUMN error_type varchar(50);
@@ -883,12 +1013,14 @@ ALTER TABLE executions ADD COLUMN retry_count integer DEFAULT 0;
 **API Specifications:** Enhances existing execution API
 
 **Validation Logic:**
+
 - Classify different types of errors
 - Determine retry eligibility
 - Calculate appropriate retry delays
 - Log errors for monitoring
 
 **Success Criteria:**
+
 - Errors are classified correctly
 - Retry logic works appropriately
 - Error logging is comprehensive
@@ -897,42 +1029,56 @@ ALTER TABLE executions ADD COLUMN retry_count integer DEFAULT 0;
 ---
 
 ### **Task 18: Create Sample Demo Data and Seed Script**
+
 **Dependencies:** Tasks 2, 7
 
 **Technical Specifications:**
+
 - **File Path:** `prisma/seed.ts` (update existing)
 - **Dependencies:** Existing seed script, template engine, validation system
 - **Demo Data:**
-```typescript
+
+````typescript
 const demoPrompts = [
   {
-    name: "Code Review Assistant",
-    description: "Reviews code for best practices and security",
-    template: "Review this {{language}} code:\n```{{language}}\n{{code}}\n```\nFocus on: {{focus_areas}}",
+    name: 'Code Review Assistant',
+    description: 'Reviews code for best practices and security',
+    template:
+      'Review this {{language}} code:\n```{{language}}\n{{code}}\n```\nFocus on: {{focus_areas}}',
     variables: [
-      { name: "language", type: "string", required: true, defaultValue: "typescript" },
-      { name: "code", type: "string", required: true },
-      { name: "focus_areas", type: "string", defaultValue: "security, performance" }
+      {
+        name: 'language',
+        type: 'string',
+        required: true,
+        defaultValue: 'typescript',
+      },
+      { name: 'code', type: 'string', required: true },
+      {
+        name: 'focus_areas',
+        type: 'string',
+        defaultValue: 'security, performance',
+      },
     ],
     validationRules: [
       {
-        name: "Code Review Format",
-        type: "json_schema",
+        name: 'Code Review Format',
+        type: 'json_schema',
         schema: {
-          type: "object",
+          type: 'object',
           properties: {
-            issues: { type: "array" },
-            recommendations: { type: "array" }
-          }
-        }
-      }
-    ]
-  }
+            issues: { type: 'array' },
+            recommendations: { type: 'array' },
+          },
+        },
+      },
+    ],
+  },
   // Additional demo prompts...
 ];
-```
+````
 
 **Integration Points:**
+
 - Extend existing seed script
 - Use template engine for validation
 - Create realistic sample data
@@ -943,12 +1089,14 @@ const demoPrompts = [
 **API Specifications:** None (seed script only)
 
 **Validation Logic:**
+
 - Validate demo data matches schema
 - Ensure templates are valid
 - Verify validation rules work
 - Check sample executions work
 
 **Success Criteria:**
+
 - Demo data creates successfully
 - Prompts are immediately usable
 - Validation rules work on sample data
@@ -959,16 +1107,19 @@ const demoPrompts = [
 ## Implementation Timeline
 
 ### Phase 1: Core AI Engine (Week 1)
+
 - **Days 1-2:** Tasks 1-3 (OpenAI integration, template engine, database schema)
-- **Days 3-4:** Tasks 4-5 (execution API, cost tracking)  
+- **Days 3-4:** Tasks 4-5 (execution API, cost tracking)
 - **Days 5-7:** Tasks 6-8 (queries, validation, results API)
 
-### Phase 2: User Interface (Week 2)  
+### Phase 2: User Interface (Week 2)
+
 - **Days 8-9:** Tasks 9-10 (execution panel, history component)
 - **Days 10-11:** Tasks 11-12 (results viewer, analytics dashboard)
 - **Days 12-14:** Tasks 13-14 (analytics API, custom hooks)
 
 ### Phase 3: Polish & Integration (Week 3)
+
 - **Days 15-16:** Tasks 15-16 (configuration, integration)
 - **Days 17-18:** Task 17 (error handling and retry logic)
 - **Days 19-21:** Task 18 (demo data and final testing)

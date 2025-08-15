@@ -93,14 +93,16 @@ jest.mock('openai', () => ({
           object: 'chat.completion',
           created: Date.now(),
           model: 'gpt-3.5-turbo',
-          choices: [{
-            index: 0,
-            message: {
-              role: 'assistant',
-              content: 'Test response',
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: 'assistant',
+                content: 'Test response',
+              },
+              finish_reason: 'stop',
             },
-            finish_reason: 'stop',
-          }],
+          ],
           usage: {
             prompt_tokens: 10,
             completion_tokens: 5,

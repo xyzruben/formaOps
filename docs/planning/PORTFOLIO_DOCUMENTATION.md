@@ -3,6 +3,7 @@
 ## README.md Structure
 
 ### Header Section
+
 ```markdown
 # FormaOps - AI-Native Prompt Management Platform
 
@@ -17,6 +18,7 @@
 ```
 
 ### Key Features Showcase
+
 ```markdown
 ## 🚀 Key Features
 
@@ -29,29 +31,34 @@
 ```
 
 ### Tech Stack Section
+
 ```markdown
 ## 🛠 Tech Stack
 
 **Frontend:**
+
 - Next.js 15 (App Router) - React framework with SSR/SSG
-- TypeScript - Type safety and developer experience  
+- TypeScript - Type safety and developer experience
 - Tailwind CSS - Utility-first styling
 - shadcn/ui - Accessible component library
 
 **Backend:**
+
 - Next.js API Routes - Serverless backend
 - Prisma - Type-safe database ORM
 - Supabase - PostgreSQL with real-time subscriptions
 - OpenAI API - Large language model integration
 
 **Infrastructure:**
+
 - Vercel - Deployment and hosting
 - Supabase Edge Functions - Serverless compute
 - GitHub Actions - CI/CD pipeline
 ```
 
 ### Setup Instructions
-```markdown
+
+````markdown
 ## 🏃‍♂️ Quick Start
 
 ```bash
@@ -65,22 +72,25 @@ npm run setup
 # Start development server
 npm run dev
 ```
+````
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Environment Variables
+
 ```env
 # Database
 DATABASE_URL="postgresql://..."
 
-# Authentication  
+# Authentication
 NEXT_PUBLIC_SUPABASE_URL="https://..."
 NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
 
 # AI Integration
 OPENAI_API_KEY="sk-..."
 ```
-```
+
+````
 
 ## DEMO.md Content Structure
 
@@ -100,7 +110,7 @@ OPENAI_API_KEY="sk-..."
 - Variable definition with type validation
 - Real-time preview with sample data
 
-### 2. Execution Dashboard  
+### 2. Execution Dashboard
 ![Execution Dashboard](docs/screenshots/execution-dashboard.png)
 - Live execution status updates
 - Token usage and cost tracking
@@ -111,86 +121,105 @@ OPENAI_API_KEY="sk-..."
 - JSON Schema validation builder
 - Custom JavaScript test functions
 - Regex pattern matching with examples
-```
+````
 
 ### Live Examples
+
 ```markdown
 ## Try It Out
 
 **Sample Prompts Available:**
+
 - Code Review Assistant
-- Email Template Generator  
+- Email Template Generator
 - Data Analysis Summarizer
 - Technical Documentation Writer
 
 **Test Credentials:**
+
 - Email: demo@formaops.com
 - Password: DemoUser2024!
 
-*Note: Demo data resets every 24 hours*
+_Note: Demo data resets every 24 hours_
 ```
 
 ## TECHNICAL_DECISIONS.md Structure
 
 ### Architecture Choices
+
 ```markdown
 # Technical Decisions & Trade-offs
 
 ## Core Architecture Decisions
 
 ### 1. Next.js App Router vs Pages Router
+
 **Decision:** App Router  
-**Reasoning:** 
+**Reasoning:**
+
 - Better performance with React Server Components
 - Simplified data fetching patterns
 - Built-in loading and error boundaries
 - Future-proof architecture aligned with React direction
 
 **Trade-offs:**
+
 - Steeper learning curve
 - Some third-party libraries lack App Router support
 
-### 2. Supabase vs Custom Backend  
+### 2. Supabase vs Custom Backend
+
 **Decision:** Supabase
 **Reasoning:**
+
 - Row-level security eliminates custom auth logic
 - Real-time subscriptions out of the box
 - Edge functions for AI processing
 - PostgreSQL reliability with managed infrastructure
 
 **Trade-offs:**
+
 - Vendor lock-in considerations
 - Limited customization of auth flows
 
 ### 3. Prisma vs Raw SQL
+
 **Decision:** Prisma ORM
 **Reasoning:**
+
 - Type-safe database access prevents runtime errors
 - Automatic TypeScript generation
 - Migration management and schema evolution
 - Excellent developer experience
 
 **Trade-offs:**
+
 - Query performance overhead
 - Complex queries sometimes need raw SQL
 ```
 
 ### Problem-Solution Examples
-```markdown
+
+````markdown
 ## Key Problems Solved
 
 ### Problem: AI API Rate Limiting
+
 **Solution:** Implemented circuit breaker pattern with exponential backoff
+
 ```typescript
 const circuitBreaker = new CircuitBreaker(openaiClient, {
   timeout: 30000,
   errorThresholdPercentage: 50,
-  resetTimeout: 60000
+  resetTimeout: 60000,
 });
 ```
+````
 
 ### Problem: Real-time Status Updates
+
 **Solution:** WebSocket connections with fallback to polling
+
 ```typescript
 // Real-time subscription with automatic reconnection
 const subscription = supabase
@@ -199,8 +228,10 @@ const subscription = supabase
   .subscribe();
 ```
 
-### Problem: Type Safety Across API Boundaries  
+### Problem: Type Safety Across API Boundaries
+
 **Solution:** Shared TypeScript interfaces with Zod validation
+
 ```typescript
 export const ExecutePromptSchema = z.object({
   inputs: z.record(z.any()),
@@ -209,7 +240,8 @@ export const ExecutePromptSchema = z.object({
 
 export type ExecutePromptRequest = z.infer<typeof ExecutePromptSchema>;
 ```
-```
+
+````
 
 ## DEVELOPMENT_LOG.md Format
 
@@ -222,7 +254,7 @@ export type ExecutePromptRequest = z.infer<typeof ExecutePromptSchema>;
 ### Day 1-2: Project Setup
 - [x] Next.js 15 project initialization
 - [x] TypeScript and ESLint configuration
-- [x] Tailwind CSS and component library setup  
+- [x] Tailwind CSS and component library setup
 - [x] Basic folder structure and routing
 
 **Key Learning:** App Router requires different patterns for data fetching
@@ -246,27 +278,32 @@ export type ExecutePromptRequest = z.infer<typeof ExecutePromptSchema>;
 - Dynamic imports for heavy components
 - Image optimization
 - Bundle analysis and code splitting
-```
+````
 
 ### Weekly Retrospectives
+
 ```markdown
 ## Week 1 Retrospective
 
 **What Went Well:**
+
 - Clean component architecture from day one
 - Comprehensive TypeScript typing prevented 12+ runtime errors
 - Database design required minimal changes
 
 **Challenges:**
+
 - Supabase Edge Functions deployment debugging (4 hours)
 - Real-time subscription connection management complexity
 
 **Next Week Focus:**
+
 - Validation system implementation
 - Performance optimization
 - Error handling improvements
 
 **Code Quality Metrics:**
+
 - Test Coverage: 85%
 - TypeScript Strict Mode: 100% compliance
 - Bundle Size: 245KB (target: <300KB)

@@ -4,12 +4,22 @@ import { z } from 'zod';
 // Input validation and sanitization utilities
 export class InputValidator {
   // Sanitize HTML content
-  static sanitizeHtml(input: string, options?: {
-    allowedTags?: string[];
-    allowedAttributes?: Record<string, string[]>;
-  }): string {
+  static sanitizeHtml(
+    input: string,
+    options?: {
+      allowedTags?: string[];
+      allowedAttributes?: Record<string, string[]>;
+    }
+  ): string {
     const config = {
-      ALLOWED_TAGS: options?.allowedTags || ['b', 'i', 'em', 'strong', 'p', 'br'],
+      ALLOWED_TAGS: options?.allowedTags || [
+        'b',
+        'i',
+        'em',
+        'strong',
+        'p',
+        'br',
+      ],
       ALLOWED_ATTR: options?.allowedAttributes || {},
       FORBID_TAGS: ['script', 'object', 'embed', 'iframe', 'form', 'input'],
       FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus'],
@@ -19,12 +29,15 @@ export class InputValidator {
   }
 
   // Validate and sanitize string input
-  static validateString(input: unknown, options: {
-    minLength?: number;
-    maxLength?: number;
-    pattern?: RegExp;
-    allowEmpty?: boolean;
-  } = {}): string {
+  static validateString(
+    input: unknown,
+    options: {
+      minLength?: number;
+      maxLength?: number;
+      pattern?: RegExp;
+      allowEmpty?: boolean;
+    } = {}
+  ): string {
     const schema = z.string({
       required_error: 'String input is required',
       invalid_type_error: 'Input must be a string',
@@ -42,11 +55,15 @@ export class InputValidator {
 
     // Length validation
     if (options.minLength && validatedString.length < options.minLength) {
-      throw new Error(`String must be at least ${options.minLength} characters long`);
+      throw new Error(
+        `String must be at least ${options.minLength} characters long`
+      );
     }
 
     if (options.maxLength && validatedString.length > options.maxLength) {
-      throw new Error(`String must be no more than ${options.maxLength} characters long`);
+      throw new Error(
+        `String must be no more than ${options.maxLength} characters long`
+      );
     }
 
     // Pattern validation
@@ -61,21 +78,24 @@ export class InputValidator {
   static validateEmail(email: unknown): string {
     const emailSchema = z.string().email('Invalid email format');
     const validatedEmail = emailSchema.parse(email);
-    
+
     // Additional security: normalize email
     return validatedEmail.toLowerCase().trim();
   }
 
   // Validate URL
-  static validateUrl(url: unknown, options: {
-    allowedProtocols?: string[];
-    allowedDomains?: string[];
-  } = {}): string {
+  static validateUrl(
+    url: unknown,
+    options: {
+      allowedProtocols?: string[];
+      allowedDomains?: string[];
+    } = {}
+  ): string {
     const urlSchema = z.string().url('Invalid URL format');
     const validatedUrl = urlSchema.parse(url);
-    
+
     const parsedUrl = new URL(validatedUrl);
-    
+
     // Protocol validation
     const allowedProtocols = options.allowedProtocols || ['http:', 'https:'];
     if (!allowedProtocols.includes(parsedUrl.protocol)) {
@@ -84,10 +104,12 @@ export class InputValidator {
 
     // Domain validation
     if (options.allowedDomains) {
-      const isAllowedDomain = options.allowedDomains.some(domain => 
-        parsedUrl.hostname === domain || parsedUrl.hostname.endsWith('.' + domain)
+      const isAllowedDomain = options.allowedDomains.some(
+        domain =>
+          parsedUrl.hostname === domain ||
+          parsedUrl.hostname.endsWith('.' + domain)
       );
-      
+
       if (!isAllowedDomain) {
         throw new Error(`Domain ${parsedUrl.hostname} is not allowed`);
       }
@@ -114,14 +136,19 @@ export class InputValidator {
   }
 
   // Validate file upload
-  static validateFile(file: File, options: {
-    maxSize?: number; // in bytes
-    allowedTypes?: string[];
-    allowedExtensions?: string[];
-  } = {}): void {
+  static validateFile(
+    file: File,
+    options: {
+      maxSize?: number; // in bytes
+      allowedTypes?: string[];
+      allowedExtensions?: string[];
+    } = {}
+  ): void {
     // Size validation
     if (options.maxSize && file.size > options.maxSize) {
-      throw new Error(`File size must not exceed ${Math.round(options.maxSize / 1024 / 1024)}MB`);
+      throw new Error(
+        `File size must not exceed ${Math.round(options.maxSize / 1024 / 1024)}MB`
+      );
     }
 
     // MIME type validation
@@ -139,11 +166,25 @@ export class InputValidator {
 
     // Additional security checks
     const suspiciousNames = [
-      '.exe', '.bat', '.cmd', '.com', '.pif', '.scr', '.vbs', '.js',
-      '.jar', '.php', '.asp', '.jsp', '.sh', '.py', '.rb', '.pl'
+      '.exe',
+      '.bat',
+      '.cmd',
+      '.com',
+      '.pif',
+      '.scr',
+      '.vbs',
+      '.js',
+      '.jar',
+      '.php',
+      '.asp',
+      '.jsp',
+      '.sh',
+      '.py',
+      '.rb',
+      '.pl',
     ];
 
-    const hasSuspiciousExtension = suspiciousNames.some(ext => 
+    const hasSuspiciousExtension = suspiciousNames.some(ext =>
       file.name.toLowerCase().includes(ext)
     );
 
@@ -156,8 +197,18 @@ export class InputValidator {
   static sanitizeSqlInput(input: string): string {
     // Remove or escape dangerous SQL keywords and characters
     const sqlKeywords = [
-      'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER',
-      'EXEC', 'EXECUTE', 'UNION', 'SCRIPT', 'JAVASCRIPT'
+      'SELECT',
+      'INSERT',
+      'UPDATE',
+      'DELETE',
+      'DROP',
+      'CREATE',
+      'ALTER',
+      'EXEC',
+      'EXECUTE',
+      'UNION',
+      'SCRIPT',
+      'JAVASCRIPT',
     ];
 
     let sanitized = input;
@@ -218,10 +269,12 @@ export class InputValidator {
 
   // Validate API key format
   static validateApiKey(apiKey: unknown): string {
-    const keySchema = z.string().regex(
-      /^[A-Za-z0-9_-]{20,}$/, 
-      'API key must be at least 20 characters and contain only letters, numbers, underscores, and hyphens'
-    );
+    const keySchema = z
+      .string()
+      .regex(
+        /^[A-Za-z0-9_-]{20,}$/,
+        'API key must be at least 20 characters and contain only letters, numbers, underscores, and hyphens'
+      );
 
     return keySchema.parse(apiKey);
   }
@@ -233,7 +286,11 @@ export class InputValidator {
   }
 
   // Rate limiting validation
-  static validateRateLimit(requests: number, windowMs: number, limit: number): void {
+  static validateRateLimit(
+    requests: number,
+    windowMs: number,
+    limit: number
+  ): void {
     if (requests > limit) {
       const retryAfter = Math.ceil(windowMs / 1000);
       throw new Error(`Rate limit exceeded. Retry after ${retryAfter} seconds`);
@@ -272,12 +329,16 @@ export const validationSchemas = {
   prompt: z.object({
     name: z.string().min(1).max(255),
     template: z.string().min(1).max(10000),
-    variables: z.array(z.object({
-      name: z.string().min(1).max(100),
-      type: z.enum(['string', 'number', 'boolean', 'array', 'object']),
-      required: z.boolean().default(false),
-      description: z.string().max(500).optional(),
-    })).max(50),
+    variables: z
+      .array(
+        z.object({
+          name: z.string().min(1).max(100),
+          type: z.enum(['string', 'number', 'boolean', 'array', 'object']),
+          required: z.boolean().default(false),
+          description: z.string().max(500).optional(),
+        })
+      )
+      .max(50),
   }),
 
   execution: z.object({
@@ -300,7 +361,9 @@ export function validateInput<T>(schema: z.ZodSchema<T>) {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const firstError = error.errors[0];
-        throw new Error(`Validation error: ${firstError.message} at ${firstError.path.join('.')}`);
+        throw new Error(
+          `Validation error: ${firstError.message} at ${firstError.path.join('.')}`
+        );
       }
       throw error;
     }

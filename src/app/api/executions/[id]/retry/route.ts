@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '../../../../../lib/auth/server';
-import { retryExecution, getExecutionById } from '../../../../../lib/database/queries';
+import {
+  retryExecution,
+  getExecutionById,
+} from '../../../../../lib/database/queries';
 import { handleApiError } from '../../../../../lib/utils/error-handler';
 import { logger } from '../../../../../lib/monitoring/logger';
 import { executionErrorHandler } from '../../../../../lib/execution/error-handler';
@@ -16,12 +19,13 @@ export async function POST(
     const { id: executionId } = params;
 
     // Validate execution ID format (basic UUID validation)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(executionId)) {
       return NextResponse.json(
-        { 
-          error: 'Invalid execution ID format', 
-          code: 'VALIDATION_ERROR' 
+        {
+          error: 'Invalid execution ID format',
+          code: 'VALIDATION_ERROR',
         },
         { status: 400 }
       );
@@ -29,12 +33,12 @@ export async function POST(
 
     // Verify the execution exists and belongs to the user before retrying
     const originalExecution = await getExecutionById(executionId, user.id);
-    
+
     if (!originalExecution) {
       return NextResponse.json(
-        { 
-          error: 'Execution not found', 
-          code: 'NOT_FOUND' 
+        {
+          error: 'Execution not found',
+          code: 'NOT_FOUND',
         },
         { status: 404 }
       );
@@ -43,13 +47,13 @@ export async function POST(
     // Verify execution can be retried
     if (originalExecution.status !== 'FAILED') {
       return NextResponse.json(
-        { 
-          error: 'Only failed executions can be retried', 
+        {
+          error: 'Only failed executions can be retried',
           code: 'VALIDATION_ERROR',
-          details: { 
+          details: {
             currentStatus: originalExecution.status,
-            allowedStatuses: ['FAILED'] 
-          }
+            allowedStatuses: ['FAILED'],
+          },
         },
         { status: 400 }
       );
@@ -60,20 +64,20 @@ export async function POST(
       const mockError = {
         type: 'API_ERROR' as const,
         message: 'Execution failed',
-        retryable: true
+        retryable: true,
       };
 
       // For now, allow all failed executions to be retried
       // In a real implementation, you'd check retry count from logs or metadata
       if (!executionErrorHandler.shouldRetry(mockError, 0)) {
         return NextResponse.json(
-          { 
+          {
             error: 'This execution cannot be retried',
             code: 'RETRY_NOT_ALLOWED',
-            details: { 
+            details: {
               status: originalExecution.status,
-              reason: 'Maximum retry attempts exceeded'
-            }
+              reason: 'Maximum retry attempts exceeded',
+            },
           },
           { status: 400 }
         );
@@ -99,7 +103,6 @@ export async function POST(
         message: 'Execution retry initiated successfully',
       },
     });
-
   } catch (error) {
     // Log retry failure
     await logger.error('Execution retry failed', error, {

@@ -38,7 +38,7 @@ export class PerformanceUtils {
     let isThrottled = false;
     return (...args: Parameters<T>) => {
       if (isThrottled) return;
-      
+
       func.apply(null, args);
       isThrottled = true;
       setTimeout(() => (isThrottled = false), delay);
@@ -51,11 +51,11 @@ export class PerformanceUtils {
     operationName: string
   ): Promise<T> {
     const start = performance.now();
-    
+
     try {
       const result = await operation();
       const duration = performance.now() - start;
-      
+
       performanceMonitor.recordMetric({
         name: operationName,
         value: duration,
@@ -63,11 +63,11 @@ export class PerformanceUtils {
         timestamp: new Date(),
         metadata: { success: true },
       });
-      
+
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      
+
       performanceMonitor.recordMetric({
         name: operationName,
         value: duration,
@@ -75,7 +75,7 @@ export class PerformanceUtils {
         timestamp: new Date(),
         metadata: { success: false, error: String(error) },
       });
-      
+
       throw error;
     }
   }
@@ -86,11 +86,11 @@ export class PerformanceUtils {
     fallback?: React.ComponentType
   ) {
     const LazyComponent = React.lazy(importFunc);
-    
+
     if (!fallback) {
       return LazyComponent;
     }
-    
+
     return function LazyWrapper(props: React.ComponentProps<T>) {
       return (
         <React.Suspense fallback={React.createElement(fallback)}>
@@ -167,25 +167,31 @@ export class PerformanceUtils {
 // React hook for performance monitoring
 export function usePerformanceMonitor() {
   const React = require('react');
-  
-  const recordMetric = React.useCallback((name: string, value: number, unit: 'ms' | 'count' = 'ms') => {
-    performanceMonitor.recordMetric({
-      name,
-      value,
-      unit,
-      timestamp: new Date(),
-    });
-  }, []);
 
-  const measureRender = React.useCallback((componentName: string) => {
-    const start = performance.now();
-    
-    // Schedule the metric recording for the next tick to avoid hooks violations
-    setTimeout(() => {
-      const duration = performance.now() - start;
-      recordMetric(`render_${componentName}`, duration);
-    }, 0);
-  }, [recordMetric]);
+  const recordMetric = React.useCallback(
+    (name: string, value: number, unit: 'ms' | 'count' = 'ms') => {
+      performanceMonitor.recordMetric({
+        name,
+        value,
+        unit,
+        timestamp: new Date(),
+      });
+    },
+    []
+  );
+
+  const measureRender = React.useCallback(
+    (componentName: string) => {
+      const start = performance.now();
+
+      // Schedule the metric recording for the next tick to avoid hooks violations
+      setTimeout(() => {
+        const duration = performance.now() - start;
+        recordMetric(`render_${componentName}`, duration);
+      }, 0);
+    },
+    [recordMetric]
+  );
 
   return {
     recordMetric,
@@ -198,9 +204,9 @@ export function withPerformanceMonitoring<T extends Record<string, unknown>>(
   Component: React.ComponentType<T>,
   displayName: string
 ): React.ComponentType<T> {
-  const PerformanceMonitoredComponent: React.ComponentType<T> = (props) => {
+  const PerformanceMonitoredComponent: React.ComponentType<T> = props => {
     const startTime = React.useRef(performance.now());
-    
+
     React.useEffect(() => {
       const renderTime = performance.now() - startTime.current;
       performanceMonitor.recordMetric({
@@ -215,13 +221,16 @@ export function withPerformanceMonitoring<T extends Record<string, unknown>>(
   };
 
   PerformanceMonitoredComponent.displayName = `withPerformanceMonitoring(${displayName})`;
-  
+
   return PerformanceMonitoredComponent;
 }
 
 // Cache manager for API responses
 export class CacheManager {
-  private cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+  private cache = new Map<
+    string,
+    { data: any; timestamp: number; ttl: number }
+  >();
 
   set(key: string, data: any, ttlSeconds = 300): void {
     this.cache.set(key, {
@@ -233,16 +242,16 @@ export class CacheManager {
 
   get<T = any>(key: string): T | null {
     const entry = this.cache.get(key);
-    
+
     if (!entry) return null;
-    
+
     const isExpired = Date.now() - entry.timestamp > entry.ttl;
-    
+
     if (isExpired) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry.data;
   }
 

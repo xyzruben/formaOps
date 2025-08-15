@@ -1,5 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export default function HomePage(): JSX.Element {
   return (
@@ -17,9 +23,7 @@ export default function HomePage(): JSX.Element {
             <Button variant="ghost" size="sm">
               Sign In
             </Button>
-            <Button size="sm">
-              Get Started
-            </Button>
+            <Button size="sm">Get Started</Button>
           </nav>
         </div>
       </header>
@@ -33,8 +37,8 @@ export default function HomePage(): JSX.Element {
               <span className="text-primary"> Platform</span>
             </h1>
             <p className="text-xl text-muted-foreground">
-              Create, test, validate, and execute reusable operational prompts with 
-              enterprise-grade reliability and AI-first architecture.
+              Create, test, validate, and execute reusable operational prompts
+              with enterprise-grade reliability and AI-first architecture.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
               <Button size="lg" className="text-base">
@@ -56,7 +60,8 @@ export default function HomePage(): JSX.Element {
               Built for Developers Building with AI
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              Professional prompt management with enterprise features and developer-first experience.
+              Professional prompt management with enterprise features and
+              developer-first experience.
             </p>
           </div>
 
@@ -65,13 +70,15 @@ export default function HomePage(): JSX.Element {
               <CardHeader>
                 <CardTitle className="text-lg">AI-First Architecture</CardTitle>
                 <CardDescription>
-                  CPU priority system ensures AI operations get maximum resources
+                  CPU priority system ensures AI operations get maximum
+                  resources
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Built from the ground up with AI workloads in mind. Automatic 
-                  resource allocation and priority management for optimal performance.
+                  Built from the ground up with AI workloads in mind. Automatic
+                  resource allocation and priority management for optimal
+                  performance.
                 </p>
               </CardContent>
             </Card>
@@ -85,7 +92,7 @@ export default function HomePage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Watch your prompts execute in real-time with detailed metrics, 
+                  Watch your prompts execute in real-time with detailed metrics,
                   token usage tracking, and cost analysis.
                 </p>
               </CardContent>
@@ -100,8 +107,8 @@ export default function HomePage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Ensure output quality with comprehensive validation frameworks.
-                  Catch issues before they reach production.
+                  Ensure output quality with comprehensive validation
+                  frameworks. Catch issues before they reach production.
                 </p>
               </CardContent>
             </Card>
@@ -115,7 +122,7 @@ export default function HomePage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Track changes, compare versions, and rollback to previous 
+                  Track changes, compare versions, and rollback to previous
                   working states with full audit trails.
                 </p>
               </CardContent>
@@ -130,7 +137,7 @@ export default function HomePage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Monitor AI API costs, set budgets, and optimize prompts for 
+                  Monitor AI API costs, set budgets, and optimize prompts for
                   better performance and lower costs.
                 </p>
               </CardContent>
@@ -145,8 +152,8 @@ export default function HomePage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Production-ready security with comprehensive logging, 
-                  access controls, and compliance features.
+                  Production-ready security with comprehensive logging, access
+                  controls, and compliance features.
                 </p>
               </CardContent>
             </Card>

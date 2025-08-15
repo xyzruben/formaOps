@@ -4,10 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { LoadingSpinner, LoadingState, ErrorState } from '@/components/ui/loading-spinner';
+import {
+  LoadingSpinner,
+  LoadingState,
+  ErrorState,
+} from '@/components/ui/loading-spinner';
 import { ExecutionPanel } from '@/components/execution/execution-panel';
 import { ExecutionHistory } from '@/components/execution/execution-history';
 
@@ -24,19 +34,22 @@ interface PromptWithDetails {
   updatedAt: Date;
   publishedAt: Date | null;
   userId: string;
-  validations: Array<{ id: string; type: string; configuration: Record<string, unknown> }>;
+  validations: Array<{
+    id: string;
+    type: string;
+    configuration: Record<string, unknown>;
+  }>;
   _count: {
     executions: number;
     versions: number;
   };
 }
 
-
 export default function PromptDetailPage(): JSX.Element {
   const params = useParams();
   const router = useRouter();
   const promptId = params.id as string;
-  
+
   const [prompt, setPrompt] = useState<PromptWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,20 +62,23 @@ export default function PromptDetailPage(): JSX.Element {
       setError(null);
 
       const response = await fetch(`/api/prompts/${promptId}`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           setError('Prompt not found');
           return;
         }
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch prompt: ${response.status}`);
+        throw new Error(
+          errorData.error || `Failed to fetch prompt: ${response.status}`
+        );
       }
 
       const promptData = await response.json();
       setPrompt(promptData);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load prompt';
+      const message =
+        err instanceof Error ? err.message : 'Failed to load prompt';
       setError(message);
       console.error('Error fetching prompt:', err);
     } finally {
@@ -72,16 +88,16 @@ export default function PromptDetailPage(): JSX.Element {
 
   const handleDelete = async (): Promise<void> => {
     if (!prompt) return;
-    
+
     const confirmed = window.confirm(
       `Are you sure you want to delete "${prompt.name}"? This action cannot be undone.`
     );
-    
+
     if (!confirmed) return;
 
     try {
       setIsDeleting(true);
-      
+
       const response = await fetch(`/api/prompts/${promptId}`, {
         method: 'DELETE',
       });
@@ -94,7 +110,8 @@ export default function PromptDetailPage(): JSX.Element {
       // Redirect to prompts list
       router.push('/prompts');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to delete prompt';
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete prompt';
       alert(`Delete failed: ${message}`);
       console.error('Error deleting prompt:', err);
     } finally {
@@ -102,7 +119,9 @@ export default function PromptDetailPage(): JSX.Element {
     }
   };
 
-  const handleStatusChange = async (newStatus: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'): Promise<void> => {
+  const handleStatusChange = async (
+    newStatus: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+  ): Promise<void> => {
     if (!prompt) return;
 
     try {
@@ -122,13 +141,16 @@ export default function PromptDetailPage(): JSX.Element {
       const updatedPrompt = await response.json();
       setPrompt(updatedPrompt);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to update status';
+      const message =
+        err instanceof Error ? err.message : 'Failed to update status';
       alert(`Status update failed: ${message}`);
       console.error('Error updating prompt status:', err);
     }
   };
 
-  const getStatusBadgeVariant = (status: string): 'default' | 'secondary' | 'outline' => {
+  const getStatusBadgeVariant = (
+    status: string
+  ): 'default' | 'secondary' | 'outline' => {
     switch (status) {
       case 'PUBLISHED':
         return 'default';
@@ -141,11 +163,13 @@ export default function PromptDetailPage(): JSX.Element {
     }
   };
 
-  const formatVariables = (variables: Array<{ name: string; type: string }> | null): string => {
+  const formatVariables = (
+    variables: Array<{ name: string; type: string }> | null
+  ): string => {
     if (!variables || !Array.isArray(variables)) return 'No variables defined';
     if (variables.length === 0) return 'No variables defined';
-    
-    return variables.map((v) => `{{${v.name}}} (${v.type})`).join(', ');
+
+    return variables.map(v => `{{${v.name}}} (${v.type})`).join(', ');
   };
 
   useEffect(() => {
@@ -161,10 +185,7 @@ export default function PromptDetailPage(): JSX.Element {
   if (error) {
     return (
       <div className="container mx-auto py-8">
-        <ErrorState 
-          message={error} 
-          onRetry={fetchPrompt}
-        />
+        <ErrorState message={error} onRetry={fetchPrompt} />
       </div>
     );
   }
@@ -172,8 +193,8 @@ export default function PromptDetailPage(): JSX.Element {
   if (!prompt) {
     return (
       <div className="container mx-auto py-8">
-        <ErrorState 
-          message="Prompt not found" 
+        <ErrorState
+          message="Prompt not found"
           onRetry={() => router.push('/prompts')}
         />
       </div>
@@ -196,7 +217,9 @@ export default function PromptDetailPage(): JSX.Element {
           </div>
           <h1 className="text-3xl font-bold">{prompt.name}</h1>
           {prompt.description && (
-            <p className="text-muted-foreground text-lg">{prompt.description}</p>
+            <p className="text-muted-foreground text-lg">
+              {prompt.description}
+            </p>
           )}
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Badge variant={getStatusBadgeVariant(prompt.status)}>
@@ -206,7 +229,7 @@ export default function PromptDetailPage(): JSX.Element {
             <span>Updated {formatDate(prompt.updatedAt)}</span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* Status Actions */}
           {prompt.status === 'DRAFT' && (
@@ -236,7 +259,7 @@ export default function PromptDetailPage(): JSX.Element {
               Restore to Draft
             </Button>
           )}
-          
+
           <Button
             variant="destructive"
             size="sm"
@@ -345,9 +368,9 @@ export default function PromptDetailPage(): JSX.Element {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ExecutionPanel 
-                prompt={prompt} 
-                onExecutionComplete={(_result) => {
+              <ExecutionPanel
+                prompt={prompt}
+                onExecutionComplete={_result => {
                   // Execution completed successfully
                   // Switch to history tab to see the new execution
                   setActiveTab('history');
@@ -367,10 +390,10 @@ export default function PromptDetailPage(): JSX.Element {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ExecutionHistory 
+              <ExecutionHistory
                 userId={prompt.userId}
                 promptId={prompt.id}
-                onExecutionSelect={(_executionId) => {
+                onExecutionSelect={_executionId => {
                   // Selected execution for detailed view
                   // Could navigate to detailed execution view
                 }}
@@ -391,29 +414,36 @@ export default function PromptDetailPage(): JSX.Element {
             <CardContent>
               <div className="space-y-4">
                 <div className="text-sm text-muted-foreground">
-                  Prompt settings and validation configuration will be implemented in a future update.
+                  Prompt settings and validation configuration will be
+                  implemented in a future update.
                 </div>
-                
+
                 {/* Status Control */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Status</label>
                   <div className="flex gap-2">
                     <Button
-                      variant={prompt.status === 'DRAFT' ? 'default' : 'outline'}
+                      variant={
+                        prompt.status === 'DRAFT' ? 'default' : 'outline'
+                      }
                       size="sm"
                       onClick={() => handleStatusChange('DRAFT')}
                     >
                       Draft
                     </Button>
                     <Button
-                      variant={prompt.status === 'PUBLISHED' ? 'default' : 'outline'}
+                      variant={
+                        prompt.status === 'PUBLISHED' ? 'default' : 'outline'
+                      }
                       size="sm"
                       onClick={() => handleStatusChange('PUBLISHED')}
                     >
                       Published
                     </Button>
                     <Button
-                      variant={prompt.status === 'ARCHIVED' ? 'default' : 'outline'}
+                      variant={
+                        prompt.status === 'ARCHIVED' ? 'default' : 'outline'
+                      }
                       size="sm"
                       onClick={() => handleStatusChange('ARCHIVED')}
                     >

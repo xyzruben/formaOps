@@ -10,7 +10,6 @@ const AnalyticsQuerySchema = z.object({
   to: z.string().optional(),
 });
 
-
 interface DashboardAnalytics {
   executions: {
     total: number;
@@ -26,7 +25,7 @@ interface DashboardAnalytics {
   usage: {
     totalTokens: number;
     avgTokensPerExecution: number;
-    topPrompts: { name: string; count: number; }[];
+    topPrompts: { name: string; count: number }[];
   };
 }
 
@@ -48,12 +47,15 @@ interface CombinedAnalyticsData {
       totalOutput: number;
       totalTokens: number;
     };
-    modelBreakdown: Record<string, {
-      executions: number;
-      costUsd: number;
-      inputTokens: number;
-      outputTokens: number;
-    }>;
+    modelBreakdown: Record<
+      string,
+      {
+        executions: number;
+        costUsd: number;
+        inputTokens: number;
+        outputTokens: number;
+      }
+    >;
     dailyTrend: Array<{
       date: string;
       executions: number;
@@ -74,7 +76,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await requireAuth();
     const { searchParams } = new URL(request.url);
-    
+
     // Parse and validate query parameters
     const query = AnalyticsQuerySchema.parse({
       from: searchParams.get('from'),
@@ -83,50 +85,67 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Validate date parameters
     let dateRange: { from: Date; to: Date } | undefined;
-    
+
     if (query.from || query.to) {
-      const fromDate = query.from ? new Date(query.from) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
+      const fromDate = query.from
+        ? new Date(query.from)
+        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
       const toDate = query.to ? new Date(query.to) : new Date();
-      
+
       // Validate dates are valid
       if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-        return NextResponse.json({
-          error: 'Invalid date format. Use ISO date strings.',
-          code: 'INVALID_DATE_FORMAT',
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: 'Invalid date format. Use ISO date strings.',
+            code: 'INVALID_DATE_FORMAT',
+          },
+          { status: 400 }
+        );
       }
-      
+
       // Validate date range is reasonable (not more than 1 year)
       const maxRange = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
       if (toDate.getTime() - fromDate.getTime() > maxRange) {
-        return NextResponse.json({
-          error: 'Date range cannot exceed 1 year',
-          code: 'DATE_RANGE_TOO_LARGE',
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: 'Date range cannot exceed 1 year',
+            code: 'DATE_RANGE_TOO_LARGE',
+          },
+          { status: 400 }
+        );
       }
-      
+
       // Validate from date is not in the future
       if (fromDate > new Date()) {
-        return NextResponse.json({
-          error: 'From date cannot be in the future',
-          code: 'INVALID_DATE_RANGE',
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: 'From date cannot be in the future',
+            code: 'INVALID_DATE_RANGE',
+          },
+          { status: 400 }
+        );
       }
-      
+
       // Validate from date is before to date
       if (fromDate > toDate) {
-        return NextResponse.json({
-          error: 'From date must be before to date',
-          code: 'INVALID_DATE_RANGE',
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error: 'From date must be before to date',
+            code: 'INVALID_DATE_RANGE',
+          },
+          { status: 400 }
+        );
       }
-      
+
       dateRange = { from: fromDate, to: toDate };
     }
 
     // Calculate the number of days for the cost tracker
-    const days = dateRange 
-      ? Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (24 * 60 * 60 * 1000))
+    const days = dateRange
+      ? Math.ceil(
+          (dateRange.to.getTime() - dateRange.from.getTime()) /
+            (24 * 60 * 60 * 1000)
+        )
       : 30; // Default to 30 days
 
     // Fetch data in parallel for better performance
@@ -143,11 +162,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const todayStats = await getExecutionStats(user.id, todayRange);
 
     // Find most used prompt from top prompts
-    const mostUsedPrompt = topPrompts.length > 0 
-      ? topPrompts.reduce((prev, current) => 
-          prev.executions > current.executions ? prev : current
-        ).promptName
-      : 'No prompts found';
+    const mostUsedPrompt =
+      topPrompts.length > 0
+        ? topPrompts.reduce((prev, current) =>
+            prev.executions > current.executions ? prev : current
+          ).promptName
+        : 'No prompts found';
 
     // Calculate model breakdown by cost (simplified from the detailed breakdown)
     const modelCostBreakdown: Record<string, number> = {};
@@ -176,9 +196,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
       usage: {
         totalTokens: costMetrics.tokenUsage.totalTokens,
-        avgTokensPerExecution: executionStats.total > 0 
-          ? costMetrics.tokenUsage.totalTokens / executionStats.total 
-          : 0,
+        avgTokensPerExecution:
+          executionStats.total > 0
+            ? costMetrics.tokenUsage.totalTokens / executionStats.total
+            : 0,
         topPrompts: topPromptsForUsage,
       },
     };

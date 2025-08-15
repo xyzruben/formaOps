@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ErrorBoundary } from '@/components/error-boundary';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   preload: true,
@@ -11,7 +11,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'FormaOps - AI-Native Prompt Management',
-  description: 'Professional prompt management platform for developers. Create, validate, and execute AI prompts with enterprise-grade monitoring.',
+  description:
+    'Professional prompt management platform for developers. Create, validate, and execute AI prompts with enterprise-grade monitoring.',
   keywords: ['AI', 'prompts', 'automation', 'development', 'LLM', 'OpenAI'],
   authors: [{ name: 'FormaOps' }],
   openGraph: {
@@ -43,9 +44,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
-          <main className="min-h-screen bg-background">
-            {children}
-          </main>
+          <main className="min-h-screen bg-background">{children}</main>
         </ErrorBoundary>
       </body>
     </html>

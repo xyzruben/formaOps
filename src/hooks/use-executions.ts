@@ -9,7 +9,12 @@ import type { ExecutionWithDetails } from '../lib/database/queries';
 export type { ExecutionWithDetails } from '../lib/database/queries';
 
 // Additional types for the hook
-type ExecutionStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+type ExecutionStatus =
+  | 'PENDING'
+  | 'RUNNING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'CANCELLED';
 
 // Execution result type matching the API response
 interface ExecutionResult {
@@ -69,12 +74,18 @@ interface UseExecutionsReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  executePrompt: (promptId: string, inputs: Record<string, any>, options?: Partial<ExecutePromptRequest>) => Promise<ExecutionResult>;
+  executePrompt: (
+    promptId: string,
+    inputs: Record<string, any>,
+    options?: Partial<ExecutePromptRequest>
+  ) => Promise<ExecutionResult>;
   retryExecution: (executionId: string) => Promise<void>;
   getExecutionById: (executionId: string) => Promise<ExecutionWithDetails>;
 }
 
-export function useExecutions(options: UseExecutionsOptions = {}): UseExecutionsReturn {
+export function useExecutions(
+  options: UseExecutionsOptions = {}
+): UseExecutionsReturn {
   const [data, setData] = useState<ExecutionsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,16 +116,18 @@ export function useExecutions(options: UseExecutionsOptions = {}): UseExecutions
       if (options.to) params.set('to', options.to);
 
       const response = await fetch(`/api/executions?${params}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch executions: ${response.status}`);
+        throw new Error(
+          errorData.error || `Failed to fetch executions: ${response.status}`
+        );
       }
 
       const result = await response.json();
-      
+
       if (!mountedRef.current) return; // Prevent state update if component unmounted
-      
+
       setData(result);
     } catch (err) {
       if (!mountedRef.current) return;
@@ -125,99 +138,121 @@ export function useExecutions(options: UseExecutionsOptions = {}): UseExecutions
         setLoading(false);
       }
     }
-  }, [options.promptId, options.status, options.page, options.limit, options.from, options.to]);
+  }, [
+    options.promptId,
+    options.status,
+    options.page,
+    options.limit,
+    options.from,
+    options.to,
+  ]);
 
-  const executePrompt = useCallback(async (
-    promptId: string, 
-    inputs: Record<string, any>,
-    executionOptions?: Partial<ExecutePromptRequest>
-  ): Promise<ExecutionResult> => {
-    try {
-      const requestPayload: ExecutePromptRequest = {
-        inputs,
-        ...executionOptions,
-      };
+  const executePrompt = useCallback(
+    async (
+      promptId: string,
+      inputs: Record<string, any>,
+      executionOptions?: Partial<ExecutePromptRequest>
+    ): Promise<ExecutionResult> => {
+      try {
+        const requestPayload: ExecutePromptRequest = {
+          inputs,
+          ...executionOptions,
+        };
 
-      const response = await fetch(`/api/prompts/${promptId}/execute`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestPayload),
-      });
+        const response = await fetch(`/api/prompts/${promptId}/execute`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestPayload),
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to execute prompt: ${response.status}`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Failed to execute prompt: ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+
+        // Refresh the executions list to show the new execution
+        if (mountedRef.current) {
+          await fetchExecutions();
+        }
+
+        return result;
+      } catch (err) {
+        console.error('Error executing prompt:', err);
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
+    },
+    [fetchExecutions]
+  );
 
-      const result = await response.json();
-      
-      // Refresh the executions list to show the new execution
-      if (mountedRef.current) {
-        await fetchExecutions();
+  const retryExecution = useCallback(
+    async (executionId: string): Promise<void> => {
+      try {
+        const response = await fetch(`/api/executions/${executionId}/retry`, {
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Failed to retry execution: ${response.status}`
+          );
+        }
+
+        // Refresh the list after retry
+        if (mountedRef.current) {
+          await fetchExecutions();
+        }
+      } catch (err) {
+        console.error('Error retrying execution:', err);
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
-      
-      return result;
-    } catch (err) {
-      console.error('Error executing prompt:', err);
-      throw err instanceof Error ? err : new Error('Unknown error');
-    }
-  }, [fetchExecutions]);
+    },
+    [fetchExecutions]
+  );
 
-  const retryExecution = useCallback(async (executionId: string): Promise<void> => {
-    try {
-      const response = await fetch(`/api/executions/${executionId}/retry`, {
-        method: 'POST',
-      });
+  const getExecutionById = useCallback(
+    async (executionId: string): Promise<ExecutionWithDetails> => {
+      try {
+        const response = await fetch(`/api/executions/${executionId}`);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to retry execution: ${response.status}`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Failed to fetch execution: ${response.status}`
+          );
+        }
+
+        const result = await response.json();
+        return result.data;
+      } catch (err) {
+        console.error('Error fetching execution by ID:', err);
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
-
-      // Refresh the list after retry
-      if (mountedRef.current) {
-        await fetchExecutions();
-      }
-    } catch (err) {
-      console.error('Error retrying execution:', err);
-      throw err instanceof Error ? err : new Error('Unknown error');
-    }
-  }, [fetchExecutions]);
-
-  const getExecutionById = useCallback(async (executionId: string): Promise<ExecutionWithDetails> => {
-    try {
-      const response = await fetch(`/api/executions/${executionId}`);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to fetch execution: ${response.status}`);
-      }
-
-      const result = await response.json();
-      return result.data;
-    } catch (err) {
-      console.error('Error fetching execution by ID:', err);
-      throw err instanceof Error ? err : new Error('Unknown error');
-    }
-  }, []);
+    },
+    []
+  );
 
   // Initial fetch and auto-refresh setup
   useEffect(() => {
     fetchExecutions();
-    
+
     // Setup auto-refresh if enabled
     if (options.autoRefresh && options.refreshInterval) {
       const interval = Math.max(options.refreshInterval, 1000); // Minimum 1 second
-      
+
       refreshIntervalRef.current = setInterval(() => {
         if (mountedRef.current) {
           fetchExecutions();
         }
       }, interval);
     }
-    
+
     // Cleanup interval on dependencies change
     return () => {
       if (refreshIntervalRef.current) {

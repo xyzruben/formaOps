@@ -39,11 +39,14 @@ export interface ValidationRule {
 }
 
 export class SchemaValidator {
-  public validate(data: unknown, schema: SchemaValidationRule): ValidationResult {
+  public validate(
+    data: unknown,
+    schema: SchemaValidationRule
+  ): ValidationResult {
     try {
       const zodSchema = this.convertToZodSchema(schema);
       const result = zodSchema.safeParse(data);
-      
+
       if (result.success) {
         return {
           isValid: true,
@@ -51,7 +54,7 @@ export class SchemaValidator {
           validatedData: result.data,
         };
       }
-      
+
       return {
         isValid: false,
         errors: result.error.errors.map(err => ({
@@ -63,10 +66,15 @@ export class SchemaValidator {
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          path: 'root',
-          message: error instanceof Error ? error.message : 'Schema validation error',
-        }],
+        errors: [
+          {
+            path: 'root',
+            message:
+              error instanceof Error
+                ? error.message
+                : 'Schema validation error',
+          },
+        ],
       };
     }
   }
@@ -76,30 +84,30 @@ export class SchemaValidator {
       case 'string':
         if (schema.enum) return schema.enum[0];
         return schema.pattern ? 'example' : 'string_value';
-      
+
       case 'number':
         if (schema.enum) return schema.enum[0] as number;
         return schema.minimum || 0;
-      
+
       case 'boolean':
         return true;
-      
+
       case 'array':
         if (!schema.items) return [];
         return [this.generateExample(schema.items)];
-      
+
       case 'object':
         if (!schema.properties) return {};
-        
+
         const example: Record<string, unknown> = {};
         Object.entries(schema.properties).forEach(([key, prop]) => {
           if (schema.required?.includes(key)) {
             example[key] = this.generateExample(prop);
           }
         });
-        
+
         return example;
-      
+
       default:
         return null;
     }
@@ -109,67 +117,77 @@ export class SchemaValidator {
     switch (rule.type) {
       case 'string':
         let stringSchema = z.string();
-        
+
         if (rule.minLength) stringSchema = stringSchema.min(rule.minLength);
         if (rule.maxLength) stringSchema = stringSchema.max(rule.maxLength);
-        if (rule.pattern) stringSchema = stringSchema.regex(new RegExp(rule.pattern));
+        if (rule.pattern)
+          stringSchema = stringSchema.regex(new RegExp(rule.pattern));
         if (rule.enum) {
-          const stringEnums = rule.enum.filter(v => typeof v === 'string') as string[];
+          const stringEnums = rule.enum.filter(
+            v => typeof v === 'string'
+          ) as string[];
           if (stringEnums.length > 0) {
             return z.enum(stringEnums as [string, ...string[]]);
           }
         }
-        
+
         return stringSchema;
-      
+
       case 'number':
         let numberSchema = z.number();
-        
-        if (rule.minimum !== undefined) numberSchema = numberSchema.min(rule.minimum);
-        if (rule.maximum !== undefined) numberSchema = numberSchema.max(rule.maximum);
+
+        if (rule.minimum !== undefined)
+          numberSchema = numberSchema.min(rule.minimum);
+        if (rule.maximum !== undefined)
+          numberSchema = numberSchema.max(rule.maximum);
         if (rule.enum) {
-          const numericEnum = rule.enum.filter(v => typeof v === 'number') as number[];
+          const numericEnum = rule.enum.filter(
+            v => typeof v === 'number'
+          ) as number[];
           if (numericEnum.length > 0) {
             return z.number().refine(val => numericEnum.includes(val), {
               message: `Must be one of: ${numericEnum.join(', ')}`,
             });
           }
         }
-        
+
         return numberSchema;
-      
+
       case 'boolean':
         return z.boolean();
-      
+
       case 'array':
         if (!rule.items) return z.array(z.unknown());
         return z.array(this.convertToZodSchema(rule.items));
-      
+
       case 'object':
         if (!rule.properties) return z.object({});
-        
+
         const shape: Record<string, z.ZodSchema> = {};
-        
+
         Object.entries(rule.properties).forEach(([key, prop]) => {
           let schema = this.convertToZodSchema(prop);
-          
+
           // Make optional if not required
           if (!rule.required?.includes(key)) {
             schema = schema.optional();
           }
-          
+
           shape[key] = schema;
         });
-        
+
         return z.object(shape);
-      
+
       default:
         return z.unknown();
     }
   }
 
   // Task 7: Database integration methods
-  public async validateOutput(output: string, rules: ValidationRule[]): Promise<ValidationResult> {
+  public async validateOutput(
+    output: string,
+    rules: ValidationRule[]
+  ): Promise<ValidationResult> {
     const errors: ValidationErrorDetail[] = [];
     let validatedData: any = null;
 
@@ -186,32 +204,42 @@ export class SchemaValidator {
       // Validate against each active rule
       for (const rule of rules.filter(r => r.isActive)) {
         let result: ValidationResult;
-        
+
         if (rule.type === 'SCHEMA') {
-          result = this.validate(parsedOutput, rule.config as SchemaValidationRule);
+          result = this.validate(
+            parsedOutput,
+            rule.config as SchemaValidationRule
+          );
         } else if (rule.type === 'REGEX') {
           const pattern = (rule.config as { pattern: string }).pattern;
           const regex = new RegExp(pattern);
-          const isValid = typeof parsedOutput === 'string' && regex.test(parsedOutput);
+          const isValid =
+            typeof parsedOutput === 'string' && regex.test(parsedOutput);
           result = {
             isValid,
-            errors: isValid ? [] : [{
-              path: 'root',
-              message: `Does not match pattern: ${pattern}`,
-            }],
+            errors: isValid
+              ? []
+              : [
+                  {
+                    path: 'root',
+                    message: `Does not match pattern: ${pattern}`,
+                  },
+                ],
             validatedData: isValid ? parsedOutput : undefined,
           };
         } else {
           // For now, skip FUNCTION type validations as they need runtime evaluation
           continue;
         }
-        
+
         if (!result.isValid) {
-          errors.push(...result.errors.map(err => ({
-            ...err,
-            path: `${rule.name}.${err.path}`,
-            message: `${rule.name}: ${err.message}`,
-          })));
+          errors.push(
+            ...result.errors.map(err => ({
+              ...err,
+              path: `${rule.name}.${err.path}`,
+              message: `${rule.name}: ${err.message}`,
+            }))
+          );
         } else if (validatedData === null) {
           validatedData = result.validatedData;
         }
@@ -222,14 +250,16 @@ export class SchemaValidator {
         errors,
         validatedData: validatedData || parsedOutput,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          path: 'root',
-          message: error instanceof Error ? error.message : 'Validation failed',
-        }],
+        errors: [
+          {
+            path: 'root',
+            message:
+              error instanceof Error ? error.message : 'Validation failed',
+          },
+        ],
       };
     }
   }
@@ -255,7 +285,10 @@ export class SchemaValidator {
         promptId: createdRule.promptId,
         name: createdRule.name,
         type: createdRule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
-        config: createdRule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        config: createdRule.config as
+          | SchemaValidationRule
+          | { pattern: string }
+          | { code: string },
         isActive: createdRule.isActive,
         createdAt: createdRule.createdAt,
         updatedAt: createdRule.updatedAt,
@@ -279,7 +312,10 @@ export class SchemaValidator {
         promptId: rule.promptId,
         name: rule.name,
         type: rule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
-        config: rule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        config: rule.config as
+          | SchemaValidationRule
+          | { pattern: string }
+          | { code: string },
         isActive: rule.isActive,
         createdAt: rule.createdAt,
         updatedAt: rule.updatedAt,
@@ -293,7 +329,9 @@ export class SchemaValidator {
 
   public async updateValidationRule(
     ruleId: string,
-    updates: Partial<Pick<ValidationRule, 'name' | 'type' | 'config' | 'isActive'>>
+    updates: Partial<
+      Pick<ValidationRule, 'name' | 'type' | 'config' | 'isActive'>
+    >
   ): Promise<ValidationRule> {
     try {
       const updatedRule = await prisma.validation.update({
@@ -310,7 +348,10 @@ export class SchemaValidator {
         promptId: updatedRule.promptId,
         name: updatedRule.name,
         type: updatedRule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
-        config: updatedRule.config as SchemaValidationRule | { pattern: string } | { code: string },
+        config: updatedRule.config as
+          | SchemaValidationRule
+          | { pattern: string }
+          | { code: string },
         isActive: updatedRule.isActive,
         createdAt: updatedRule.createdAt,
         updatedAt: updatedRule.updatedAt,
@@ -337,7 +378,11 @@ export class SchemaValidator {
   public async validateExecutionOutput(
     executionId: string,
     output: string
-  ): Promise<{ isValid: boolean; errors: ValidationErrorDetail[]; validationStatus: 'PASSED' | 'FAILED' }> {
+  ): Promise<{
+    isValid: boolean;
+    errors: ValidationErrorDetail[];
+    validationStatus: 'PASSED' | 'FAILED';
+  }> {
     try {
       // Get execution and its prompt's validation rules
       const execution = await prisma.execution.findUnique({
@@ -356,16 +401,21 @@ export class SchemaValidator {
       }
 
       // Convert database validation rules to ValidationRule format
-      const rules: ValidationRule[] = execution.prompt.validations.map(rule => ({
-        id: rule.id,
-        promptId: rule.promptId,
-        name: rule.name,
-        type: rule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
-        config: rule.config as SchemaValidationRule | { pattern: string } | { code: string },
-        isActive: rule.isActive,
-        createdAt: rule.createdAt,
-        updatedAt: rule.updatedAt,
-      }));
+      const rules: ValidationRule[] = execution.prompt.validations.map(
+        rule => ({
+          id: rule.id,
+          promptId: rule.promptId,
+          name: rule.name,
+          type: rule.type as 'SCHEMA' | 'REGEX' | 'FUNCTION',
+          config: rule.config as
+            | SchemaValidationRule
+            | { pattern: string }
+            | { code: string },
+          isActive: rule.isActive,
+          createdAt: rule.createdAt,
+          updatedAt: rule.updatedAt,
+        })
+      );
 
       // Validate output against rules
       const result = await this.validateOutput(output, rules);
@@ -409,7 +459,13 @@ export const commonSchemas = {
           properties: {
             type: {
               type: 'string' as const,
-              enum: ['security', 'performance', 'style', 'bug', 'maintainability'],
+              enum: [
+                'security',
+                'performance',
+                'style',
+                'bug',
+                'maintainability',
+              ],
             },
             severity: {
               type: 'string' as const,
@@ -461,8 +517,14 @@ export const commonSchemas = {
           required: ['action', 'impact', 'priority'],
           properties: {
             action: { type: 'string' as const },
-            impact: { type: 'string' as const, enum: ['low', 'medium', 'high'] },
-            priority: { type: 'string' as const, enum: ['low', 'medium', 'high'] },
+            impact: {
+              type: 'string' as const,
+              enum: ['low', 'medium', 'high'],
+            },
+            priority: {
+              type: 'string' as const,
+              enum: ['low', 'medium', 'high'],
+            },
           },
         },
       },
@@ -472,7 +534,10 @@ export const commonSchemas = {
         properties: {
           completeness: { type: 'number' as const, minimum: 0, maximum: 100 },
           accuracy: { type: 'number' as const, minimum: 0, maximum: 100 },
-          issues: { type: 'array' as const, items: { type: 'string' as const } },
+          issues: {
+            type: 'array' as const,
+            items: { type: 'string' as const },
+          },
         },
       },
     },

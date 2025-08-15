@@ -18,15 +18,15 @@ interface TabsProps {
   className?: string;
 }
 
-export function Tabs({ 
-  value, 
-  defaultValue, 
-  onValueChange, 
-  children, 
-  className 
+export function Tabs({
+  value,
+  defaultValue,
+  onValueChange,
+  children,
+  className,
 }: TabsProps): JSX.Element {
   const [internalValue, setInternalValue] = useState(defaultValue || '');
-  
+
   const activeTab = value !== undefined ? value : internalValue;
   const setActiveTab = (newValue: string) => {
     if (value === undefined) {
@@ -37,9 +37,7 @@ export function Tabs({
 
   return (
     <TabsContext.Provider value={{ activeTab, setActiveTab }}>
-      <div className={cn('w-full', className)}>
-        {children}
-      </div>
+      <div className={cn('w-full', className)}>{children}</div>
     </TabsContext.Provider>
   );
 }
@@ -69,14 +67,14 @@ interface TabsTriggerProps {
   disabled?: boolean;
 }
 
-export function TabsTrigger({ 
-  value, 
-  children, 
-  className, 
-  disabled = false 
+export function TabsTrigger({
+  value,
+  children,
+  className,
+  disabled = false,
 }: TabsTriggerProps): JSX.Element {
   const context = useContext(TabsContext);
-  
+
   if (!context) {
     throw new Error('TabsTrigger must be used within a Tabs component');
   }
@@ -91,8 +89,8 @@ export function TabsTrigger({
       onClick={() => !disabled && setActiveTab(value)}
       className={cn(
         'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-        isActive 
-          ? 'bg-background text-foreground shadow-sm' 
+        isActive
+          ? 'bg-background text-foreground shadow-sm'
           : 'hover:bg-background/60',
         className
       )}
@@ -108,13 +106,13 @@ interface TabsContentProps {
   className?: string;
 }
 
-export function TabsContent({ 
-  value, 
-  children, 
-  className 
+export function TabsContent({
+  value,
+  children,
+  className,
 }: TabsContentProps): JSX.Element {
   const context = useContext(TabsContext);
-  
+
   if (!context) {
     throw new Error('TabsContent must be used within a Tabs component');
   }

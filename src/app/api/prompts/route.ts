@@ -4,7 +4,10 @@ import { requireAuth } from '@/lib/auth/server';
 import { getUserPrompts, createPrompt } from '@/lib/database/queries';
 
 const VariableSchema = z.object({
-  name: z.string().min(1).regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid variable name'),
+  name: z
+    .string()
+    .min(1)
+    .regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/, 'Invalid variable name'),
   type: z.enum(['string', 'number', 'boolean', 'array']),
   required: z.boolean(),
   description: z.string().optional(),
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await requireAuth();
     const { searchParams } = new URL(request.url);
-    
+
     const query = PromptsQuerySchema.parse({
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
@@ -74,7 +77,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const user = await requireAuth();
     const body = await request.json();
-    
+
     const data = CreatePromptSchema.parse(body);
 
     const prompt = await createPrompt(user.id, data);

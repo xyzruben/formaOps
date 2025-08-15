@@ -5,10 +5,10 @@ interface LoadingSpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function LoadingSpinner({ 
-  className, 
+export function LoadingSpinner({
+  className,
   size = 'md',
-  ...props 
+  ...props
 }: LoadingSpinnerProps): JSX.Element {
   return (
     <div
@@ -33,9 +33,9 @@ interface LoadingStateProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function LoadingState({ 
-  message = 'Loading...', 
-  size = 'md' 
+export function LoadingState({
+  message = 'Loading...',
+  size = 'md',
 }: LoadingStateProps): JSX.Element {
   return (
     <div className="flex items-center justify-center p-8">
@@ -47,11 +47,11 @@ export function LoadingState({
   );
 }
 
-export function ErrorState({ 
-  message, 
-  onRetry 
-}: { 
-  message: string; 
+export function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
   onRetry?: () => void;
 }): JSX.Element {
   return (

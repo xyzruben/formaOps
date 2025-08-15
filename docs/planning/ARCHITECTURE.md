@@ -10,7 +10,7 @@ FormaOps is an AI-native developer platform for creating, testing, validating, a
 2. **Edge-Native Execution**: All prompt execution via isolated edge functions
 3. **Infrastructure-as-Code**: Prompts are treated as versioned, testable infrastructure
 4. **Fault Tolerance**: Resumable, idempotent operations with comprehensive logging
-5. **Developer Experience**: Built for developers building *with* AI, not chatting with it
+5. **Developer Experience**: Built for developers building _with_ AI, not chatting with it
 
 ---
 
@@ -139,27 +139,32 @@ FormaOps is an AI-native developer platform for creating, testing, validating, a
 ## 2. Core Features & Organization
 
 ### 2.1 Prompt Management (`/src/lib/prompts/`)
+
 - **Template Engine**: Handlebars-style variable substitution
 - **Variable Injection**: Type-safe input validation and insertion
 - **Versioning**: Git-like versioning with rollback capabilities
 - **Import/Export**: JSON/YAML format support
 
 ### 2.2 AI Agent Core (`/src/lib/agent/`)
+
 - **Executor**: Main agent orchestration with OpenAI API integration
 - **Priority Manager**: CPU priority enforcement and resource allocation
 - **Context Builder**: Dynamic context assembly from templates and variables
 
 ### 2.3 Execution Engine (`/src/lib/execution/`)
+
 - **Edge Dispatcher**: Routes executions to Supabase/Vercel edge functions
 - **Result Handler**: Processes and stores execution results
 - **Retry Logic**: Exponential backoff with circuit breaker pattern
 
 ### 2.4 Validation System (`/src/lib/validation/`)
+
 - **Schema Validator**: JSON Schema validation (Zod integration)
 - **Regex Validator**: Pattern matching for text outputs
 - **Test Runner**: Custom JavaScript test functions
 
 ### 2.5 Monitoring & Analytics (`/src/lib/monitoring/`)
+
 - **Cost Tracker**: Token usage and API cost calculation
 - **Performance Monitor**: Latency, throughput, and error metrics
 - **Audit Trail**: Complete execution history and compliance logging
@@ -180,12 +185,12 @@ model User {
   plan            UserPlan  @default(FREE)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
+
   // Relations
   prompts         Prompt[]
   executions      Execution[]
   apiKeys         ApiKey[]
-  
+
   @@map("users")
 }
 
@@ -199,19 +204,19 @@ model Prompt {
   version         Int             @default(1)
   status          PromptStatus    @default(DRAFT)
   tags            String[]        @default([])
-  
+
   // Metadata
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   publishedAt     DateTime?
-  
+
   // Relations
   userId          String
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   executions      Execution[]
   validations     Validation[]
   versions        PromptVersion[]
-  
+
   @@map("prompts")
   @@index([userId, status])
   @@index([createdAt])
@@ -225,11 +230,11 @@ model PromptVersion {
   variables       Json
   changeLog       String?
   createdAt       DateTime  @default(now())
-  
+
   // Relations
   promptId        String
   prompt          Prompt    @relation(fields: [promptId], references: [id], onDelete: Cascade)
-  
+
   @@map("prompt_versions")
   @@unique([promptId, version])
 }
@@ -237,38 +242,38 @@ model PromptVersion {
 // Execution Records
 model Execution {
   id              String          @id @default(uuid())
-  
+
   // Input Data
   inputs          Json            // Variable values used
   context         Json?           // Additional context data
-  
+
   // Execution Details
   status          ExecutionStatus @default(PENDING)
   priority        Priority        @default(NORMAL)
   edgeFunctionId  String?         // Edge function execution ID
-  
+
   // Results
   output          String?         // Raw AI response
   validatedOutput Json?           // Post-validation structured data
   validationStatus ValidationStatus @default(PENDING)
-  
+
   // Metrics
   tokenUsage      Json?           // Input/output token counts
   latencyMs       Int?
   costUsd         Decimal?        @db.Decimal(10,6)
-  
+
   // Timestamps
   createdAt       DateTime        @default(now())
   startedAt       DateTime?
   completedAt     DateTime?
-  
+
   // Relations
   userId          String
   user            User            @relation(fields: [userId], references: [id])
   promptId        String
   prompt          Prompt          @relation(fields: [promptId], references: [id])
   logs            ExecutionLog[]
-  
+
   @@map("executions")
   @@index([userId, status])
   @@index([createdAt])
@@ -282,14 +287,14 @@ model Validation {
   type            ValidationType  // SCHEMA, REGEX, FUNCTION
   config          Json            // Validation configuration
   isActive        Boolean         @default(true)
-  
+
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  
+
   // Relations
   promptId        String
   prompt          Prompt          @relation(fields: [promptId], references: [id], onDelete: Cascade)
-  
+
   @@map("validations")
 }
 
@@ -300,11 +305,11 @@ model ExecutionLog {
   message         String
   metadata        Json?
   timestamp       DateTime    @default(now())
-  
+
   // Relations
   executionId     String
   execution       Execution   @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  
+
   @@map("execution_logs")
   @@index([executionId, timestamp])
 }
@@ -317,11 +322,11 @@ model ApiKey {
   lastUsed        DateTime?
   isActive        Boolean     @default(true)
   createdAt       DateTime    @default(now())
-  
+
   // Relations
   userId          String
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@map("api_keys")
 }
 
@@ -400,24 +405,25 @@ CREATE POLICY "Users can subscribe to own execution updates" ON executions
 ### 4.1 CPU Priority System
 
 **Priority Manager** (`/src/lib/agent/priority-manager.ts`):
+
 ```typescript
 interface PriorityConfig {
-  maxConcurrentAgentOps: number;    // Configurable: AGENT_MAX_CONCURRENT || 5
-  agentCpuReservation: number;      // Configurable: AGENT_CPU_RESERVE || 70
-  uiOperationThreshold: number;     // Configurable: UI_THRESHOLD || 2
-  autoScaleThreshold: number;       // Configurable: SCALE_THRESHOLD || 80
+  maxConcurrentAgentOps: number; // Configurable: AGENT_MAX_CONCURRENT || 5
+  agentCpuReservation: number; // Configurable: AGENT_CPU_RESERVE || 70
+  uiOperationThreshold: number; // Configurable: UI_THRESHOLD || 2
+  autoScaleThreshold: number; // Configurable: SCALE_THRESHOLD || 80
 }
 
 interface CircuitBreakerConfig {
-  failureThreshold: number;         // Configurable: FAILURE_THRESHOLD || 5
-  timeoutMs: number;               // Configurable: TIMEOUT_MS || 30000
-  recoveryTimeMs: number;          // Configurable: RECOVERY_TIME || 60000
+  failureThreshold: number; // Configurable: FAILURE_THRESHOLD || 5
+  timeoutMs: number; // Configurable: TIMEOUT_MS || 30000
+  recoveryTimeMs: number; // Configurable: RECOVERY_TIME || 60000
   fallbackStrategy: 'queue' | 'reject' | 'degrade'; // FALLBACK_STRATEGY || 'queue'
 }
 
 interface DegradationStrategy {
-  highLoadThreshold: number;       // 70% capacity
-  criticalLoadThreshold: number;   // 90% capacity
+  highLoadThreshold: number; // 70% capacity
+  criticalLoadThreshold: number; // 90% capacity
   actions: {
     highLoad: 'defer_analytics' | 'reduce_logging';
     criticalLoad: 'essential_only' | 'reject_non_priority';
@@ -426,6 +432,7 @@ interface DegradationStrategy {
 ```
 
 **Enforcement Mechanisms**:
+
 1. **Queue Management**: Agent operations bypass normal request queues with circuit breaker protection
 2. **Resource Allocation**: Configurable CPU reservation (default 70%) with dynamic adjustment
 3. **UI Deferral**: Non-critical UI operations pause when agent load exceeds threshold
@@ -460,6 +467,7 @@ interface DegradationStrategy {
 ### 4.3 Fault Tolerance & Resumability
 
 **Design Patterns**:
+
 - **Idempotent Operations**: All executions use UUID-based idempotency keys
 - **State Checkpointing**: Execution state saved at each major step
 - **Circuit Breaker**: Automatic fallback for failed edge functions with configurable thresholds
@@ -493,13 +501,14 @@ interface DegradationStrategy {
 
 ```typescript
 interface ValidationPipeline {
-  preValidation: ValidationRule[];   // Before AI execution
+  preValidation: ValidationRule[]; // Before AI execution
   postValidation: ValidationRule[]; // After AI execution
-  onFailure: ValidationAction[];    // Retry, alert, or fail
+  onFailure: ValidationAction[]; // Retry, alert, or fail
 }
 ```
 
 **Execution Flow**:
+
 1. Pre-validation: Input and template validation
 2. AI Execution: Prompt processing with agent
 3. Post-validation: Output validation against rules
@@ -512,18 +521,21 @@ interface ValidationPipeline {
 ### 6.1 Comprehensive Logging
 
 **Log Categories**:
+
 - **Execution Logs**: Step-by-step execution traces
 - **Performance Logs**: Latency, throughput, and resource usage
 - **Error Logs**: Failures, retries, and system errors
 - **Audit Logs**: User actions, API access, and data changes
 
 **Storage Strategy**:
+
 - Hot data: PostgreSQL (last 30 days) with daily automated backups
 - Warm data: Supabase Storage (30-365 days) with point-in-time recovery
 - Cold data: Archive to S3 (>365 days) with lifecycle policies
 - Backup retention: 30 days hot, 90 days warm, 7 years cold
 
 **Data Safety & Recovery**:
+
 - **Automated Backups**: Daily PostgreSQL dumps via Supabase (built-in)
 - **Point-in-Time Recovery**: 7-day window for critical data restoration
 - **Cross-Region Replication**: Async replication to secondary region
@@ -533,12 +545,14 @@ interface ValidationPipeline {
 ### 6.2 Cost Tracking
 
 **Cost Components**:
+
 - OpenAI API usage (input/output tokens)
 - Edge function execution time
 - Database operations and storage
 - Real-time subscriptions
 
 **Tracking Implementation**:
+
 ```typescript
 interface CostMetrics {
   tokenCosts: {
@@ -563,22 +577,25 @@ interface CostMetrics {
 
 **Key Metrics & SLAs**:
 
-*Performance Targets:*
+_Performance Targets:_
+
 - Execution latency: < 5s p95, < 2s p50
 - System availability: 99.5% uptime (43.8min downtime/month)
 - Error rate: < 1% for successful validations
 - Agent response time: < 500ms for priority operations
 
-*Operational Metrics:*
+_Operational Metrics:_
+
 - Execution success rate and latency percentiles
 - Cost per execution and daily/monthly spending
 - Token usage trends and optimization opportunities
 - Validation failure patterns and error analysis
 - Resource utilization and scaling effectiveness
 
-*Alerting Thresholds:*
+_Alerting Thresholds:_
+
 - Error rate > 2% for 5 minutes
-- Latency p95 > 10s for 3 minutes  
+- Latency p95 > 10s for 3 minutes
 - System availability < 99% for 10 minutes
 - Cost anomalies > 150% of daily average
 
@@ -589,6 +606,7 @@ interface CostMetrics {
 ### 7.1 Testing Approach
 
 **Test Categories**:
+
 1. **Unit Tests**: Jest + Testing Library for components and utilities
 2. **Integration Tests**: API route testing with test database
 3. **E2E Tests**: Playwright for full user workflows
@@ -596,6 +614,7 @@ interface CostMetrics {
 5. **Edge Function Tests**: Supabase CLI local testing
 
 **Test Structure**:
+
 ```
 /tests
 ├── unit/
@@ -615,6 +634,7 @@ interface CostMetrics {
 ### 7.2 CI/CD Pipeline
 
 **GitHub Actions Workflow**:
+
 1. **Code Quality**: ESLint, Prettier, TypeScript checks
 2. **Security**: Dependency scanning, secret detection
 3. **Testing**: Unit → Integration → E2E test execution
@@ -623,13 +643,15 @@ interface CostMetrics {
 6. **Monitoring**: Post-deployment health checks
 
 **Environment Strategy**:
+
 - Development: Local Supabase + OpenAI dev keys
-- Staging: Supabase staging + OpenAI test environment  
+- Staging: Supabase staging + OpenAI test environment
 - Production: Supabase production + OpenAI production keys
 
 ### 7.3 Development Workflow
 
 **Key Development Commands**:
+
 ```bash
 # Local development
 npm run dev          # Next.js dev server
@@ -651,6 +673,7 @@ npm run deploy       # Deploy to Vercel
 ```
 
 **Environment Configuration**:
+
 ```bash
 # Core Settings
 AGENT_CPU_RESERVE=70        # CPU reservation percentage
@@ -668,6 +691,7 @@ FALLBACK_STRATEGY=queue     # Failure handling strategy
 ```
 
 **Code Standards**:
+
 - TypeScript strict mode enforcement
 - ESLint + Prettier configuration
 - Conventional commit messages
@@ -704,11 +728,13 @@ FALLBACK_STRATEGY=queue     # Failure handling strategy
 ### 9.1 Scaling Strategy
 
 **Horizontal Scaling**:
+
 - Edge functions auto-scale based on demand
-- Database read replicas for analytics queries  
+- Database read replicas for analytics queries
 - CDN distribution for global performance
 
 **Vertical Scaling**:
+
 - CPU priority system adapts to increased load
 - Memory optimization for large prompt templates
 - Connection pooling for database efficiency
@@ -716,12 +742,14 @@ FALLBACK_STRATEGY=queue     # Failure handling strategy
 ### 9.2 Extension Points
 
 **Plugin Architecture**:
+
 - Custom validation functions
 - Third-party AI model integrations
 - External data source connectors
 - Webhook and API integrations
 
 **Enterprise Features**:
+
 - Multi-tenant organization support with resource isolation
 - Advanced RBAC and audit requirements with compliance reporting
 - Custom deployment options (on-premise) with air-gapped support
@@ -734,21 +762,25 @@ FALLBACK_STRATEGY=queue     # Failure handling strategy
 ## Implementation Priority
 
 **Phase 1: Core Foundation** (Weeks 1-2)
+
 - Basic Next.js setup with auth
-- Prisma schema and Supabase configuration  
+- Prisma schema and Supabase configuration
 - Simple prompt creation and execution
 
 **Phase 2: Agent System** (Weeks 3-4)
+
 - Edge function deployment
 - AI agent integration with OpenAI
 - Priority management system
 
 **Phase 3: Validation & Monitoring** (Weeks 5-6)
+
 - Output validation system
 - Logging and cost tracking
 - Basic analytics dashboard
 
 **Phase 4: Polish & Production** (Weeks 7-8)
+
 - Testing suite completion
 - Performance optimization
 - Production deployment and monitoring
@@ -756,12 +788,14 @@ FALLBACK_STRATEGY=queue     # Failure handling strategy
 ## 10. Operational Excellence & Reliability
 
 ### 10.1 Service Health Monitoring
+
 - **Health Endpoints**: `/api/health` with dependency checks (database, AI APIs, edge functions)
 - **Circuit Breaker Dashboards**: Real-time status of all circuit breakers and fallback modes
 - **Capacity Planning**: Automated scaling recommendations based on usage patterns
 - **Incident Response**: Automated alerting with escalation paths and runbook integration
 
 ### 10.2 Graceful Degradation Framework
+
 ```typescript
 interface DegradationLevels {
   NORMAL: 'all_features_available';
@@ -771,14 +805,15 @@ interface DegradationLevels {
 }
 
 interface DegradationTriggers {
-  cpu_usage: 85;           // Trigger degradation at 85% CPU
-  error_rate: 5;           // 5% error rate threshold
-  response_time: 10000;    // 10s response time threshold
-  dependency_failures: 3;  // 3 consecutive dependency failures
+  cpu_usage: 85; // Trigger degradation at 85% CPU
+  error_rate: 5; // 5% error rate threshold
+  response_time: 10000; // 10s response time threshold
+  dependency_failures: 3; // 3 consecutive dependency failures
 }
 ```
 
 ### 10.3 Recovery & Continuity
+
 - **Automatic Recovery**: Self-healing capabilities for common failure modes
 - **State Reconstruction**: Ability to rebuild system state from audit logs
 - **Rollback Procedures**: Automated and manual rollback capabilities for deployments

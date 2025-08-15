@@ -31,27 +31,27 @@ Provide detailed feedback with specific suggestions.`,
         type: 'string' as const,
         required: true,
         defaultValue: 'typescript',
-        options: ['typescript', 'javascript', 'python', 'go', 'rust']
+        options: ['typescript', 'javascript', 'python', 'go', 'rust'],
       },
       {
         name: 'code',
         type: 'string' as const,
         required: true,
-        description: 'Code to review'
+        description: 'Code to review',
       },
       {
         name: 'focus_areas',
         type: 'string' as const,
         required: false,
         defaultValue: 'security, performance',
-        description: 'Specific areas to focus on'
-      }
+        description: 'Specific areas to focus on',
+      },
     ] as VariableDefinition[],
     testInputs: {
       language: 'typescript',
       code: 'const user = { password: "123456" }; // TODO: hash passwords\nconsole.log("User:", user);',
-      focus_areas: 'security, best practices'
-    }
+      focus_areas: 'security, best practices',
+    },
   },
   {
     name: 'Content Generator',
@@ -75,71 +75,96 @@ Please ensure the content is engaging, on-brand, and achieves the specified goal
         name: 'content_type',
         type: 'string' as const,
         required: true,
-        options: ['blog_post', 'social_media', 'email_campaign', 'landing_page', 'product_description']
+        options: [
+          'blog_post',
+          'social_media',
+          'email_campaign',
+          'landing_page',
+          'product_description',
+        ],
       },
       {
         name: 'audience',
         type: 'string' as const,
         required: true,
-        options: ['executives', 'developers', 'marketers', 'general_public', 'customers']
+        options: [
+          'executives',
+          'developers',
+          'marketers',
+          'general_public',
+          'customers',
+        ],
       },
       {
         name: 'topic',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'key_messages',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'tone',
         type: 'string' as const,
         required: true,
-        options: ['professional', 'conversational', 'authoritative', 'friendly', 'technical'],
-        defaultValue: 'professional'
+        options: [
+          'professional',
+          'conversational',
+          'authoritative',
+          'friendly',
+          'technical',
+        ],
+        defaultValue: 'professional',
       },
       {
         name: 'word_count',
         type: 'number' as const,
         required: true,
-        defaultValue: 300
+        defaultValue: 300,
       },
       {
         name: 'brand_name',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'primary_goal',
         type: 'string' as const,
         required: true,
-        options: ['awareness', 'engagement', 'conversion', 'education', 'retention']
+        options: [
+          'awareness',
+          'engagement',
+          'conversion',
+          'education',
+          'retention',
+        ],
       },
       {
         name: 'call_to_action',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'additional_context',
         type: 'string' as const,
-        required: false
-      }
+        required: false,
+      },
     ] as VariableDefinition[],
     testInputs: {
       content_type: 'blog_post',
       audience: 'developers',
       topic: 'Introduction to AI-powered development tools',
-      key_messages: 'AI tools increase productivity, reduce errors, enhance code quality',
+      key_messages:
+        'AI tools increase productivity, reduce errors, enhance code quality',
       tone: 'conversational',
       word_count: 500,
       brand_name: 'FormaOps',
       primary_goal: 'education',
       call_to_action: 'Try FormaOps today',
-      additional_context: 'Focus on practical benefits and real-world examples'
-    }
+      additional_context: 'Focus on practical benefits and real-world examples',
+    },
   },
   {
     name: 'API Documentation Generator',
@@ -175,74 +200,76 @@ Style: {{doc_style}}`,
         name: 'method',
         type: 'string' as const,
         required: true,
-        options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
+        options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
       },
       {
         name: 'endpoint_path',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'description',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'parameters',
         type: 'string' as const,
-        required: false
+        required: false,
       },
       {
         name: 'request_schema',
         type: 'string' as const,
-        required: false
+        required: false,
       },
       {
         name: 'response_schema',
         type: 'string' as const,
-        required: true
+        required: true,
       },
       {
         name: 'error_codes',
         type: 'string' as const,
         required: true,
-        defaultValue: '400, 401, 404, 500'
+        defaultValue: '400, 401, 404, 500',
       },
       {
         name: 'auth_type',
         type: 'string' as const,
         required: true,
         options: ['Bearer', 'API Key', 'Basic Auth', 'OAuth', 'None'],
-        defaultValue: 'Bearer'
+        defaultValue: 'Bearer',
       },
       {
         name: 'language',
         type: 'string' as const,
         required: true,
         options: ['javascript', 'python', 'curl', 'go', 'php'],
-        defaultValue: 'javascript'
+        defaultValue: 'javascript',
       },
       {
         name: 'doc_style',
         type: 'string' as const,
         required: true,
         options: ['openapi', 'markdown', 'rest', 'graphql'],
-        defaultValue: 'openapi'
-      }
+        defaultValue: 'openapi',
+      },
     ] as VariableDefinition[],
     testInputs: {
       method: 'POST',
       endpoint_path: '/api/users',
       description: 'Create a new user account',
       parameters: 'None',
-      request_schema: '{"name": "string", "email": "string", "password": "string"}',
-      response_schema: '{"id": "string", "name": "string", "email": "string", "createdAt": "datetime"}',
+      request_schema:
+        '{"name": "string", "email": "string", "password": "string"}',
+      response_schema:
+        '{"id": "string", "name": "string", "email": "string", "createdAt": "datetime"}',
       error_codes: '400, 409, 500',
       auth_type: 'Bearer',
       language: 'javascript',
-      doc_style: 'openapi'
-    }
-  }
+      doc_style: 'openapi',
+    },
+  },
 ];
 
 async function validateDemoData(): Promise<void> {
@@ -254,7 +281,7 @@ async function validateDemoData(): Promise<void> {
 
   for (const prompt of demoPrompts) {
     console.log(`📝 Testing prompt: "${prompt.name}"`);
-    
+
     try {
       // Test template processing
       const result = templateEngine.processTemplate(
@@ -267,30 +294,42 @@ async function validateDemoData(): Promise<void> {
 
       if (result.isValid) {
         console.log(`  ✅ Template processing: PASSED`);
-        console.log(`  📄 Processed template length: ${result.processedTemplate.length} characters`);
-        
+        console.log(
+          `  📄 Processed template length: ${result.processedTemplate.length} characters`
+        );
+
         // Check that all variables were replaced
-        const remainingVariables = result.processedTemplate.match(/\{\{[^}]+\}\}/g);
+        const remainingVariables =
+          result.processedTemplate.match(/\{\{[^}]+\}\}/g);
         if (remainingVariables) {
-          console.log(`  ⚠️  Warning: Unreplaced variables found: ${remainingVariables.join(', ')}`);
+          console.log(
+            `  ⚠️  Warning: Unreplaced variables found: ${remainingVariables.join(', ')}`
+          );
         } else {
           console.log(`  🎯 All variables successfully replaced`);
         }
-        
+
         passedTests++;
       } else {
         console.log(`  ❌ Template processing: FAILED`);
-        console.log(`  🚫 Missing variables: ${result.missingVariables.join(', ')}`);
+        console.log(
+          `  🚫 Missing variables: ${result.missingVariables.join(', ')}`
+        );
         failedTests++;
       }
 
       // Test variable validation
       console.log(`  📊 Variables defined: ${prompt.variables.length}`);
-      console.log(`  🔧 Required variables: ${prompt.variables.filter(v => v.required).length}`);
-      console.log(`  🎛️  Optional variables: ${prompt.variables.filter(v => !v.required).length}`);
-
+      console.log(
+        `  🔧 Required variables: ${prompt.variables.filter(v => v.required).length}`
+      );
+      console.log(
+        `  🎛️  Optional variables: ${prompt.variables.filter(v => !v.required).length}`
+      );
     } catch (error) {
-      console.log(`  💥 Error during validation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.log(
+        `  💥 Error during validation: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
       totalTests++;
       failedTests++;
     }
@@ -303,7 +342,9 @@ async function validateDemoData(): Promise<void> {
   console.log(`  Total tests: ${totalTests}`);
   console.log(`  Passed: ${passedTests} ✅`);
   console.log(`  Failed: ${failedTests} ❌`);
-  console.log(`  Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`);
+  console.log(
+    `  Success rate: ${((passedTests / totalTests) * 100).toFixed(1)}%`
+  );
 
   if (failedTests === 0) {
     console.log('\n🎉 All demo data validation tests passed!');
@@ -318,7 +359,7 @@ async function validateDemoData(): Promise<void> {
 
 // Run validation if this script is executed directly
 if (require.main === module) {
-  validateDemoData().catch((error) => {
+  validateDemoData().catch(error => {
     console.error('💥 Validation script failed:', error);
     process.exit(1);
   });

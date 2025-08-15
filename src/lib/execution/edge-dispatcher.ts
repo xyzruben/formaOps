@@ -50,9 +50,18 @@ export class EdgeDispatcher {
    * Simulates edge function execution by running the AI execution
    * and validation pipeline in the current process
    */
-  public async dispatchExecution(request: EdgeExecutionRequest): Promise<EdgeExecutionResult> {
+  public async dispatchExecution(
+    request: EdgeExecutionRequest
+  ): Promise<EdgeExecutionResult> {
     const startTime = Date.now();
-    const { executionId, template, inputs, priority, validationRules, options } = request;
+    const {
+      executionId,
+      template,
+      inputs,
+      priority,
+      validationRules,
+      options,
+    } = request;
 
     try {
       // Update execution status to RUNNING
@@ -94,25 +103,34 @@ export class EdgeDispatcher {
 
         // If validation passes and provides validated data, use it
         if (validationSummary.overallValid) {
-          const schemaResult = validationSummary.results.find(r => r.type === 'SCHEMA');
+          const schemaResult = validationSummary.results.find(
+            r => r.type === 'SCHEMA'
+          );
           if (schemaResult?.result) {
-            validatedOutput = typeof schemaResult.result === 'string' 
-              ? schemaResult.result 
-              : JSON.stringify(schemaResult.result);
+            validatedOutput =
+              typeof schemaResult.result === 'string'
+                ? schemaResult.result
+                : JSON.stringify(schemaResult.result);
           }
         }
       }
 
       const totalLatency = Date.now() - startTime;
-      const validationTime = validationSummary ? Date.now() - validationStartTime : 0;
+      const validationTime = validationSummary
+        ? Date.now() - validationStartTime
+        : 0;
 
       // Update execution with results
       await updateExecution(executionId, {
         status: 'COMPLETED',
         output: aiResult.output,
-        validatedOutput: validatedOutput !== aiResult.output ? validatedOutput : null,
-        validationStatus: validationSummary ? 
-          (validationSummary.overallValid ? 'PASSED' : 'FAILED') : 'SKIPPED',
+        validatedOutput:
+          validatedOutput !== aiResult.output ? validatedOutput : null,
+        validationStatus: validationSummary
+          ? validationSummary.overallValid
+            ? 'PASSED'
+            : 'FAILED'
+          : 'SKIPPED',
         latencyMs: totalLatency,
         tokenUsage: aiResult.tokenUsage,
         costUsd: aiResult.costUsd,
@@ -123,13 +141,16 @@ export class EdgeDispatcher {
         executionId,
         status: 'COMPLETED',
         output: aiResult.output,
-        validatedOutput: validatedOutput !== aiResult.output ? validatedOutput : undefined,
-        validationSummary: validationSummary ? {
-          overallValid: validationSummary.overallValid,
-          passedCount: validationSummary.passedCount,
-          failedCount: validationSummary.failedCount,
-          results: validationSummary.results,
-        } : undefined,
+        validatedOutput:
+          validatedOutput !== aiResult.output ? validatedOutput : undefined,
+        validationSummary: validationSummary
+          ? {
+              overallValid: validationSummary.overallValid,
+              passedCount: validationSummary.passedCount,
+              failedCount: validationSummary.failedCount,
+              results: validationSummary.results,
+            }
+          : undefined,
         metrics: {
           latencyMs: totalLatency,
           tokenUsage: aiResult.tokenUsage,
@@ -137,10 +158,10 @@ export class EdgeDispatcher {
           validationTime,
         },
       };
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Execution failed';
-      
+      const errorMessage =
+        error instanceof Error ? error.message : 'Execution failed';
+
       // Update execution with error status
       await updateExecution(executionId, {
         status: 'FAILED',
@@ -177,9 +198,11 @@ export class EdgeDispatcher {
       executeWhenReady: async () => {
         // Simulate queue waiting time
         if (estimatedWaitTime > 0) {
-          await new Promise(resolve => setTimeout(resolve, Math.min(estimatedWaitTime, 5000)));
+          await new Promise(resolve =>
+            setTimeout(resolve, Math.min(estimatedWaitTime, 5000))
+          );
         }
-        
+
         return this.dispatchExecution(request);
       },
     };
@@ -196,7 +219,7 @@ export class EdgeDispatcher {
     healthStatus: 'healthy' | 'degraded' | 'overloaded';
   } {
     const load = aiExecutor.getSystemLoad();
-    
+
     let healthStatus: 'healthy' | 'degraded' | 'overloaded' = 'healthy';
     if (load.cpuUtilization > 90) {
       healthStatus = 'overloaded';
@@ -213,11 +236,13 @@ export class EdgeDispatcher {
   /**
    * Simulates batch execution for multiple requests
    */
-  public async dispatchBatch(requests: EdgeExecutionRequest[]): Promise<EdgeExecutionResult[]> {
+  public async dispatchBatch(
+    requests: EdgeExecutionRequest[]
+  ): Promise<EdgeExecutionResult[]> {
     // Sort by priority
     const priorityOrder = { CRITICAL: 0, HIGH: 1, NORMAL: 2, LOW: 3 };
-    const sortedRequests = requests.sort((a, b) => 
-      priorityOrder[a.priority] - priorityOrder[b.priority]
+    const sortedRequests = requests.sort(
+      (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]
     );
 
     // Execute in parallel with concurrency limit

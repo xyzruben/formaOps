@@ -11,19 +11,22 @@ This document outlines the pragmatic implementation approach for FormaOps' core 
 ## Core AI Features Scope
 
 ### 1. Essential Features (Must Have)
+
 - ✅ OpenAI API integration for prompt execution
-- ✅ Template variable injection system  
+- ✅ Template variable injection system
 - ✅ Basic execution tracking and results storage
 - ✅ Simple validation (JSON schema)
 - ✅ Cost tracking (token usage)
 
 ### 2. Nice-to-Have Features (Should Have)
+
 - ⚠️ Real-time execution status updates
 - ⚠️ Retry logic for failed executions
 - ⚠️ Basic analytics dashboard
 - ⚠️ Execution history with search
 
 ### 3. Advanced Features (Could Have)
+
 - ❌ Complex priority management system
 - ❌ Edge functions for AI execution
 - ❌ WebSocket real-time updates
@@ -35,9 +38,11 @@ This document outlines the pragmatic implementation approach for FormaOps' core 
 ## Implementation Strategy
 
 ### Phase 1: Core AI Engine (Week 1)
+
 **Goal**: Make prompts actually execute with AI and return results
 
 #### 1.1 OpenAI Integration
+
 ```typescript
 // /src/lib/openai/client.ts
 interface OpenAIConfig {
@@ -48,18 +53,23 @@ interface OpenAIConfig {
 }
 
 class OpenAIClient {
-  async executePrompt(prompt: string, config?: Partial<OpenAIConfig>): Promise<ExecutionResult>
-  async calculateCost(tokens: TokenUsage): Promise<number>
+  async executePrompt(
+    prompt: string,
+    config?: Partial<OpenAIConfig>
+  ): Promise<ExecutionResult>;
+  async calculateCost(tokens: TokenUsage): Promise<number>;
 }
 ```
 
 **Implementation Approach**:
+
 - Use official OpenAI SDK (already in package.json)
 - Simple async/await pattern, no complex queue management
 - Basic error handling with try/catch
 - Store API key in environment variables
 
 #### 1.2 Template Engine
+
 ```typescript
 // /src/lib/prompts/template-engine.ts
 interface TemplateVariable {
@@ -69,17 +79,19 @@ interface TemplateVariable {
 }
 
 class TemplateEngine {
-  injectVariables(template: string, variables: TemplateVariable[]): string
-  validateTemplate(template: string): ValidationResult
+  injectVariables(template: string, variables: TemplateVariable[]): string;
+  validateTemplate(template: string): ValidationResult;
 }
 ```
 
 **Implementation Approach**:
+
 - Simple string replacement using handlebars-style {{variable}} syntax
 - Basic type checking for variables
 - No complex conditionals or loops initially
 
 #### 1.3 Execution API
+
 ```typescript
 // /src/app/api/prompts/[id]/execute/route.ts
 interface ExecuteRequest {
@@ -97,15 +109,18 @@ interface ExecuteResponse {
 ```
 
 **Implementation Approach**:
+
 - Next.js API routes (no edge functions)
 - Synchronous execution (no background jobs)
 - Store results in database immediately
 - Simple error responses with HTTP status codes
 
 ### Phase 2: User Experience (Week 2)
+
 **Goal**: Make the AI features usable and visible to users
 
 #### 2.1 Execution Interface
+
 ```typescript
 // /src/components/execution/execution-panel.tsx
 interface ExecutionPanelProps {
@@ -116,12 +131,14 @@ interface ExecutionPanelProps {
 ```
 
 **Features**:
+
 - Variable input form with type validation
 - Execute button that calls API
 - Results display with formatting
 - Basic loading states
 
 #### 2.2 Results History
+
 ```typescript
 // /src/components/execution/execution-history.tsx
 interface ExecutionHistoryProps {
@@ -131,12 +148,14 @@ interface ExecutionHistoryProps {
 ```
 
 **Features**:
+
 - Table of past executions with timestamps
 - Click to view full results
 - Basic status indicators (success/failed)
 - Pagination for large lists
 
 #### 2.3 Cost Dashboard
+
 ```typescript
 // /src/components/analytics/simple-dashboard.tsx
 interface DashboardMetrics {
@@ -148,15 +167,18 @@ interface DashboardMetrics {
 ```
 
 **Features**:
+
 - Simple metric cards showing usage
 - Basic charts (line chart for executions over time)
 - Daily/weekly/monthly views
 - No complex real-time updates
 
 ### Phase 3: Quality & Polish (Week 3)
+
 **Goal**: Add validation and improve reliability
 
 #### 3.1 Basic Validation System
+
 ```typescript
 // /src/lib/validation/schema-validator.ts
 interface ValidationRule {
@@ -166,27 +188,30 @@ interface ValidationRule {
 }
 
 class SchemaValidator {
-  validate(output: string, rules: ValidationRule[]): ValidationResult
+  validate(output: string, rules: ValidationRule[]): ValidationResult;
 }
 ```
 
 **Implementation Approach**:
+
 - JSON Schema validation using Zod (already in package.json)
 - Simple pass/fail validation
 - Store validation results with execution
 - No complex retry logic initially
 
 #### 3.2 Error Handling & Retry
+
 ```typescript
 // /src/lib/execution/error-handler.ts
 class ExecutionErrorHandler {
-  handleOpenAIError(error: OpenAIError): ExecutionResult
-  shouldRetry(error: OpenAIError): boolean
-  retryExecution(executionId: string): Promise<ExecutionResult>
+  handleOpenAIError(error: OpenAIError): ExecutionResult;
+  shouldRetry(error: OpenAIError): boolean;
+  retryExecution(executionId: string): Promise<ExecutionResult>;
 }
 ```
 
 **Implementation Approach**:
+
 - Basic retry for rate limits and timeouts
 - Exponential backoff (simple implementation)
 - No complex circuit breakers
@@ -197,26 +222,31 @@ class ExecutionErrorHandler {
 ## Technical Decisions & Justifications
 
 ### 1. No Edge Functions Initially
+
 **Why**: Edge functions add deployment complexity without significant benefit for portfolio scope
 **Instead**: Use Next.js API routes with simple async execution
 **Future**: Can migrate to edge functions if needed for scale
 
 ### 2. Synchronous Execution
+
 **Why**: Simpler to implement and debug, adequate for demo purposes
 **Instead**: Direct OpenAI API calls in request handler
 **Future**: Add background jobs if execution times become problematic
 
 ### 3. Basic Template Engine
+
 **Why**: Handlebars-style syntax is familiar and sufficient for most use cases
 **Instead**: Simple string replacement with {{variable}} syntax
 **Future**: Add conditionals and loops if needed
 
 ### 4. Simple Validation
+
 **Why**: JSON Schema covers 80% of validation needs for AI outputs
 **Instead**: Focus on schema validation with Zod integration
 **Future**: Add regex and custom function validation later
 
 ### 5. No Real-time Updates Initially
+
 **Why**: WebSocket complexity isn't justified for portfolio project
 **Instead**: Polling or refresh-based updates
 **Future**: Add WebSocket support for better UX
@@ -226,6 +256,7 @@ class ExecutionErrorHandler {
 ## Database Changes Required
 
 ### New Tables Needed
+
 ```sql
 -- execution_results table for storing AI outputs
 CREATE TABLE execution_results (
@@ -252,6 +283,7 @@ CREATE TABLE validation_rules (
 ```
 
 ### Existing Table Updates
+
 ```sql
 -- Add columns to executions table
 ALTER TABLE executions ADD COLUMN model varchar(50) DEFAULT 'gpt-3.5-turbo';
@@ -290,6 +322,7 @@ MAX_TOKENS_PER_DAY=50000
 ## Success Metrics
 
 ### Functional Success
+
 - [ ] Users can create prompts with variables
 - [ ] Prompts execute successfully with OpenAI
 - [ ] Results are stored and displayed
@@ -297,12 +330,14 @@ MAX_TOKENS_PER_DAY=50000
 - [ ] Cost tracking shows accurate numbers
 
 ### Technical Success
+
 - [ ] API response time < 10s for most prompts
 - [ ] Error handling prevents crashes
 - [ ] Database queries are efficient
 - [ ] Code is maintainable and testable
 
 ### Portfolio Success
+
 - [ ] Demonstrates full-stack AI integration
 - [ ] Shows practical understanding of AI APIs
 - [ ] Displays good UX design for AI tools
@@ -313,16 +348,19 @@ MAX_TOKENS_PER_DAY=50000
 ## Implementation Timeline
 
 ### Week 1: Core AI Engine
+
 - Day 1-2: OpenAI client integration
 - Day 3-4: Template engine and variable injection
 - Day 5-7: Execution API endpoints and database integration
 
 ### Week 2: User Interface
+
 - Day 8-9: Execution panel and variable input forms
 - Day 10-11: Results display and execution history
 - Day 12-14: Basic analytics and cost dashboard
 
 ### Week 3: Polish & Validation
+
 - Day 15-16: Schema validation system
 - Day 17-18: Error handling and retry logic
 - Day 19-21: Testing, bug fixes, and demo data
@@ -334,12 +372,14 @@ MAX_TOKENS_PER_DAY=50000
 ## Risk Mitigation
 
 ### Technical Risks
+
 1. **OpenAI API Rate Limits**: Implement simple rate limiting and user feedback
 2. **Execution Timeouts**: Set reasonable timeout values and show progress
 3. **Database Performance**: Add proper indexes and query optimization
 4. **Error Handling**: Comprehensive try/catch with user-friendly messages
 
 ### Scope Risks
+
 1. **Feature Creep**: Stick to essential features only
 2. **Over-engineering**: Use simplest solution that works
 3. **Under-delivery**: Focus on working features over perfect features

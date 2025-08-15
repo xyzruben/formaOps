@@ -20,11 +20,13 @@ export interface ValidationContext {
   output: string;
   inputs: Record<string, unknown>;
   metadata: {
-    tokenUsage?: {
-      input: number;
-      output: number;
-      total: number;
-    } | undefined;
+    tokenUsage?:
+      | {
+          input: number;
+          output: number;
+          total: number;
+        }
+      | undefined;
     model?: string | undefined;
     latencyMs?: number | undefined;
   };
@@ -33,12 +35,23 @@ export interface ValidationContext {
 export class FunctionValidator {
   private readonly maxExecutionTime: number = 5000; // 5 seconds max
   private readonly allowedGlobals = new Set([
-    'Array', 'Object', 'String', 'Number', 'Boolean', 'Date', 'Math', 'JSON',
-    'RegExp', 'parseInt', 'parseFloat', 'isNaN', 'isFinite'
+    'Array',
+    'Object',
+    'String',
+    'Number',
+    'Boolean',
+    'Date',
+    'Math',
+    'JSON',
+    'RegExp',
+    'parseInt',
+    'parseFloat',
+    'isNaN',
+    'isFinite',
   ]);
 
   public async validate(
-    data: unknown, 
+    data: unknown,
     rule: FunctionValidationRule,
     context?: Partial<ValidationContext>
   ): Promise<FunctionValidationResult> {
@@ -59,8 +72,12 @@ export class FunctionValidator {
       const executionContext = this.createExecutionContext(data, context);
 
       // Execute function with timeout
-      const result = await this.executeWithTimeout(rule.code, executionContext, timeout);
-      
+      const result = await this.executeWithTimeout(
+        rule.code,
+        executionContext,
+        timeout
+      );
+
       return {
         isValid: Boolean(result),
         result,
@@ -69,18 +86,22 @@ export class FunctionValidator {
     } catch (error) {
       return {
         isValid: false,
-        error: error instanceof Error ? error.message : 'Function execution error',
+        error:
+          error instanceof Error ? error.message : 'Function execution error',
         executionTime: Date.now() - startTime,
       };
     }
   }
 
-  public testFunction(code: string, testCases: Array<{
-    input: unknown;
-    context?: Partial<ValidationContext>;
-    expectedResult: boolean;
-    description: string;
-  }>): Promise<{
+  public testFunction(
+    code: string,
+    testCases: Array<{
+      input: unknown;
+      context?: Partial<ValidationContext>;
+      expectedResult: boolean;
+      description: string;
+    }>
+  ): Promise<{
     passed: number;
     failed: number;
     results: Array<{
@@ -93,13 +114,18 @@ export class FunctionValidator {
   }> {
     return Promise.all(
       testCases.map(async testCase => {
-        const result = await this.validate(testCase.input, { code }, testCase.context);
-        
+        const result = await this.validate(
+          testCase.input,
+          { code },
+          testCase.context
+        );
+
         return {
           description: testCase.description,
           expected: testCase.expectedResult,
           actual: Boolean(result.result),
-          passed: Boolean(result.result) === testCase.expectedResult && !result.error,
+          passed:
+            Boolean(result.result) === testCase.expectedResult && !result.error,
           error: result.error,
         };
       })
@@ -141,7 +167,10 @@ export class FunctionValidator {
     return null;
   }
 
-  private createExecutionContext(data: unknown, context?: Partial<ValidationContext>): ValidationContext {
+  private createExecutionContext(
+    data: unknown,
+    context?: Partial<ValidationContext>
+  ): ValidationContext {
     return {
       output: typeof data === 'string' ? data : JSON.stringify(data),
       inputs: context?.inputs || {},
@@ -154,8 +183,8 @@ export class FunctionValidator {
   }
 
   private executeWithTimeout(
-    code: string, 
-    context: ValidationContext, 
+    code: string,
+    context: ValidationContext,
     timeout: number
   ): Promise<unknown> {
     return new Promise((resolve, reject) => {
@@ -166,7 +195,7 @@ export class FunctionValidator {
       try {
         // Create restricted execution environment
         const func = new Function(
-          'data', 
+          'data',
           'context',
           `
             "use strict";
@@ -224,7 +253,7 @@ export const commonFunctions = {
         input: 'Hello world',
         expectedResult: true,
         description: 'Text with sufficient length (minLength: 10)',
-      }
+      },
     ],
   },
 
@@ -240,7 +269,7 @@ export const commonFunctions = {
         input: 'This is a test message',
         expectedResult: true,
         description: 'Contains required words: ["test", "message"]',
-      }
+      },
     ],
   },
 
@@ -259,7 +288,7 @@ export const commonFunctions = {
         input: '{"key": "value"}',
         expectedResult: true,
         description: 'Valid JSON object',
-      }
+      },
     ],
   },
 
@@ -273,7 +302,7 @@ export const commonFunctions = {
         input: 'Here is code: ```javascript\\nconsole.log("hi");\\n```',
         expectedResult: true,
         description: 'Contains code block',
-      }
+      },
     ],
   },
 
@@ -287,10 +316,11 @@ export const commonFunctions = {
     description: 'Check if output has reasonable word count',
     examples: [
       {
-        input: 'This is a reasonably sized response with enough content to be useful.',
+        input:
+          'This is a reasonably sized response with enough content to be useful.',
         expectedResult: true,
         description: 'Word count within reasonable range',
-      }
+      },
     ],
   },
 
@@ -304,10 +334,11 @@ export const commonFunctions = {
     description: 'Check if output follows email format',
     examples: [
       {
-        input: 'Subject: Meeting\\n\\nDear John,\\n\\nLet\'s meet.\\n\\nBest regards,\\nJane',
+        input:
+          "Subject: Meeting\\n\\nDear John,\\n\\nLet's meet.\\n\\nBest regards,\\nJane",
         expectedResult: true,
         description: 'Properly formatted email',
-      }
+      },
     ],
   },
 };

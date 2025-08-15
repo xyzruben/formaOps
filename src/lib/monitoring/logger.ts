@@ -20,14 +20,16 @@ export interface PerformanceMetric {
 
 export class Logger {
   private readonly isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   public async log(entry: LogEntry): Promise<void> {
     // Console logging for development
     if (this.isDevelopment) {
       const timestamp = new Date().toISOString();
       const prefix = `[${timestamp}] ${entry.level}:`;
-      const suffix = entry.metadata ? `\n${JSON.stringify(entry.metadata, null, 2)}` : '';
-      
+      const suffix = entry.metadata
+        ? `\n${JSON.stringify(entry.metadata, null, 2)}`
+        : '';
+
       console.log(`${prefix} ${entry.message}${suffix}`);
     }
 
@@ -50,29 +52,54 @@ export class Logger {
     }
   }
 
-  public async debug(message: string, metadata?: Record<string, unknown>, executionId?: string): Promise<void> {
+  public async debug(
+    message: string,
+    metadata?: Record<string, unknown>,
+    executionId?: string
+  ): Promise<void> {
     await this.log({ level: 'DEBUG', message, metadata, executionId });
   }
 
-  public async info(message: string, metadata?: Record<string, unknown>, executionId?: string): Promise<void> {
+  public async info(
+    message: string,
+    metadata?: Record<string, unknown>,
+    executionId?: string
+  ): Promise<void> {
     await this.log({ level: 'INFO', message, metadata, executionId });
   }
 
-  public async warn(message: string, metadata?: Record<string, unknown>, executionId?: string): Promise<void> {
+  public async warn(
+    message: string,
+    metadata?: Record<string, unknown>,
+    executionId?: string
+  ): Promise<void> {
     await this.log({ level: 'WARN', message, metadata, executionId });
   }
 
-  public async error(message: string, error?: Error | unknown, metadata?: Record<string, unknown>, executionId?: string): Promise<void> {
+  public async error(
+    message: string,
+    error?: Error | unknown,
+    metadata?: Record<string, unknown>,
+    executionId?: string
+  ): Promise<void> {
     const errorMetadata = {
       ...metadata,
-      error: error instanceof Error ? {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      } : error,
+      error:
+        error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
     };
 
-    await this.log({ level: 'ERROR', message, metadata: errorMetadata, executionId });
+    await this.log({
+      level: 'ERROR',
+      message,
+      metadata: errorMetadata,
+      executionId,
+    });
   }
 
   public async logPerformance(metric: PerformanceMetric): Promise<void> {
@@ -87,39 +114,49 @@ export class Logger {
     });
   }
 
-  public async logExecutionStart(executionId: string, data: {
-    promptId: string;
-    userId: string;
-    inputs: Record<string, unknown>;
-    priority: string;
-    model?: string;
-  }): Promise<void> {
-    await this.info('Execution started', {
-      execution: {
-        phase: 'start',
-        promptId: data.promptId,
-        priority: data.priority,
-        model: data.model,
-        inputCount: Object.keys(data.inputs).length,
+  public async logExecutionStart(
+    executionId: string,
+    data: {
+      promptId: string;
+      userId: string;
+      inputs: Record<string, unknown>;
+      priority: string;
+      model?: string;
+    }
+  ): Promise<void> {
+    await this.info(
+      'Execution started',
+      {
+        execution: {
+          phase: 'start',
+          promptId: data.promptId,
+          priority: data.priority,
+          model: data.model,
+          inputCount: Object.keys(data.inputs).length,
+        },
       },
-    }, executionId);
+      executionId
+    );
   }
 
-  public async logExecutionComplete(executionId: string, data: {
-    status: 'COMPLETED' | 'FAILED';
-    latencyMs: number;
-    tokenUsage?: {
-      input: number;
-      output: number;
-      total: number;
-    };
-    costUsd?: number;
-    validationStatus?: string;
-    error?: string;
-  }): Promise<void> {
+  public async logExecutionComplete(
+    executionId: string,
+    data: {
+      status: 'COMPLETED' | 'FAILED';
+      latencyMs: number;
+      tokenUsage?: {
+        input: number;
+        output: number;
+        total: number;
+      };
+      costUsd?: number;
+      validationStatus?: string;
+      error?: string;
+    }
+  ): Promise<void> {
     const level = data.status === 'COMPLETED' ? 'INFO' : 'ERROR';
     const message = `Execution ${data.status.toLowerCase()}`;
-    
+
     await this.log({
       level,
       message,
@@ -138,23 +175,31 @@ export class Logger {
     });
   }
 
-  public async logValidation(executionId: string, data: {
-    ruleCount: number;
-    passedCount: number;
-    failedCount: number;
-    validationTimeMs: number;
-    overallValid: boolean;
-  }): Promise<void> {
-    await this.info('Validation completed', {
-      validation: {
-        ruleCount: data.ruleCount,
-        passedCount: data.passedCount,
-        failedCount: data.failedCount,
-        validationTimeMs: data.validationTimeMs,
-        overallValid: data.overallValid,
-        successRate: data.ruleCount > 0 ? (data.passedCount / data.ruleCount) * 100 : 0,
+  public async logValidation(
+    executionId: string,
+    data: {
+      ruleCount: number;
+      passedCount: number;
+      failedCount: number;
+      validationTimeMs: number;
+      overallValid: boolean;
+    }
+  ): Promise<void> {
+    await this.info(
+      'Validation completed',
+      {
+        validation: {
+          ruleCount: data.ruleCount,
+          passedCount: data.passedCount,
+          failedCount: data.failedCount,
+          validationTimeMs: data.validationTimeMs,
+          overallValid: data.overallValid,
+          successRate:
+            data.ruleCount > 0 ? (data.passedCount / data.ruleCount) * 100 : 0,
+        },
       },
-    }, executionId);
+      executionId
+    );
   }
 
   public async logSystemHealth(data: {
@@ -165,7 +210,7 @@ export class Logger {
     healthStatus: 'healthy' | 'degraded' | 'overloaded';
   }): Promise<void> {
     const level = data.healthStatus === 'healthy' ? 'INFO' : 'WARN';
-    
+
     await this.log({
       level,
       message: `System health: ${data.healthStatus}`,
@@ -182,13 +227,18 @@ export class Logger {
     });
   }
 
-  public async getExecutionLogs(executionId: string, limit = 50): Promise<Array<{
-    id: string;
-    level: LogLevel;
-    message: string;
-    metadata: any;
-    timestamp: Date;
-  }>> {
+  public async getExecutionLogs(
+    executionId: string,
+    limit = 50
+  ): Promise<
+    Array<{
+      id: string;
+      level: LogLevel;
+      message: string;
+      metadata: any;
+      timestamp: Date;
+    }>
+  > {
     const logs = await prisma.executionLog.findMany({
       where: { executionId },
       orderBy: { timestamp: 'desc' },
@@ -208,12 +258,14 @@ export class Logger {
     level?: LogLevel,
     category?: string,
     _limit = 100
-  ): Promise<Array<{
-    level: LogLevel;
-    message: string;
-    metadata: any;
-    timestamp: Date;
-  }>> {
+  ): Promise<
+    Array<{
+      level: LogLevel;
+      message: string;
+      metadata: any;
+      timestamp: Date;
+    }>
+  > {
     // For this portfolio implementation, we'll return mock system logs
     // In a real system, these would be stored in a separate system logs table
     return [
@@ -242,14 +294,17 @@ export class Logger {
 // Structured logging helpers
 export const createExecutionLogger = (executionId: string) => {
   return {
-    debug: (message: string, metadata?: Record<string, unknown>) => 
+    debug: (message: string, metadata?: Record<string, unknown>) =>
       logger.debug(message, metadata, executionId),
-    info: (message: string, metadata?: Record<string, unknown>) => 
+    info: (message: string, metadata?: Record<string, unknown>) =>
       logger.info(message, metadata, executionId),
-    warn: (message: string, metadata?: Record<string, unknown>) => 
+    warn: (message: string, metadata?: Record<string, unknown>) =>
       logger.warn(message, metadata, executionId),
-    error: (message: string, error?: Error | unknown, metadata?: Record<string, unknown>) => 
-      logger.error(message, error, metadata, executionId),
+    error: (
+      message: string,
+      error?: Error | unknown,
+      metadata?: Record<string, unknown>
+    ) => logger.error(message, error, metadata, executionId),
   };
 };
 
