@@ -7,14 +7,18 @@ jest.mock('@/lib/auth/server', () => ({
   }),
 }));
 
+// Create mock functions that can be typed properly
+const mockPromptFindUnique = jest.fn();
+const mockExecutionCreate = jest.fn();
+
 // Mock dependencies using factory functions
 jest.mock('@/lib/database/client', () => ({
   prisma: {
     prompt: {
-      findUnique: jest.fn(),
+      findUnique: mockPromptFindUnique,
     },
     execution: {
-      create: jest.fn(),
+      create: mockExecutionCreate,
     },
   },
 }));
@@ -26,21 +30,25 @@ jest.mock('@/lib/agent/executor', () => ({
 }));
 
 jest.mock('@/lib/agent/priority-manager', () => ({
-  cpuPriorityManager: {
-    boostPriorityForAI: jest.fn().mockReturnValue({ success: true }),
-    restoreOriginalPriority: jest.fn(),
+  priorityManager: {
+    scheduleExecution: jest.fn().mockResolvedValue({ shouldExecuteNow: true }),
+    completeExecution: jest.fn(),
+    getSystemLoad: jest.fn().mockReturnValue({
+      activeExecutions: 1,
+      queuedExecutions: 0,
+      cpuUtilization: 20,
+      shouldDegradeUI: false,
+    }),
   },
 }));
 
 import { GET } from '../route';
-import { prisma } from '@/lib/database/client';
 import { aiExecutor } from '@/lib/agent/executor';
-import { cpuPriorityManager } from '@/lib/agent/priority-manager';
+import { priorityManager } from '@/lib/agent/priority-manager';
 
-// Get typed mocks for better intellisense
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+// Get typed mocks for better intellisense  
 const mockAIExecutor = aiExecutor as jest.Mocked<typeof aiExecutor>;
-const mockPriorityManager = cpuPriorityManager as jest.Mocked<typeof cpuPriorityManager>;
+const mockPriorityManager = priorityManager as jest.Mocked<typeof priorityManager>;
 
 describe('/api/executions', () => {
   beforeEach(() => {
@@ -61,20 +69,19 @@ describe('/api/executions', () => {
       promptId: 'prompt-1',
       userId: 'user-123',
       status: 'COMPLETED',
-      result: 'Hello John',
-      tokenUsage: { input: 10, output: 5, total: 15 },
+      output: 'Hello John',
+      tokenUsage: { input: 10, output: 5, total: 15, model: 'gpt-3.5-turbo' },
       costUsd: 0.0001,
       latencyMs: 1500,
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
     mockAIExecutor.executePrompt.mockResolvedValue({
-      result: 'Hello John',
-      tokenUsage: { input: 10, output: 5, total: 15 },
+      output: 'Hello John',
+      tokenUsage: { input: 10, output: 5, total: 15, model: 'gpt-3.5-turbo' },
       costUsd: 0.0001,
-      latencyMs: 1500,
     });
-    mockPrisma.execution.create.mockResolvedValue(mockExecution);
+    mockExecutionCreate.mockResolvedValue(mockExecution);
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
       method: 'GET',
@@ -92,18 +99,18 @@ describe('/api/executions', () => {
     expect(data.success).toBe(true);
     expect(data.execution).toEqual(mockExecution);
 
-    expect(mockPriorityManager.boostPriorityForAI).toHaveBeenCalled();
+    expect(mockPriorityManager.scheduleExecution).toHaveBeenCalled();
     expect(mockAIExecutor.executePrompt).toHaveBeenCalledWith({
       template: 'Hello {{name}}',
       inputs: { name: 'John' },
       model: 'gpt-3.5-turbo',
       priority: 'high',
     });
-    expect(mockPriorityManager.restoreOriginalPriority).toHaveBeenCalled();
+    expect(mockPriorityManager.completeExecution).toHaveBeenCalled();
   });
 
   it('should validate prompt ownership', async () => {
-    mockPrisma.prompt.findUnique.mockResolvedValue({
+    mockPromptFindUnique.mockResolvedValue({
       id: 'prompt-1',
       userId: 'different-user', // Different user
     });
@@ -134,7 +141,7 @@ describe('/api/executions', () => {
       userId: 'user-123',
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
       method: 'GET',
@@ -159,7 +166,7 @@ describe('/api/executions', () => {
       userId: 'user-123',
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
       method: 'GET',
@@ -185,7 +192,7 @@ describe('/api/executions', () => {
       userId: 'user-123',
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
     mockAIExecutor.executePrompt.mockRejectedValue(
       new Error('AI service unavailable')
     );
@@ -205,8 +212,8 @@ describe('/api/executions', () => {
     expect(data.success).toBe(false);
     expect(data.error).toBe('Execution failed');
 
-    // Should still restore priority even on failure
-    expect(mockPriorityManager.restoreOriginalPriority).toHaveBeenCalled();
+    // Should still complete execution even on failure
+    expect(mockPriorityManager.completeExecution).toHaveBeenCalledWith(expect.any(String), false);
   });
 
   it('should handle database errors during execution save', async () => {
@@ -217,12 +224,13 @@ describe('/api/executions', () => {
       userId: 'user-123',
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
     mockAIExecutor.executePrompt.mockResolvedValue({
-      result: 'Hello John',
-      tokenUsage: { input: 10, output: 5, total: 15 },
+      output: 'Hello John',
+      tokenUsage: { input: 10, output: 5, total: 15, model: 'gpt-3.5-turbo' },
+      costUsd: 0.0001,
     });
-    mockPrisma.execution.create.mockRejectedValue(new Error('Database error'));
+    mockExecutionCreate.mockRejectedValue(new Error('Database error'));
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
       method: 'GET',
@@ -248,12 +256,13 @@ describe('/api/executions', () => {
       userId: 'user-123',
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
     mockAIExecutor.executePrompt.mockResolvedValue({
-      result: 'Hello John',
-      tokenUsage: { input: 20, output: 10, total: 30 },
+      output: 'Hello John',
+      tokenUsage: { input: 20, output: 10, total: 30, model: 'gpt-4' },
+      costUsd: 0.0002,
     });
-    mockPrisma.execution.create.mockResolvedValue({});
+    mockExecutionCreate.mockResolvedValue({});
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
       method: 'GET',
@@ -282,10 +291,11 @@ describe('/api/executions', () => {
       userId: 'user-123',
     };
 
-    mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
-    mockPriorityManager.boostPriorityForAI.mockReturnValue({
-      success: false,
-      error: 'System overloaded',
+    mockPromptFindUnique.mockResolvedValue(mockPrompt);
+    mockPriorityManager.scheduleExecution.mockResolvedValue({
+      shouldExecuteNow: false,
+      estimatedWaitTime: 60000,
+      queuePosition: 5,
     });
 
     const request = new NextRequest('http://localhost:3000/api/executions', {

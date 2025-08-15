@@ -32,14 +32,18 @@ describe('/api/prompts', () => {
             id: 'prompt-1',
             name: 'Test Prompt',
             description: 'Test description',
-            status: 'PUBLISHED',
+            status: 'PUBLISHED' as const,
             createdAt: new Date(),
             updatedAt: new Date(),
+            _count: { executions: 0 },
           },
         ],
-        total: 1,
-        page: 1,
-        totalPages: 1,
+        pagination: {
+          page: 1,
+          limit: 20,
+          total: 1,
+          totalPages: 1,
+        },
       };
 
       mockGetUserPrompts.mockResolvedValue(mockResult);
@@ -71,7 +75,10 @@ describe('/api/prompts', () => {
     });
 
     it('should support pagination', async () => {
-      mockGetUserPrompts.mockResolvedValue({ prompts: [], total: 0, page: 2, totalPages: 0 });
+      mockGetUserPrompts.mockResolvedValue({ 
+        prompts: [], 
+        pagination: { page: 2, limit: 10, total: 0, totalPages: 0 }
+      });
 
       const request = new NextRequest(
         'http://localhost:3000/api/prompts?page=2&limit=10'
@@ -85,7 +92,10 @@ describe('/api/prompts', () => {
     });
 
     it('should support search filtering', async () => {
-      mockGetUserPrompts.mockResolvedValue({ prompts: [], total: 0, page: 1, totalPages: 0 });
+      mockGetUserPrompts.mockResolvedValue({ 
+        prompts: [], 
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+      });
 
       const request = new NextRequest(
         'http://localhost:3000/api/prompts?search=test'
@@ -109,9 +119,12 @@ describe('/api/prompts', () => {
         template: 'Hello {{name}}',
         variables: [{ name: 'name', type: 'string', required: true }],
         userId: 'user-123',
+        status: 'DRAFT' as const,
         version: 1,
+        tags: [],
         createdAt: new Date(),
         updatedAt: new Date(),
+        publishedAt: null,
       };
 
       mockCreatePrompt.mockResolvedValue(newPrompt);
@@ -195,15 +208,22 @@ describe('/api/prompts', () => {
       const newPrompt = {
         id: 'prompt-3',
         name: 'Auto Variables',
+        description: null,
         template: 'Hello {{name}}, you are {{age}} years old',
-        variables: [],
+        variables: [
+          { name: 'name', type: 'string', required: true },
+          { name: 'age', type: 'string', required: true },
+        ],
         userId: 'user-123',
+        status: 'DRAFT' as const,
         version: 1,
+        tags: [],
         createdAt: new Date(),
         updatedAt: new Date(),
+        publishedAt: null,
       };
 
-      mockPrisma.prompt.create.mockResolvedValue(newPrompt);
+      mockCreatePrompt.mockResolvedValue(newPrompt);
 
       const request = new NextRequest('http://localhost:3000/api/prompts', {
         method: 'POST',
@@ -217,18 +237,18 @@ describe('/api/prompts', () => {
       await POST(request);
 
       // Should create prompt with auto-detected variables
-      expect(mockPrisma.prompt.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+      expect(mockCreatePrompt).toHaveBeenCalledWith('user-123', 
+        expect.objectContaining({
           variables: expect.arrayContaining([
             expect.objectContaining({ name: 'name' }),
             expect.objectContaining({ name: 'age' }),
           ]),
-        }),
-      });
+        })
+      );
     });
 
     it('should handle database constraints', async () => {
-      mockPrisma.prompt.create.mockRejectedValue(
+      mockCreatePrompt.mockRejectedValue(
         new Error('Unique constraint failed')
       );
 
@@ -260,12 +280,12 @@ describe('/api/prompts', () => {
 
       await POST(request);
 
-      expect(mockPrisma.prompt.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
+      expect(mockCreatePrompt).toHaveBeenCalledWith('user-123', 
+        expect.objectContaining({
           name: 'Test Prompt', // Trimmed
           template: expect.not.stringContaining('<script>'), // Sanitized
-        }),
-      });
+        })
+      );
     });
   });
 });
