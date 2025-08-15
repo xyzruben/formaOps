@@ -74,7 +74,7 @@ export class PromptVersionManager {
         promptId,
         version: currentPrompt.version,
         template: currentPrompt.template,
-        variables: currentPrompt.variables,
+        variables: (currentPrompt.variables || []) as any,
         changeLog: `Version ${currentPrompt.version} backup`,
       },
     });
@@ -84,7 +84,7 @@ export class PromptVersionManager {
       where: { id: promptId },
       data: {
         template: updates.template || currentPrompt.template,
-        variables: updates.variables || currentPrompt.variables,
+        variables: (updates.variables || currentPrompt.variables || []) as any,
         version: newVersionNumber,
         updatedAt: new Date(),
       },
@@ -96,7 +96,7 @@ export class PromptVersionManager {
         promptId,
         version: newVersionNumber,
         template: updates.template || currentPrompt.template,
-        variables: updates.variables || currentPrompt.variables,
+        variables: (updates.variables || currentPrompt.variables || []) as any,
         changeLog: updates.changeLog || `Updated to version ${newVersionNumber}`,
       },
     });
@@ -133,15 +133,15 @@ export class PromptVersionManager {
       {
         version: prompt.version,
         template: prompt.template,
-        variables: prompt.variables as VariableDefinition[],
+        variables: prompt.variables as unknown as VariableDefinition[],
         changeLog: 'Current version',
         createdAt: prompt.updatedAt,
       },
       ...versions.map(v => ({
         version: v.version,
         template: v.template,
-        variables: v.variables as VariableDefinition[],
-        changeLog: v.changeLog,
+        variables: v.variables as unknown as VariableDefinition[],
+        changeLog: v.changeLog || undefined,
         createdAt: v.createdAt,
       })),
     ];
@@ -355,7 +355,7 @@ export const promptVersions = {
     return {
       version: prompt.version,
       template: prompt.template,
-      variables: prompt.variables as VariableDefinition[],
+      variables: prompt.variables as unknown as VariableDefinition[],
       changeLog: 'Current version',
       createdAt: prompt.updatedAt,
     };

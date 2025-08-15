@@ -55,25 +55,24 @@ export async function POST(
       );
     }
 
-    // Check if the error type is retryable
-    if (originalExecution.errorType) {
+    // Check if the execution failed and is retryable
+    if (originalExecution.status === 'FAILED') {
       const mockError = {
-        type: originalExecution.errorType as 'RATE_LIMIT' | 'API_ERROR' | 'TIMEOUT' | 'VALIDATION_ERROR',
-        message: originalExecution.errorMessage || 'Unknown error',
+        type: 'API_ERROR' as const,
+        message: 'Execution failed',
         retryable: true
       };
 
-      if (!executionErrorHandler.shouldRetry(mockError, originalExecution.retryCount || 0)) {
+      // For now, allow all failed executions to be retried
+      // In a real implementation, you'd check retry count from logs or metadata
+      if (!executionErrorHandler.shouldRetry(mockError, 0)) {
         return NextResponse.json(
           { 
             error: 'This execution cannot be retried',
             code: 'RETRY_NOT_ALLOWED',
             details: { 
-              errorType: originalExecution.errorType,
-              retryCount: originalExecution.retryCount,
-              reason: originalExecution.errorType === 'VALIDATION_ERROR' 
-                ? 'Validation errors are not retryable'
-                : 'Maximum retry attempts exceeded'
+              status: originalExecution.status,
+              reason: 'Maximum retry attempts exceeded'
             }
           },
           { status: 400 }

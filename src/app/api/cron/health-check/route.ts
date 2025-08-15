@@ -36,7 +36,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         WHERE state = 'active'
       ` as Array<{ count: number }>;
       
-      logger.info(`Database health check passed. Active connections: ${activeConnections[0]?.active_connections || 'unknown'}`);
+      logger.info(`Database health check passed. Active connections: ${activeConnections[0]?.count || 'unknown'}`);
     } catch (error) {
       healthChecks.database.status = 'unhealthy';
       healthChecks.database.error = String(error);
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // 3. Performance metrics check
     try {
       const metrics = performanceMonitor.getSystemMetrics(1); // Last hour
-      healthChecks.performance.metrics = metrics;
+      healthChecks.performance.metrics = metrics as unknown as Record<string, unknown>;
       
       // Check for performance issues
       if (metrics.executionMetrics.successRate < 95) {

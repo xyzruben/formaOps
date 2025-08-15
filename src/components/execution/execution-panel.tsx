@@ -225,7 +225,7 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
             ))}
           </select>
           {fieldError && (
-            <p className="text-xs text-destructive">{fieldError.message}</p>
+            <p className="text-xs text-destructive">{typeof fieldError === 'string' ? fieldError : (fieldError as any)?.message || 'Invalid input'}</p>
           )}
         </div>
       );
@@ -249,7 +249,7 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
             <p className="text-xs text-muted-foreground">{variable.description}</p>
           )}
           {fieldError && (
-            <p className="text-xs text-destructive">{fieldError.message}</p>
+            <p className="text-xs text-destructive">{typeof fieldError === 'string' ? fieldError : (fieldError as any)?.message || 'Invalid input'}</p>
           )}
         </div>
       );
@@ -272,7 +272,7 @@ export function ExecutionPanel({ prompt, onExecutionComplete }: ExecutionPanelPr
           })}
         />
         {fieldError && (
-          <p className="text-xs text-destructive">{fieldError.message}</p>
+          <p className="text-xs text-destructive">{typeof fieldError === 'string' ? fieldError : (fieldError as any)?.message || 'Invalid input'}</p>
         )}
       </div>
     );

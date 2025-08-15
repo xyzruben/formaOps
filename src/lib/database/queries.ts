@@ -433,7 +433,7 @@ export async function retryExecution(executionId: string, userId: string): Promi
     data: {
       userId,
       promptId: existingExecution.promptId,
-      inputs: existingExecution.inputs,
+      inputs: existingExecution.inputs || {},
       priority: existingExecution.priority,
       status: 'PENDING',
     },

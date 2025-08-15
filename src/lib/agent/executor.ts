@@ -192,7 +192,7 @@ export class AIExecutor {
     let processed = template;
 
     // Handle array iteration (simple Handlebars-like syntax)
-    processed = processed.replace(/{{#each\s+(\w+)}}(.*?){{\/each}}/gs, (match, arrayName, content) => {
+    processed = processed.replace(/{{#each\s+(\w+)}}([\s\S]*?){{\/each}}/g, (match, arrayName, content) => {
       const array = inputs[arrayName];
       if (!Array.isArray(array)) {
         return '';
@@ -204,7 +204,7 @@ export class AIExecutor {
     });
 
     // Handle conditional blocks
-    processed = processed.replace(/{{#if\s+(\w+)}}(.*?){{\/if}}/gs, (match, varName, content) => {
+    processed = processed.replace(/{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g, (match, varName, content) => {
       const value = inputs[varName];
       return value ? content : '';
     });

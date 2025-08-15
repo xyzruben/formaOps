@@ -20,9 +20,9 @@ interface PromptWithDetails {
   version: number;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  publishedAt: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  publishedAt: Date | null;
   userId: string;
   validations: Array<{ id: string; type: string; configuration: Record<string, unknown> }>;
   _count: {

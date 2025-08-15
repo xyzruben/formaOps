@@ -848,7 +848,6 @@ Format: {{output_format}}`,
         tone: 'professional'
       },
       status: 'FAILED',
-      errorMessage: 'Rate limit exceeded. Please try again later.',
       validationStatus: 'SKIPPED',
       latencyMs: 1200,
       costUsd: 0.012,

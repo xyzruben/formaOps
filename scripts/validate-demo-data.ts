@@ -6,6 +6,7 @@
  */
 
 import { templateEngine } from '../src/lib/prompts/template-engine';
+import type { VariableDefinition } from '../src/types/database';
 
 // Demo prompts data structure matching seed file
 const demoPrompts = [
@@ -27,24 +28,25 @@ Provide detailed feedback with specific suggestions.`,
     variables: [
       {
         name: 'language',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         defaultValue: 'typescript',
         options: ['typescript', 'javascript', 'python', 'go', 'rust']
       },
       {
         name: 'code',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         description: 'Code to review'
       },
       {
         name: 'focus_areas',
-        type: 'string',
+        type: 'string' as const,
+        required: false,
         defaultValue: 'security, performance',
         description: 'Specific areas to focus on'
       }
-    ],
+    ] as VariableDefinition[],
     testInputs: {
       language: 'typescript',
       code: 'const user = { password: "123456" }; // TODO: hash passwords\nconsole.log("User:", user);',
@@ -71,61 +73,61 @@ Please ensure the content is engaging, on-brand, and achieves the specified goal
     variables: [
       {
         name: 'content_type',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['blog_post', 'social_media', 'email_campaign', 'landing_page', 'product_description']
       },
       {
         name: 'audience',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['executives', 'developers', 'marketers', 'general_public', 'customers']
       },
       {
         name: 'topic',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'key_messages',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'tone',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['professional', 'conversational', 'authoritative', 'friendly', 'technical'],
         defaultValue: 'professional'
       },
       {
         name: 'word_count',
-        type: 'number',
+        type: 'number' as const,
         required: true,
         defaultValue: 300
       },
       {
         name: 'brand_name',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'primary_goal',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['awareness', 'engagement', 'conversion', 'education', 'retention']
       },
       {
         name: 'call_to_action',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'additional_context',
-        type: 'string',
+        type: 'string' as const,
         required: false
       }
-    ],
+    ] as VariableDefinition[],
     testInputs: {
       content_type: 'blog_post',
       audience: 'developers',
@@ -171,63 +173,63 @@ Style: {{doc_style}}`,
     variables: [
       {
         name: 'method',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
       },
       {
         name: 'endpoint_path',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'description',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'parameters',
-        type: 'string',
+        type: 'string' as const,
         required: false
       },
       {
         name: 'request_schema',
-        type: 'string',
+        type: 'string' as const,
         required: false
       },
       {
         name: 'response_schema',
-        type: 'string',
+        type: 'string' as const,
         required: true
       },
       {
         name: 'error_codes',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         defaultValue: '400, 401, 404, 500'
       },
       {
         name: 'auth_type',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['Bearer', 'API Key', 'Basic Auth', 'OAuth', 'None'],
         defaultValue: 'Bearer'
       },
       {
         name: 'language',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['javascript', 'python', 'curl', 'go', 'php'],
         defaultValue: 'javascript'
       },
       {
         name: 'doc_style',
-        type: 'string',
+        type: 'string' as const,
         required: true,
         options: ['openapi', 'markdown', 'rest', 'graphql'],
         defaultValue: 'openapi'
       }
-    ],
+    ] as VariableDefinition[],
     testInputs: {
       method: 'POST',
       endpoint_path: '/api/users',

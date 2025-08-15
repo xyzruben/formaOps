@@ -1,5 +1,5 @@
 import { CostTracker } from '../cost-tracker';
-import type { TokenUsage } from '../../agent/executor';
+import type { TokenUsage } from '../../../types/database';
 
 jest.mock('../../database/client', () => ({
   prisma: {

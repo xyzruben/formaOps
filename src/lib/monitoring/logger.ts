@@ -38,7 +38,7 @@ export class Logger {
           data: {
             level: entry.level,
             message: entry.message,
-            metadata: entry.metadata || {},
+            metadata: (entry.metadata || {}) as any,
             executionId: entry.executionId,
           },
         });

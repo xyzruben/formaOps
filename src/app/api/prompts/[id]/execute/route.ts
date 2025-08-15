@@ -107,12 +107,8 @@ export async function POST(
       async () => {
         attemptCount++;
         
-        // Update retry count in database
-        if (attemptCount > 1) {
-          await updateExecution(execution.id, {
-            retryCount: attemptCount - 1,
-          });
-        }
+        // Note: Retry count tracking would be implemented via logs/metadata
+        // The retryCount field doesn't exist in the current Execution model
         
         return await openAIClient.executePrompt(
           templateResult.processedTemplate,
@@ -126,7 +122,8 @@ export async function POST(
       },
       async (attempt, delay) => {
         // Log retry attempt
-        await logger.logExecutionEvent(execution.id, 'RETRY_ATTEMPT', {
+        await logger.info('Execution retry attempt', {
+          executionId: execution.id,
           attempt,
           delayMs: delay,
           totalAttempts: attemptCount,
@@ -211,8 +208,6 @@ export async function POST(
       
       await updateExecution(execution.id, {
         status: 'FAILED',
-        errorType: executionError.type,
-        errorMessage: executionError.message,
         completedAt: new Date(),
         latencyMs,
       });
@@ -221,9 +216,6 @@ export async function POST(
         status: 'FAILED',
         latencyMs,
         error: executionError.message,
-        errorType: executionError.type,
-        retryable: executionError.retryable,
-        retryCount: (finalError as any).attemptCount || 1,
       });
     }
 

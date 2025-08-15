@@ -96,7 +96,9 @@ export class EdgeDispatcher {
         if (validationSummary.overallValid) {
           const schemaResult = validationSummary.results.find(r => r.type === 'SCHEMA');
           if (schemaResult?.result) {
-            validatedOutput = schemaResult.result;
+            validatedOutput = typeof schemaResult.result === 'string' 
+              ? schemaResult.result 
+              : JSON.stringify(schemaResult.result);
           }
         }
       }

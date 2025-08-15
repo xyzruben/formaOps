@@ -51,7 +51,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const enhancedErrorInfo: ErrorInfo = {
-      componentStack: errorInfo.componentStack,
+      componentStack: errorInfo.componentStack || '',
       errorBoundary: this.constructor.name,
     };
 
@@ -282,13 +282,13 @@ export function withErrorBoundary<T extends Record<string, any>>(
     isolate?: boolean;
   } = {}
 ): React.ComponentType<T> {
-  const WrappedComponent = React.forwardRef<any, T>((props, ref) => {
+  const WrappedComponent: React.ComponentType<T> = (props) => {
     return (
       <ErrorBoundary {...options}>
-        <Component {...props} ref={ref} />
+        <Component {...props} />
       </ErrorBoundary>
     );
-  });
+  };
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
   

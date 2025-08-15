@@ -1,4 +1,5 @@
 import { prisma } from '../database/client';
+import { Prisma } from '@prisma/client';
 import { openAIConfig } from '../config/openai';
 import type { TokenUsage } from '../../types/database';
 
@@ -79,7 +80,7 @@ export class CostTracker {
 
   public calculateExecutionCost(tokenUsage: TokenUsage): number {
     const modelCosts = this.getConfiguredModelCosts();
-    const costs = modelCosts[tokenUsage.model] || modelCosts['gpt-3.5-turbo'];
+    const costs = modelCosts[tokenUsage.model || 'gpt-3.5-turbo'] || modelCosts['gpt-3.5-turbo'];
     
     return (
       (tokenUsage.input * costs.input / 1000) +
@@ -282,7 +283,7 @@ export class CostTracker {
           where: {
             userId,
             promptId: result.promptId,
-            tokenUsage: { not: null },
+            tokenUsage: { not: Prisma.JsonNull },
           },
           select: { tokenUsage: true },
         });
@@ -512,7 +513,7 @@ export class CostTracker {
           where: {
             userId,
             promptId: result.promptId,
-            tokenUsage: { not: null },
+            tokenUsage: { not: Prisma.JsonNull },
           },
           select: { tokenUsage: true },
         });

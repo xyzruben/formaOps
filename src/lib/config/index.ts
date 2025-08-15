@@ -1,3 +1,6 @@
+// Import for internal use
+import { validateOpenAIConfig } from './openai';
+
 // Export OpenAI configuration management
 export { 
   openAIConfig, 

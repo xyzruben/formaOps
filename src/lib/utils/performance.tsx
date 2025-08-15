@@ -198,7 +198,7 @@ export function withPerformanceMonitoring<T extends Record<string, unknown>>(
   Component: React.ComponentType<T>,
   displayName: string
 ): React.ComponentType<T> {
-  const PerformanceMonitoredComponent = React.forwardRef<unknown, T>((props, ref) => {
+  const PerformanceMonitoredComponent: React.ComponentType<T> = (props) => {
     const startTime = React.useRef(performance.now());
     
     React.useEffect(() => {
@@ -211,8 +211,8 @@ export function withPerformanceMonitoring<T extends Record<string, unknown>>(
       });
     });
 
-    return <Component {...props} ref={ref} />;
-  });
+    return <Component {...props} />;
+  };
 
   PerformanceMonitoredComponent.displayName = `withPerformanceMonitoring(${displayName})`;
   

@@ -15,7 +15,7 @@ export class InputValidator {
       FORBID_ATTR: ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus'],
     };
 
-    return DOMPurify.sanitize(input, config);
+    return DOMPurify.sanitize(input, config as any) as unknown as string;
   }
 
   // Validate and sanitize string input

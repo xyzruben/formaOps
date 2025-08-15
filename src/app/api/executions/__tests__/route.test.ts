@@ -1,4 +1,4 @@
-import { POST } from '../route';
+import { GET } from '../route';
 import { NextRequest } from 'next/server';
 
 // Mock dependencies
@@ -73,7 +73,7 @@ describe('/api/executions', () => {
     mockPrisma.execution.create.mockResolvedValue(mockExecution);
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' },
@@ -81,7 +81,7 @@ describe('/api/executions', () => {
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -105,14 +105,14 @@ describe('/api/executions', () => {
     });
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' },
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(404);
@@ -133,14 +133,14 @@ describe('/api/executions', () => {
     mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' }, // Missing required 'age'
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -160,14 +160,14 @@ describe('/api/executions', () => {
     mockPrisma.prompt.findUnique.mockResolvedValue(mockPrompt);
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { age: 'not-a-number' }, // Invalid type
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -189,14 +189,14 @@ describe('/api/executions', () => {
     );
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' },
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -225,14 +225,14 @@ describe('/api/executions', () => {
     );
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' },
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -256,7 +256,7 @@ describe('/api/executions', () => {
     mockPrisma.execution.create.mockResolvedValue({});
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' },
@@ -264,7 +264,7 @@ describe('/api/executions', () => {
       }),
     });
 
-    await POST(request);
+    await GET(request);
 
     expect(mockAIExecutor.executePrompt).toHaveBeenCalledWith({
       template: 'Hello {{name}}',
@@ -289,14 +289,14 @@ describe('/api/executions', () => {
     });
 
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       body: JSON.stringify({
         promptId: 'prompt-1',
         inputs: { name: 'John' },
       }),
     });
 
-    const response = await POST(request);
+    const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(503);
@@ -307,7 +307,7 @@ describe('/api/executions', () => {
   it('should apply rate limiting', async () => {
     // This would be implemented with middleware
     const request = new NextRequest('http://localhost:3000/api/executions', {
-      method: 'POST',
+      method: 'GET',
       headers: { 'x-forwarded-for': '192.168.1.1' },
       body: JSON.stringify({
         promptId: 'prompt-1',
