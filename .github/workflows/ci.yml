@@ -237,7 +237,7 @@ jobs:
           scope: ${{ secrets.VERCEL_ORG_ID }}
 
       - name: Comment PR with preview URL
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const { data: deployments } = await github.rest.repos.listDeployments({
@@ -281,7 +281,7 @@ jobs:
           scope: ${{ secrets.VERCEL_ORG_ID }}
 
       - name: Notify deployment success
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.repos.createCommitStatus({
@@ -311,7 +311,7 @@ jobs:
           temporaryPublicStorage: true
 
       - name: Bundle Size Analysis
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             // This would analyze bundle size changes
@@ -333,7 +333,7 @@ jobs:
 
     steps:
       - name: Send failure notification
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.create({
