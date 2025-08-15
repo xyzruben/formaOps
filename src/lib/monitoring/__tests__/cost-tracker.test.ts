@@ -237,7 +237,7 @@ describe('CostTracker', () => {
 
       // Mock execution.findMany calls for token usage (called after groupBy)
       mockPrisma.execution.findMany
-        .mockResolvedValueOnce(mockExecutionsForTokens[0])  // For prompt-1
+        .mockResolvedValueOnce(mockExecutionsForTokens[0]) // For prompt-1
         .mockResolvedValueOnce(mockExecutionsForTokens[1]); // For prompt-2
     });
 

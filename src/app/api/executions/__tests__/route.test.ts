@@ -46,9 +46,11 @@ import { GET } from '../route';
 import { aiExecutor } from '@/lib/agent/executor';
 import { priorityManager } from '@/lib/agent/priority-manager';
 
-// Get typed mocks for better intellisense  
+// Get typed mocks for better intellisense
 const mockAIExecutor = aiExecutor as jest.Mocked<typeof aiExecutor>;
-const mockPriorityManager = priorityManager as jest.Mocked<typeof priorityManager>;
+const mockPriorityManager = priorityManager as jest.Mocked<
+  typeof priorityManager
+>;
 
 describe('/api/executions', () => {
   beforeEach(() => {
@@ -213,7 +215,10 @@ describe('/api/executions', () => {
     expect(data.error).toBe('Execution failed');
 
     // Should still complete execution even on failure
-    expect(mockPriorityManager.completeExecution).toHaveBeenCalledWith(expect.any(String), false);
+    expect(mockPriorityManager.completeExecution).toHaveBeenCalledWith(
+      expect.any(String),
+      false
+    );
   });
 
   it('should handle database errors during execution save', async () => {

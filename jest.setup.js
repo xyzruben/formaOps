@@ -2,7 +2,8 @@ import '@testing-library/jest-dom';
 
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
-process.env.OPENAI_API_KEY = 'sk-test-openai-key-12345678901234567890123456789012';
+process.env.OPENAI_API_KEY =
+  'sk-test-openai-key-12345678901234567890123456789012';
 process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_ANON_KEY = 'test-supabase-key';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
@@ -165,7 +166,7 @@ global.Response = jest.fn().mockImplementation((body, options) => ({
   text: jest.fn().mockResolvedValue(body || ''),
 }));
 
-global.Headers = jest.fn().mockImplementation((init) => {
+global.Headers = jest.fn().mockImplementation(init => {
   const headers = new Map();
   if (init) {
     Object.entries(init).forEach(([key, value]) => {

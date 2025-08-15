@@ -5,7 +5,7 @@ jest.mock('@/lib/auth/server', () => ({
   }),
 }));
 
-// Mock database queries - must be hoisted  
+// Mock database queries - must be hoisted
 jest.mock('@/lib/database/queries', () => ({
   getUserPrompts: jest.fn(),
   createPrompt: jest.fn(),
@@ -16,8 +16,12 @@ import { GET, POST } from '../route';
 import { getUserPrompts, createPrompt } from '@/lib/database/queries';
 
 // Get typed mocks for better intellisense
-const mockGetUserPrompts = getUserPrompts as jest.MockedFunction<typeof getUserPrompts>;
-const mockCreatePrompt = createPrompt as jest.MockedFunction<typeof createPrompt>;
+const mockGetUserPrompts = getUserPrompts as jest.MockedFunction<
+  typeof getUserPrompts
+>;
+const mockCreatePrompt = createPrompt as jest.MockedFunction<
+  typeof createPrompt
+>;
 
 describe('/api/prompts', () => {
   beforeEach(() => {
@@ -75,9 +79,9 @@ describe('/api/prompts', () => {
     });
 
     it('should support pagination', async () => {
-      mockGetUserPrompts.mockResolvedValue({ 
-        prompts: [], 
-        pagination: { page: 2, limit: 10, total: 0, totalPages: 0 }
+      mockGetUserPrompts.mockResolvedValue({
+        prompts: [],
+        pagination: { page: 2, limit: 10, total: 0, totalPages: 0 },
       });
 
       const request = new NextRequest(
@@ -92,9 +96,9 @@ describe('/api/prompts', () => {
     });
 
     it('should support search filtering', async () => {
-      mockGetUserPrompts.mockResolvedValue({ 
-        prompts: [], 
-        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 }
+      mockGetUserPrompts.mockResolvedValue({
+        prompts: [],
+        pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
       });
 
       const request = new NextRequest(
@@ -237,7 +241,8 @@ describe('/api/prompts', () => {
       await POST(request);
 
       // Should create prompt with auto-detected variables
-      expect(mockCreatePrompt).toHaveBeenCalledWith('user-123', 
+      expect(mockCreatePrompt).toHaveBeenCalledWith(
+        'user-123',
         expect.objectContaining({
           variables: expect.arrayContaining([
             expect.objectContaining({ name: 'name' }),
@@ -248,9 +253,7 @@ describe('/api/prompts', () => {
     });
 
     it('should handle database constraints', async () => {
-      mockCreatePrompt.mockRejectedValue(
-        new Error('Unique constraint failed')
-      );
+      mockCreatePrompt.mockRejectedValue(new Error('Unique constraint failed'));
 
       const request = new NextRequest('http://localhost:3000/api/prompts', {
         method: 'POST',
@@ -280,7 +283,8 @@ describe('/api/prompts', () => {
 
       await POST(request);
 
-      expect(mockCreatePrompt).toHaveBeenCalledWith('user-123', 
+      expect(mockCreatePrompt).toHaveBeenCalledWith(
+        'user-123',
         expect.objectContaining({
           name: 'Test Prompt', // Trimmed
           template: expect.not.stringContaining('<script>'), // Sanitized

@@ -13,9 +13,11 @@ jest.mock('@supabase/ssr', () => ({
 import { createServerClient } from '@supabase/ssr';
 
 // Get mock reference after import
-const mockCreateServerClient = createServerClient as jest.MockedFunction<typeof createServerClient>;
+const mockCreateServerClient = createServerClient as jest.MockedFunction<
+  typeof createServerClient
+>;
 const mockSupabase = mockCreateServerClient.mock.results[0]?.value || {
-  auth: { signInWithPassword: jest.fn() }
+  auth: { signInWithPassword: jest.fn() },
 };
 
 describe('/api/auth/login', () => {
