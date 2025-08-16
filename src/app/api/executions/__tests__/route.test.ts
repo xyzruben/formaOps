@@ -17,12 +17,12 @@ jest.mock('@/lib/utils/error-handler', () => ({
 }));
 
 // Mock database queries using the same relative path as the route
-jest.mock('../../../../lib/database/queries', () => ({
+jest.mock('@/lib/database/queries', () => ({
   getExecutionHistory: jest.fn(),
 }));
 
 import { GET } from '../route';
-import { getExecutionHistory } from '../../../../lib/database/queries';
+import { getExecutionHistory } from '@/lib/database/queries';
 
 // Get typed mocks for better intellisense
 const mockGetExecutionHistory = getExecutionHistory as jest.MockedFunction<
@@ -190,7 +190,8 @@ describe('/api/executions', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.success).toBe(false);
+    expect(data.error).toBe('Test error');
+    expect(data.code).toBe('TEST_ERROR');
   });
 
   it('should support date range filtering', async () => {

@@ -135,6 +135,23 @@ jest.mock('@supabase/supabase-js', () => ({
   })),
 }));
 
+// Mock Supabase SSR
+jest.mock('@supabase/ssr', () => ({
+  createServerClient: jest.fn(() => ({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user', email: 'test@example.com' } },
+        error: null,
+      }),
+      signInWithPassword: jest.fn().mockResolvedValue({
+        data: { user: { id: 'test-user' }, session: { access_token: 'test' } },
+        error: null,
+      }),
+      signOut: jest.fn().mockResolvedValue({ error: null }),
+    },
+  })),
+}));
+
 // Global test utilities
 global.ResizeObserver = jest.fn().mockImplementation(() => ({
   observe: jest.fn(),
