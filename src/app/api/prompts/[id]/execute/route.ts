@@ -29,7 +29,8 @@ export async function POST(
   const params = await context.params;
   const { id: promptId } = params;
 
-  let execution: { id: string; status: string; startedAt: Date | null } | null = null;
+  let execution: { id: string; status: string; startedAt: Date | null } | null =
+    null;
 
   try {
     // Authentication
@@ -80,7 +81,12 @@ export async function POST(
 
     // Process template with variables
     const variableDefinitions = Array.isArray(prompt.variables)
-      ? (prompt.variables as Array<{ name: string; type: 'string' | 'number' | 'boolean' | 'array'; required: boolean; description?: string }>)
+      ? (prompt.variables as Array<{
+          name: string;
+          type: 'string' | 'number' | 'boolean' | 'array';
+          required: boolean;
+          description?: string;
+        }>)
       : [];
 
     const templateResult = templateEngine.processTemplate(
@@ -212,7 +218,8 @@ export async function POST(
 
     // Check if this is a final error from retry handler
     if (error && typeof error === 'object' && 'executionError' in error) {
-      executionError = (error as { executionError: ExecutionError }).executionError;
+      executionError = (error as { executionError: ExecutionError })
+        .executionError;
     } else {
       executionError = executionErrorHandler.handleError(error);
     }

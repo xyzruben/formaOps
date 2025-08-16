@@ -35,7 +35,7 @@ jest.mock('next/headers', () => ({
 describe('/api/auth/login', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset the cookies mock to ensure it works properly
     const mockCookies = require('next/headers').cookies;
     mockCookies.mockResolvedValue({
@@ -151,9 +151,7 @@ describe('/api/auth/login', () => {
   });
 
   it('should handle Supabase errors gracefully', async () => {
-    mockSignInWithPassword.mockRejectedValue(
-      new Error('Network error')
-    );
+    mockSignInWithPassword.mockRejectedValue(new Error('Network error'));
 
     const request = new NextRequest('http://localhost:3000/api/auth/login', {
       method: 'POST',

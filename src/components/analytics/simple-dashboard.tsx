@@ -69,47 +69,48 @@ export function SimpleDashboard({
   ); // Default: 30 days
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = useCallback(async (
-    days: number = selectedRange.days
-  ): Promise<void> => {
-    try {
-      setError(null);
+  const fetchAnalytics = useCallback(
+    async (days: number = selectedRange.days): Promise<void> => {
+      try {
+        setError(null);
 
-      const from = dateRange?.from || startOfDay(subDays(new Date(), days));
-      const to = dateRange?.to || endOfDay(new Date());
+        const from = dateRange?.from || startOfDay(subDays(new Date(), days));
+        const to = dateRange?.to || endOfDay(new Date());
 
-      const params = new URLSearchParams({
-        from: from.toISOString(),
-        to: to.toISOString(),
-      });
+        const params = new URLSearchParams({
+          from: from.toISOString(),
+          to: to.toISOString(),
+        });
 
-      const response = await fetch(`/api/analytics/dashboard?${params}`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
+        const response = await fetch(`/api/analytics/dashboard?${params}`, {
+          headers: { 'Content-Type': 'application/json' },
+        });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Analytics request failed: ${response.status}`
-        );
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.message || `Analytics request failed: ${response.status}`
+          );
+        }
+
+        const analyticsData = await response.json();
+
+        if (!analyticsData.success) {
+          throw new Error(
+            analyticsData.message || 'Failed to fetch analytics data'
+          );
+        }
+
+        setData(analyticsData.data);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to load analytics';
+        setError(message);
+        console.error('Analytics fetch error:', err);
       }
-
-      const analyticsData = await response.json();
-
-      if (!analyticsData.success) {
-        throw new Error(
-          analyticsData.message || 'Failed to fetch analytics data'
-        );
-      }
-
-      setData(analyticsData.data);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to load analytics';
-      setError(message);
-      console.error('Analytics fetch error:', err);
-    }
-  }, [selectedRange.days, dateRange]);
+    },
+    [selectedRange.days, dateRange]
+  );
 
   const handleRefresh = async (): Promise<void> => {
     setRefreshing(true);

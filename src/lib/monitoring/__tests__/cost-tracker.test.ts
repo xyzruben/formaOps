@@ -210,7 +210,7 @@ describe('CostTracker', () => {
     beforeEach(() => {
       // Clear mocks again to ensure clean state for this group
       jest.clearAllMocks();
-      
+
       const mockGroupedResults = [
         {
           promptId: 'prompt-1',
