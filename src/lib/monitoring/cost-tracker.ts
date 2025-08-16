@@ -78,6 +78,7 @@ export class CostTracker {
       return config.costConfig;
     } catch (error) {
       // Fallback to hardcoded costs if config fails
+      // eslint-disable-next-line no-console
       console.warn(
         'Failed to load cost configuration, using fallback values:',
         error

@@ -37,6 +37,7 @@ export class OpenAIClient {
       configFromManager = openAIConfig.getConfig();
     } catch (error) {
       // Fall back to environment variables if config manager fails
+      // eslint-disable-next-line no-console
       console.warn(
         'Failed to load OpenAI config, falling back to environment variables:',
         error

@@ -59,7 +59,7 @@ class ErrorBoundary extends React.Component<
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     const enhancedErrorInfo: ErrorInfo = {
       componentStack: errorInfo.componentStack || '',
       errorBoundary: this.constructor.name,
@@ -90,13 +90,13 @@ class ErrorBoundary extends React.Component<
     }
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     if (this.resetTimeoutId) {
       clearTimeout(this.resetTimeoutId);
     }
   }
 
-  handleReset = () => {
+  handleReset = (): void => {
     if (this.resetTimeoutId) {
       clearTimeout(this.resetTimeoutId);
     }
@@ -109,7 +109,7 @@ class ErrorBoundary extends React.Component<
     });
   };
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       const FallbackComponent = this.props.fallback || DefaultErrorFallback;
 
@@ -132,12 +132,12 @@ function DefaultErrorFallback({
   errorInfo,
   resetError,
   errorId,
-}: ErrorFallbackProps) {
-  const handleReload = () => {
+}: ErrorFallbackProps): React.ReactElement {
+  const handleReload = (): void => {
     window.location.reload();
   };
 
-  const handleGoHome = () => {
+  const handleGoHome = (): void => {
     window.location.href = '/';
   };
 

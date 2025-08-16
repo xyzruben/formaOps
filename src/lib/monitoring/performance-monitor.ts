@@ -383,6 +383,7 @@ export class PerformanceMonitor {
       }
 
       if (triggered) {
+        // eslint-disable-next-line no-console
         console.warn(
           `[ALERT] ${threshold.severity.toUpperCase()}: ${threshold.message}`,
           {

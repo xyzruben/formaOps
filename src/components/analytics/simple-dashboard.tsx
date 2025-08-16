@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import {
   Card,
@@ -69,7 +69,7 @@ export function SimpleDashboard({
   ); // Default: 30 days
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = async (
+  const fetchAnalytics = useCallback(async (
     days: number = selectedRange.days
   ): Promise<void> => {
     try {
@@ -109,7 +109,7 @@ export function SimpleDashboard({
       setError(message);
       console.error('Analytics fetch error:', err);
     }
-  };
+  }, [selectedRange.days, dateRange]);
 
   const handleRefresh = async (): Promise<void> => {
     setRefreshing(true);
@@ -132,7 +132,7 @@ export function SimpleDashboard({
     };
 
     loadData();
-  }, [userId, dateRange]);
+  }, [userId, dateRange, fetchAnalytics]);
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;

@@ -4,7 +4,7 @@ import { ValidationError } from '../utils/error-handler';
 
 export interface TemplateVariable {
   name: string;
-  value: any;
+  value: string | number | boolean;
   type: 'string' | 'number' | 'boolean';
   required: boolean;
 }

@@ -125,6 +125,7 @@ export class PerformanceUtils {
   // Bundle size analyzer helper
   static analyzeBundleSize(): void {
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.log('Run "npm run analyze" to analyze bundle size');
     }
   }
@@ -155,6 +156,7 @@ export class PerformanceUtils {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.log(`Web Vital ${metric.name}:`, {
         value: metric.value,
         rating: metric.rating,

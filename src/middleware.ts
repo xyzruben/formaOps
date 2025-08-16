@@ -229,6 +229,7 @@ export function middleware(request: NextRequest): NextResponse {
       timestamp: new Date().toISOString(),
     };
 
+    // eslint-disable-next-line no-console
     console.log('Request:', JSON.stringify(requestInfo));
   }
 

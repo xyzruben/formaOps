@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { prisma } from '../database/client';
 import type { LogLevel } from '@prisma/client';
 

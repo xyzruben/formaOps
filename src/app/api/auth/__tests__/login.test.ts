@@ -1,26 +1,23 @@
 import { POST } from '../login/route';
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
 
 // Set required environment variables for the test
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-supabase-anon-key';
 
-// Create mocks that can be shared between the mock and tests - use var for hoisting
-var mockSignInWithPassword = jest.fn();
-var mockGetUser = jest.fn();
+// Create mocks that can be shared between the mock and tests
+const mockSignInWithPassword = jest.fn();
+const mockGetUser = jest.fn();
 
 // Mock Supabase SSR using factory pattern
 jest.mock('@supabase/ssr', () => ({
-  createServerClient: jest.fn().mockImplementation((...args) => {
-    console.log('createServerClient called with:', args);
+  createServerClient: jest.fn().mockImplementation(() => {
     const client = {
       auth: {
         signInWithPassword: mockSignInWithPassword,
         getUser: mockGetUser,
       },
     };
-    console.log('Returning client with auth:', client.auth);
     return client;
   }),
 }));
@@ -34,7 +31,6 @@ jest.mock('next/headers', () => ({
 }));
 
 // Get references to the mocked functions
-const mockCreateServerClient = createServerClient as jest.MockedFunction<typeof createServerClient>;
 
 describe('/api/auth/login', () => {
   beforeEach(() => {
@@ -49,13 +45,6 @@ describe('/api/auth/login', () => {
   });
 
   it('should authenticate user with valid credentials', async () => {
-    console.log('Mock function:', mockSignInWithPassword);
-    console.log('createServerClient mock:', jest.isMockFunction(createServerClient));
-    
-    // Add spy to see if createServerClient is called
-    const createServerClientSpy = mockCreateServerClient as jest.MockedFunction<typeof createServerClient>;
-    console.log('Initial calls to createServerClient:', createServerClientSpy.mock.calls.length);
-    
     mockSignInWithPassword.mockResolvedValue({
       data: {
         user: { id: 'user-123', email: 'test@example.com', user_metadata: {} },
@@ -72,30 +61,21 @@ describe('/api/auth/login', () => {
       }),
     });
 
-    try {
-      const response = await POST(request);
-      const data = await response.json();
+    const response = await POST(request);
+    const data = await response.json();
 
-      console.log('Auth Response status:', response.status);
-      console.log('Auth Response data:', data);
-      console.log('Mock called:', mockSignInWithPassword.mock.calls.length);
-      console.log('createServerClient called:', createServerClientSpy.mock.calls.length);
-      expect(response.status).toBe(200);
-      expect(data.user).toEqual({
-        id: 'user-123',
-        email: 'test@example.com',
-        name: null,
-      });
-      expect(data.access_token).toBe('token-123');
-      expect(data.refresh_token).toBe('refresh-123');
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'password123',
-      });
-    } catch (error) {
-      console.error('Error during POST:', error);
-      throw error;
-    }
+    expect(response.status).toBe(200);
+    expect(data.user).toEqual({
+      id: 'user-123',
+      email: 'test@example.com',
+      name: null,
+    });
+    expect(data.access_token).toBe('token-123');
+    expect(data.refresh_token).toBe('refresh-123');
+    expect(mockSignInWithPassword).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123',
+    });
   });
 
   it('should return error for invalid credentials', async () => {

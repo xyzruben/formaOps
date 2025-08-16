@@ -73,9 +73,6 @@ describe('/api/executions', () => {
     const response = await GET(request);
     const data = await response.json();
 
-    console.log('Response status:', response.status);
-    console.log('Response data:', data);
-    console.log('Mock called?', mockGetExecutionHistory.mock.calls.length > 0);
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.data.executions).toEqual(mockExecutions);

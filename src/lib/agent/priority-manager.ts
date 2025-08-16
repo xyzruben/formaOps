@@ -231,6 +231,7 @@ export class PriorityManager {
 
   private triggerExecution(job: ExecutionJob): void {
     // In a real system, this would emit an event or call the execution service
+    // eslint-disable-next-line no-console
     console.log(
       `Triggering execution for job ${job.id} with priority ${job.priority}`
     );
