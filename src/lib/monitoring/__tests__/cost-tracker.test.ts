@@ -97,7 +97,7 @@ describe('CostTracker', () => {
     beforeEach(() => {
       // Clear all mocks to avoid contamination from other tests
       jest.clearAllMocks();
-      
+
       const mockExecutions = [
         {
           costUsd: { toNumber: () => 0.01 },
@@ -163,7 +163,7 @@ describe('CostTracker', () => {
     beforeEach(() => {
       // Clear all mocks to avoid contamination from other tests
       jest.clearAllMocks();
-      
+
       const mockTodayExecutions = [{ costUsd: { toNumber: () => 0.08 } }];
 
       const mockMonthExecutions = [
@@ -249,7 +249,7 @@ describe('CostTracker', () => {
       mockPrisma.execution.findMany.mockImplementation((args: any) => {
         const where = args?.where;
         const promptId = where?.promptId;
-        
+
         // Check if this is the token usage query (has tokenUsage filter)
         if (where?.tokenUsage && promptId) {
           if (promptId === 'prompt-1') {
@@ -310,10 +310,12 @@ describe('CostTracker', () => {
       mockPrisma.execution.findMany.mockImplementation((args: any) => {
         const where = args?.where;
         const promptId = where?.promptId;
-        
+
         if (where?.tokenUsage && promptId) {
           // Return minimal data just for sorting test
-          return Promise.resolve([{ tokenUsage: { input: 100, output: 100, total: 200 } }]);
+          return Promise.resolve([
+            { tokenUsage: { input: 100, output: 100, total: 200 } },
+          ]);
         }
         return Promise.resolve([]);
       });

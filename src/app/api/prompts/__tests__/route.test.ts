@@ -31,7 +31,7 @@ const mockRequireAuth = requireAuth as jest.MockedFunction<typeof requireAuth>;
 describe('/api/prompts', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup auth mock to return test user with minimal structure
     mockRequireAuth.mockResolvedValue({
       id: 'user-123',
@@ -62,13 +62,16 @@ describe('/api/prompts', () => {
 
       mockGetUserPrompts.mockResolvedValue(mockResult);
 
-      const request = new NextRequest('http://localhost:3000/api/prompts?page=1&limit=20', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
+      const request = new NextRequest(
+        'http://localhost:3000/api/prompts?page=1&limit=20',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
       try {
         const response = await GET(request);
         const data = await response.json();
@@ -77,8 +80,11 @@ describe('/api/prompts', () => {
         console.log('Response status:', response.status);
         console.log('Response data:', data);
         console.log('Mock called times:', mockGetUserPrompts.mock.calls.length);
-        console.log('RequireAuth called times:', mockRequireAuth.mock.calls.length);
-        
+        console.log(
+          'RequireAuth called times:',
+          mockRequireAuth.mock.calls.length
+        );
+
         expect(response.status).toBe(200);
         expect(data).toEqual(mockResult);
         expect(mockGetUserPrompts).toHaveBeenCalledWith('user-123', {
