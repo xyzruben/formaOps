@@ -345,7 +345,8 @@ export class CostTracker {
           executions: result._count.id,
           totalCost: result._sum.costUsd?.toNumber() || 0,
           avgCost: (result._sum.costUsd?.toNumber() || 0) / result._count.id,
-          totalTokens: tokenTotals.totalTokens,
+          totalInputTokens: tokenTotals.inputTokens,
+          totalOutputTokens: tokenTotals.outputTokens,
         };
       })
     );

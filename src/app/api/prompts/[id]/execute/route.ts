@@ -29,7 +29,7 @@ export async function POST(
   const params = await context.params;
   const { id: promptId } = params;
 
-  let execution: { id: string; status: string } | null = null;
+  let execution: { id: string; status: string; startedAt: Date | null } | null = null;
 
   try {
     // Authentication
@@ -80,7 +80,7 @@ export async function POST(
 
     // Process template with variables
     const variableDefinitions = Array.isArray(prompt.variables)
-      ? (prompt.variables as Array<{ name: string; type: string; description?: string }>)
+      ? (prompt.variables as Array<{ name: string; type: 'string' | 'number' | 'boolean' | 'array'; required: boolean; description?: string }>)
       : [];
 
     const templateResult = templateEngine.processTemplate(
@@ -109,8 +109,14 @@ export async function POST(
     const startTime = Date.now();
     let attemptCount = 0;
 
+    if (!execution) {
+      throw new Error('Execution not created');
+    }
+
+    const executionId = execution.id; // Extract ID to avoid null issues in callbacks
+
     const aiResult = await executionErrorHandler.executeWithRetry(
-      execution.id,
+      executionId,
       async () => {
         attemptCount++;
 
@@ -124,13 +130,13 @@ export async function POST(
             maxTokens: data.maxTokens,
             temperature: data.temperature,
           },
-          execution.id
+          executionId
         );
       },
       async (attempt, delay) => {
         // Log retry attempt
         await logger.info('Execution retry attempt', {
-          executionId: execution.id,
+          executionId,
           attempt,
           delayMs: delay,
           totalAttempts: attemptCount,
