@@ -332,9 +332,10 @@ export class CostTracker {
             const tokenData = exec.tokenUsage as any;
             acc.inputTokens += tokenData?.input || 0;
             acc.outputTokens += tokenData?.output || 0;
+            acc.totalTokens += tokenData?.total || 0;
             return acc;
           },
-          { inputTokens: 0, outputTokens: 0 }
+          { inputTokens: 0, outputTokens: 0, totalTokens: 0 }
         );
 
         return {
@@ -343,8 +344,7 @@ export class CostTracker {
           executions: result._count.id,
           totalCost: result._sum.costUsd?.toNumber() || 0,
           avgCost: (result._sum.costUsd?.toNumber() || 0) / result._count.id,
-          totalInputTokens: tokenTotals.inputTokens,
-          totalOutputTokens: tokenTotals.outputTokens,
+          totalTokens: tokenTotals.totalTokens,
         };
       })
     );

@@ -208,6 +208,9 @@ describe('CostTracker', () => {
 
   describe('Top Expensive Prompts', () => {
     beforeEach(() => {
+      // Clear mocks again to ensure clean state for this group
+      jest.clearAllMocks();
+      
       const mockGroupedResults = [
         {
           promptId: 'prompt-1',
@@ -236,9 +239,16 @@ describe('CostTracker', () => {
       ];
 
       // Mock execution.findMany calls for token usage (called after groupBy)
-      mockPrisma.execution.findMany
-        .mockResolvedValueOnce(mockExecutionsForTokens[0]) // For prompt-1
-        .mockResolvedValueOnce(mockExecutionsForTokens[1]); // For prompt-2
+      // Use mockImplementation to handle multiple calls properly
+      mockPrisma.execution.findMany.mockImplementation((args: any) => {
+        const promptId = args?.where?.promptId;
+        if (promptId === 'prompt-1') {
+          return Promise.resolve(mockExecutionsForTokens[0]);
+        } else if (promptId === 'prompt-2') {
+          return Promise.resolve(mockExecutionsForTokens[1]);
+        }
+        return Promise.resolve([]);
+      });
     });
 
     it('should return top expensive prompts', async () => {
