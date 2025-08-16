@@ -321,6 +321,7 @@ describe('/api/prompts', () => {
       const newPrompt = {
         id: 'prompt-4',
         name: 'Test Prompt',
+        description: null,
         template: 'Hello {{name}}',
         variables: [{ name: 'name', type: 'string', required: true }],
         userId: 'user-123',
