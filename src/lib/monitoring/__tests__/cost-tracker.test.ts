@@ -216,7 +216,7 @@ describe('CostTracker', () => {
     it('should return top expensive prompts', async () => {
       // Setup specific mocks for this test
       jest.clearAllMocks();
-      
+
       // Reset mockImplementation from other tests
       mockPrisma.execution.findMany.mockReset();
 
@@ -289,7 +289,7 @@ describe('CostTracker', () => {
     it('should sort results by total cost descending', async () => {
       // Setup mocks for sorting test
       jest.clearAllMocks();
-      
+
       // Reset mockImplementation from other tests
       mockPrisma.execution.findMany.mockReset();
 

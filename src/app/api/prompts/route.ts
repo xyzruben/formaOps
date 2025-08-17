@@ -8,14 +8,14 @@ function extractVariablesFromTemplate(template: string): string[] {
   const variableRegex = /\{\{([^}]+)\}\}/g;
   const variables = new Set<string>();
   let match;
-  
+
   while ((match = variableRegex.exec(template)) !== null) {
     const variableName = match[1].trim();
     if (variableName) {
       variables.add(variableName);
     }
   }
-  
+
   return Array.from(variables);
 }
 

@@ -284,7 +284,7 @@ jest.mock('next/headers', () => ({
 // Mock Next.js server responses
 jest.mock('next/server', () => {
   const actualNextServer = jest.requireActual('next/server');
-  
+
   // Create a proper NextRequest mock that preserves constructor behavior
   class MockNextRequest {
     constructor(url, options = {}) {
@@ -300,13 +300,15 @@ jest.mock('next/server', () => {
         throw new Error('Body has already been consumed');
       }
       this._bodyUsed = true;
-      
+
       if (!this.body) {
         return {};
       }
-      
+
       try {
-        return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+        return typeof this.body === 'string'
+          ? JSON.parse(this.body)
+          : this.body;
       } catch (error) {
         throw new SyntaxError('Unexpected token in JSON');
       }
