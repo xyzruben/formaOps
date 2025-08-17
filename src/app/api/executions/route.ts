@@ -8,8 +8,14 @@ import {
 import { handleApiError } from '../../../lib/utils/error-handler';
 
 const ExecutionsQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  page: z.preprocess(
+    val => (val === null ? undefined : val),
+    z.coerce.number().min(1).default(1)
+  ),
+  limit: z.preprocess(
+    val => (val === null ? undefined : val),
+    z.coerce.number().min(1).max(100).default(20)
+  ),
   status: z
     .enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED'])
     .optional(),
@@ -26,10 +32,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const query = ExecutionsQuerySchema.parse({
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
-      status: searchParams.get('status'),
-      promptId: searchParams.get('promptId'),
-      from: searchParams.get('from'),
-      to: searchParams.get('to'),
+      status: searchParams.get('status') || undefined,
+      promptId: searchParams.get('promptId') || undefined,
+      from: searchParams.get('from') || undefined,
+      to: searchParams.get('to') || undefined,
     });
 
     const options = {

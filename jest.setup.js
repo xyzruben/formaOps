@@ -42,9 +42,9 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// Mock Prisma client
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
+// Mock Prisma client - Create a factory to avoid conflicts with local mocks
+jest.mock('@prisma/client', () => {
+  const createMockPrismaClient = () => ({
     $connect: jest.fn(),
     $disconnect: jest.fn(),
     user: {
@@ -81,10 +81,72 @@ jest.mock('@prisma/client', () => ({
       create: jest.fn(),
       findMany: jest.fn(),
     },
-  })),
-  Prisma: {
-    JsonNull: Symbol('JsonNull'),
-  },
+  });
+
+  return {
+    PrismaClient: jest.fn().mockImplementation(createMockPrismaClient),
+    Prisma: {
+      JsonNull: Symbol('JsonNull'),
+    },
+  };
+});
+
+// Mock database client module to allow proper test isolation
+jest.mock('./src/lib/database/client', () => {
+  const createMockPrismaClient = () => ({
+    $connect: jest.fn(),
+    $disconnect: jest.fn(),
+    user: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    prompt: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    execution: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      groupBy: jest.fn(),
+    },
+    promptVersion: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    executionLog: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+    },
+  });
+
+  return {
+    prisma: createMockPrismaClient(),
+  };
+});
+
+// Mock auth server module
+jest.mock('./src/lib/auth/server', () => ({
+  requireAuth: jest.fn().mockResolvedValue({ id: 'user-123' }),
+}));
+
+// Mock database queries module
+jest.mock('./src/lib/database/queries', () => ({
+  getUserPrompts: jest.fn(),
+  createPrompt: jest.fn(),
+  getExecutionHistory: jest.fn(),
 }));
 
 // Mock OpenAI
@@ -220,20 +282,64 @@ jest.mock('next/headers', () => ({
 }));
 
 // Mock Next.js server responses
-jest.mock('next/server', () => ({
-  NextRequest: jest.fn(),
-  NextResponse: {
-    json: jest.fn((data, options) => ({
-      status: options?.status || 200,
-      statusText: 'OK',
-      headers: new Map(Object.entries(options?.headers || {})),
-      json: jest.fn().mockResolvedValue(data),
-      text: jest.fn().mockResolvedValue(JSON.stringify(data)),
-      ok: (options?.status || 200) >= 200 && (options?.status || 200) < 300,
-    })),
-    redirect: jest.fn((url, status) => ({
-      status: status || 302,
-      headers: new Map([['location', url]]),
-    })),
-  },
-}));
+jest.mock('next/server', () => {
+  const actualNextServer = jest.requireActual('next/server');
+  
+  // Create a proper NextRequest mock that preserves constructor behavior
+  class MockNextRequest {
+    constructor(url, options = {}) {
+      this.url = url;
+      this.method = options.method || 'GET';
+      this.headers = new Map(Object.entries(options.headers || {}));
+      this.body = options.body;
+      this._bodyUsed = false;
+    }
+
+    async json() {
+      if (this._bodyUsed) {
+        throw new Error('Body has already been consumed');
+      }
+      this._bodyUsed = true;
+      
+      if (!this.body) {
+        return {};
+      }
+      
+      try {
+        return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+      } catch (error) {
+        throw new SyntaxError('Unexpected token in JSON');
+      }
+    }
+
+    async text() {
+      if (this._bodyUsed) {
+        throw new Error('Body has already been consumed');
+      }
+      this._bodyUsed = true;
+      return this.body || '';
+    }
+  }
+
+  return {
+    ...actualNextServer,
+    NextRequest: MockNextRequest,
+    NextResponse: {
+      json: jest.fn((data, options) => {
+        const status = options?.status || 200;
+        return {
+          status,
+          statusText: status >= 200 && status < 300 ? 'OK' : 'Error',
+          headers: new Map(Object.entries(options?.headers || {})),
+          json: jest.fn().mockResolvedValue(data),
+          text: jest.fn().mockResolvedValue(JSON.stringify(data)),
+          ok: status >= 200 && status < 300,
+        };
+      }),
+      redirect: jest.fn((url, status) => ({
+        status: status || 302,
+        headers: new Map([['location', url]]),
+      })),
+    },
+  };
+});

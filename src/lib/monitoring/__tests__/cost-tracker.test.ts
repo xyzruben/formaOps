@@ -216,6 +216,9 @@ describe('CostTracker', () => {
     it('should return top expensive prompts', async () => {
       // Setup specific mocks for this test
       jest.clearAllMocks();
+      
+      // Reset mockImplementation from other tests
+      mockPrisma.execution.findMany.mockReset();
 
       const mockGroupedResults = [
         {
@@ -251,7 +254,7 @@ describe('CostTracker', () => {
         const promptId = where?.promptId;
 
         // Check if this is the token usage query (has tokenUsage filter)
-        if (where?.tokenUsage && promptId) {
+        if (where?.tokenUsage && where.tokenUsage.not && promptId) {
           if (promptId === 'prompt-1') {
             return Promise.resolve(mockExecutionsForTokens[0]);
           } else if (promptId === 'prompt-2') {
@@ -286,6 +289,9 @@ describe('CostTracker', () => {
     it('should sort results by total cost descending', async () => {
       // Setup mocks for sorting test
       jest.clearAllMocks();
+      
+      // Reset mockImplementation from other tests
+      mockPrisma.execution.findMany.mockReset();
 
       const mockGroupedResults = [
         {
@@ -311,7 +317,7 @@ describe('CostTracker', () => {
         const where = args?.where;
         const promptId = where?.promptId;
 
-        if (where?.tokenUsage && promptId) {
+        if (where?.tokenUsage && where.tokenUsage.not && promptId) {
           // Return minimal data just for sorting test
           return Promise.resolve([
             { tokenUsage: { input: 100, output: 100, total: 200 } },

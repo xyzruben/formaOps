@@ -36,6 +36,32 @@ describe('/api/prompts', () => {
     mockRequireAuth.mockResolvedValue({
       id: 'user-123',
     } as any);
+
+    // Reset database mocks to default empty responses
+    mockGetUserPrompts.mockResolvedValue({
+      prompts: [],
+      pagination: {
+        page: 1,
+        limit: 20,
+        total: 0,
+        totalPages: 0,
+      },
+    });
+
+    mockCreatePrompt.mockResolvedValue({
+      id: 'prompt-123',
+      name: 'Test Prompt',
+      description: null,
+      template: 'Hello {{name}}',
+      variables: [],
+      userId: 'user-123',
+      status: 'DRAFT',
+      version: 1,
+      tags: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      publishedAt: null,
+    });
   });
 
   describe('GET /api/prompts', () => {
@@ -98,6 +124,8 @@ describe('/api/prompts', () => {
     });
 
     it('should handle database errors', async () => {
+      // Override the default mock with a rejection
+      mockGetUserPrompts.mockReset();
       mockGetUserPrompts.mockRejectedValue(new Error('Database error'));
 
       const request = new NextRequest('http://localhost:3000/api/prompts');

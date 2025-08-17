@@ -3,6 +3,22 @@ import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/server';
 import { getUserPrompts, createPrompt } from '@/lib/database/queries';
 
+function extractVariablesFromTemplate(template: string): string[] {
+  // Extract variables from {{variable}} patterns
+  const variableRegex = /\{\{([^}]+)\}\}/g;
+  const variables = new Set<string>();
+  let match;
+  
+  while ((match = variableRegex.exec(template)) !== null) {
+    const variableName = match[1].trim();
+    if (variableName) {
+      variables.add(variableName);
+    }
+  }
+  
+  return Array.from(variables);
+}
+
 const VariableSchema = z.object({
   name: z
     .string()
@@ -23,8 +39,14 @@ const CreatePromptSchema = z.object({
 });
 
 const PromptsQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(100).default(20),
+  page: z.preprocess(
+    val => (val === null ? undefined : val),
+    z.coerce.number().min(1).default(1)
+  ),
+  limit: z.preprocess(
+    val => (val === null ? undefined : val),
+    z.coerce.number().min(1).max(100).default(20)
+  ),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']).optional(),
   search: z.string().optional(),
 });
@@ -37,8 +59,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const query = PromptsQuerySchema.parse({
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
-      status: searchParams.get('status'),
-      search: searchParams.get('search'),
+      status: searchParams.get('status') || undefined,
+      search: searchParams.get('search') || undefined,
     });
 
     const result = await getUserPrompts(user.id, query);
@@ -79,6 +101,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = await request.json();
 
     const data = CreatePromptSchema.parse(body);
+
+    // Auto-detect variables from template if variables array is empty
+    if (data.variables.length === 0) {
+      const variableNames = extractVariablesFromTemplate(data.template);
+      data.variables = variableNames.map(name => ({
+        name,
+        type: 'string' as const,
+        required: true,
+      }));
+    }
 
     const prompt = await createPrompt(user.id, data);
 
