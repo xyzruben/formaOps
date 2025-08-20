@@ -113,7 +113,7 @@ describe('Executions Integration Tests', () => {
       let data;
       try {
         data = await response.json();
-      } catch (error) {
+      } catch {
         data = { error: 'JSON parse error', code: 'PARSE_ERROR' };
       }
 
@@ -139,7 +139,7 @@ describe('Executions Integration Tests', () => {
       let data;
       try {
         data = await response.json();
-      } catch (error) {
+      } catch {
         data = { error: 'JSON parse error', code: 'PARSE_ERROR' };
       }
 

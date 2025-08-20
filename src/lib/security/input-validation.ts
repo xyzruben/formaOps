@@ -219,7 +219,7 @@ export class InputValidator {
     });
 
     // Remove dangerous characters
-    sanitized = sanitized.replace(/[';\"\\]/g, '');
+    sanitized = sanitized.replace(/[;'"\\]/g, '');
 
     return sanitized.trim();
   }

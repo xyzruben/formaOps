@@ -15,7 +15,7 @@ describe('Prompts Integration Tests', () => {
       let data;
       try {
         data = await response.json();
-      } catch (error) {
+      } catch {
         data = { error: 'JSON parse error', code: 'PARSE_ERROR' };
       }
 
@@ -119,7 +119,7 @@ describe('Prompts Integration Tests', () => {
       let data;
       try {
         data = await response.json();
-      } catch (error) {
+      } catch {
         data = { error: 'JSON parse error', code: 'PARSE_ERROR' };
       }
 
@@ -172,7 +172,7 @@ describe('Prompts Integration Tests', () => {
       let data;
       try {
         data = await response.json();
-      } catch (error) {
+      } catch {
         data = { error: 'JSON parse error', code: 'PARSE_ERROR' };
       }
 

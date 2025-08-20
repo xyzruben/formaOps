@@ -24,7 +24,7 @@ function loadEnvFile(filePath) {
         }
       });
     }
-  } catch (error) {
+  } catch {
     // Ignore file read errors
   }
 }

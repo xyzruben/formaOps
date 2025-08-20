@@ -1,5 +1,4 @@
 #!/usr/bin/env ts-node
-/* eslint-disable no-console */
 
 /**
  * Validation script for demo data - ensures templates work with template engine

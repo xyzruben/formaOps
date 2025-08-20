@@ -98,7 +98,7 @@ export function ValidationEditor({
       };
 
       onSave(newRule);
-    } catch (err) {
+    } catch {
       setError('Invalid JSON configuration');
     }
   }, [rule?.id, name, type, config, isActive, description, onSave]);

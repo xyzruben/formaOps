@@ -38,6 +38,8 @@ module.exports = [
         Image: 'readonly',
         NodeJS: 'readonly',
         require: 'readonly',
+        crypto: 'readonly',
+        navigator: 'readonly',
       },
     },
     plugins: {
@@ -56,11 +58,12 @@ module.exports = [
       'no-var': 'error',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-case-declarations': 'error',
+      'no-unused-vars': 'off', // Disable base rule in favor of TypeScript rule
       
       // TypeScript ESLint rules
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_' },
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
@@ -121,7 +124,12 @@ module.exports = [
     },
     rules: {
       'no-console': 'off',
+      'no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   
@@ -179,8 +187,13 @@ module.exports = [
     },
     rules: {
       'no-console': 'off',
+      'no-unused-vars': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   
@@ -200,6 +213,7 @@ module.exports = [
       },
     },
     rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },

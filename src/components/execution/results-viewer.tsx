@@ -32,7 +32,7 @@ export function ResultsViewer({
     try {
       setIsRetrying(true);
       await onRetry();
-    } catch (error) {
+    } catch {
       // Error handling is done by parent component
     } finally {
       setIsRetrying(false);
@@ -46,7 +46,7 @@ export function ResultsViewer({
       setTimeout(() => {
         setCopyStatus(prev => ({ ...prev, [key]: false }));
       }, 2000);
-    } catch (error) {
+    } catch {
       // Fallback for older browsers
       const textarea = document.createElement('textarea');
       textarea.value = text;

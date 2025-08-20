@@ -230,9 +230,10 @@ export class TemplateEngine {
       switch (targetType) {
         case 'string':
           return String(value);
-        case 'number':
+        case 'number': {
           const num = Number(value);
           return isNaN(num) ? null : num;
+        }
         case 'boolean':
           if (typeof value === 'string') {
             const lower = value.toLowerCase();

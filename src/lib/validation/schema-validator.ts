@@ -96,7 +96,7 @@ export class SchemaValidator {
         if (!schema.items) return [];
         return [this.generateExample(schema.items)];
 
-      case 'object':
+      case 'object': {
         if (!schema.properties) return {};
 
         const example: Record<string, unknown> = {};
@@ -107,6 +107,7 @@ export class SchemaValidator {
         });
 
         return example;
+      }
 
       default:
         return null;
@@ -115,7 +116,7 @@ export class SchemaValidator {
 
   private convertToZodSchema(rule: SchemaValidationRule): z.ZodSchema {
     switch (rule.type) {
-      case 'string':
+      case 'string': {
         let stringSchema = z.string();
 
         if (rule.minLength) stringSchema = stringSchema.min(rule.minLength);
@@ -132,8 +133,9 @@ export class SchemaValidator {
         }
 
         return stringSchema;
+      }
 
-      case 'number':
+      case 'number': {
         let numberSchema = z.number();
 
         if (rule.minimum !== undefined)
@@ -152,6 +154,7 @@ export class SchemaValidator {
         }
 
         return numberSchema;
+      }
 
       case 'boolean':
         return z.boolean();
@@ -160,7 +163,7 @@ export class SchemaValidator {
         if (!rule.items) return z.array(z.unknown());
         return z.array(this.convertToZodSchema(rule.items));
 
-      case 'object':
+      case 'object': {
         if (!rule.properties) return z.object({});
 
         const shape: Record<string, z.ZodSchema> = {};
@@ -177,6 +180,7 @@ export class SchemaValidator {
         });
 
         return z.object(shape);
+      }
 
       default:
         return z.unknown();

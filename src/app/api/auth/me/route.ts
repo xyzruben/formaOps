@@ -41,7 +41,7 @@ export async function GET(): Promise<NextResponse> {
       name: user.user_metadata?.name || null,
       createdAt: user.created_at,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error', code: 'INTERNAL_ERROR' },
       { status: 500 }

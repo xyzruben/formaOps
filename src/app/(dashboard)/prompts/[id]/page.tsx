@@ -370,7 +370,7 @@ export default function PromptDetailPage(): JSX.Element {
             <CardContent>
               <ExecutionPanel
                 prompt={prompt}
-                onExecutionComplete={_result => {
+                onExecutionComplete={() => {
                   // Execution completed successfully
                   // Switch to history tab to see the new execution
                   setActiveTab('history');
@@ -393,7 +393,7 @@ export default function PromptDetailPage(): JSX.Element {
               <ExecutionHistory
                 userId={prompt.userId}
                 promptId={prompt.id}
-                onExecutionSelect={_executionId => {
+                onExecutionSelect={() => {
                   // Selected execution for detailed view
                   // Could navigate to detailed execution view
                 }}
