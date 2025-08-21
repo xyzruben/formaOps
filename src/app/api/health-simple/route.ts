@@ -9,12 +9,11 @@ export async function GET(): Promise<NextResponse> {
     uptime: process.uptime(),
     services: {
       openai: process.env.OPENAI_API_KEY ? 'configured' : 'missing',
-      supabase: (
+      supabase:
         process.env.NEXT_PUBLIC_SUPABASE_URL &&
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      )
-        ? 'configured'
-        : 'missing',
+          ? 'configured'
+          : 'missing',
     },
   };
 

@@ -1,15 +1,21 @@
 import { NextRequest } from 'next/server';
-import { GET as promptsGET, POST as promptsPOST } from '../../../app/api/prompts/route';
+import {
+  GET as promptsGET,
+  POST as promptsPOST,
+} from '../../../app/api/prompts/route';
 
 describe('Prompts Integration Tests', () => {
   describe('GET /api/prompts', () => {
     it('should handle prompts listing with proper API structure', async () => {
-      const request = new NextRequest('http://localhost:3000/api/prompts?page=1&limit=20', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/prompts?page=1&limit=20',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const response = await promptsGET(request);
       let data;
@@ -22,7 +28,7 @@ describe('Prompts Integration Tests', () => {
       // Test API structure regardless of auth status
       expect(response).toBeDefined();
       expect(typeof response.status).toBe('number');
-      
+
       // Data might be undefined if response has no body
       if (data !== undefined) {
         expect(data).toBeDefined();
@@ -55,19 +61,22 @@ describe('Prompts Integration Tests', () => {
     });
 
     it('should handle pagination parameters correctly', async () => {
-      const request = new NextRequest('http://localhost:3000/api/prompts?page=2&limit=10', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/prompts?page=2&limit=10',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const response = await promptsGET(request);
       const data = await response.json();
 
       expect(response).toBeDefined();
       expect(typeof response.status).toBe('number');
-      
+
       // Should not be a validation error with valid parameters
       if (response.status === 400) {
         expect(data.code).not.toBe('VALIDATION_ERROR');
@@ -75,19 +84,22 @@ describe('Prompts Integration Tests', () => {
     });
 
     it('should handle search parameters correctly', async () => {
-      const request = new NextRequest('http://localhost:3000/api/prompts?search=test&page=1&limit=20', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const request = new NextRequest(
+        'http://localhost:3000/api/prompts?search=test&page=1&limit=20',
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       const response = await promptsGET(request);
       const data = await response.json();
 
       expect(response).toBeDefined();
       expect(typeof response.status).toBe('number');
-      
+
       // Should not be a validation error with valid parameters
       if (response.status === 400) {
         expect(data.code).not.toBe('VALIDATION_ERROR');
@@ -125,7 +137,7 @@ describe('Prompts Integration Tests', () => {
 
       expect(response).toBeDefined();
       expect(typeof response.status).toBe('number');
-      
+
       // Data might be undefined if response has no body
       if (data !== undefined) {
         expect(data).toBeDefined();

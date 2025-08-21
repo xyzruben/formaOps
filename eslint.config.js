@@ -6,7 +6,7 @@ const reactHooks = require('eslint-plugin-react-hooks');
 
 module.exports = [
   js.configs.recommended,
-  
+
   // Base configuration for all TypeScript and React files
   {
     files: ['src/**/*.{ts,tsx}'],
@@ -44,7 +44,7 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': typescript,
-      'react': react,
+      react: react,
       'react-hooks': reactHooks,
     },
     settings: {
@@ -59,7 +59,7 @@ module.exports = [
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-case-declarations': 'error',
       'no-unused-vars': 'off', // Disable base rule in favor of TypeScript rule
-      
+
       // TypeScript ESLint rules
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -67,7 +67,7 @@ module.exports = [
       ],
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
-      
+
       // React rules (from Next.js config)
       'react-hooks/exhaustive-deps': 'warn',
       'react/no-unescaped-entities': 'off',
@@ -92,10 +92,14 @@ module.exports = [
       'react/require-render-return': 'error',
     },
   },
-  
+
   // Configuration for test files
   {
-    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/__tests__/**/*.{ts,tsx}'],
+    files: [
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+      '**/__tests__/**/*.{ts,tsx}',
+    ],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
@@ -132,8 +136,8 @@ module.exports = [
       ],
     },
   },
-  
-  // Configuration for E2E test files  
+
+  // Configuration for E2E test files
   {
     files: ['tests/e2e/**/*.{ts,tsx}'],
     languageOptions: {
@@ -157,7 +161,7 @@ module.exports = [
       'no-console': 'off',
     },
   },
-  
+
   // Configuration for Node.js scripts and config files
   {
     files: ['scripts/**/*.{js,ts}', '*.config.{js,ts}', 'prisma/**/*.ts'],
@@ -196,7 +200,7 @@ module.exports = [
       ],
     },
   },
-  
+
   // Configuration for JavaScript files
   {
     files: ['**/*.{js,jsx}'],
@@ -213,11 +217,14 @@ module.exports = [
       },
     },
     rules: {
-      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },
-  
+
   // Configuration for type definition files
   {
     files: ['src/types/**/*.{ts,tsx}'],
@@ -232,7 +239,7 @@ module.exports = [
       'no-unused-vars': 'off',
     },
   },
-  
+
   // Global ignores
   {
     ignores: [

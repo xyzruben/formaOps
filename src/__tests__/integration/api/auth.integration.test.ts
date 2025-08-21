@@ -22,7 +22,7 @@ describe('Auth Integration Tests', () => {
       expect(response).toBeDefined();
       expect(typeof response.status).toBe('number');
       expect(data).toBeDefined();
-      
+
       // Should return either success or error structure
       if (response.status === 200) {
         expect(data).toHaveProperty('user');
