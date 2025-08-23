@@ -208,6 +208,7 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
