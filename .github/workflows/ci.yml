@@ -127,6 +127,8 @@ jobs:
 
       - name: Build application
         run: npm run build
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Run E2E tests
         run: npm run test:e2e
@@ -180,6 +182,8 @@ jobs:
 
       - name: Build for CodeQL
         run: npm run build
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
