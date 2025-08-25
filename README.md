@@ -1,5 +1,7 @@
 # FormaOps - Enterprise AI-Native Prompt Management Platform
 
+<!-- CI/CD Test: Testing OpenAI API key secret configuration -->
+
 <div align="center">
 
 ![FormaOps Logo](https://via.placeholder.com/300x120/4F46E5/FFFFFF?text=FormaOps)
