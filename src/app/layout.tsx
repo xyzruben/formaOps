@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -44,7 +45,9 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
-          <main className="min-h-screen bg-background">{children}</main>
+          <AuthProvider>
+            <main className="min-h-screen bg-background">{children}</main>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>

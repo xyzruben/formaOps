@@ -1,3 +1,5 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -6,8 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { LoginModal } from '@/components/auth';
+import { useState } from 'react';
 
 export default function HomePage(): JSX.Element {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -20,7 +25,11 @@ export default function HomePage(): JSX.Element {
             </span>
           </div>
           <nav className="flex items-center space-x-4">
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setIsLoginModalOpen(true)}
+            >
               Sign In
             </Button>
             <Button size="sm">Get Started</Button>
@@ -176,6 +185,12 @@ export default function HomePage(): JSX.Element {
           </div>
         </div>
       </footer>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onOpenChange={setIsLoginModalOpen} 
+      />
     </div>
   );
 }
