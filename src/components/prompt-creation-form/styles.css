@@ -1,0 +1,62 @@
+/* Prompt Creation Form Styles */
+.prompt-creation-modal {
+  @apply max-w-4xl h-[90vh];
+}
+
+.template-editor {
+  @apply min-h-[300px] p-4 border rounded-md font-mono text-sm resize-none;
+}
+
+.template-editor:focus {
+  @apply ring-2 ring-blue-500 border-blue-500 outline-none;
+}
+
+.variable-section {
+  @apply space-y-4 border-t pt-4;
+}
+
+.form-section {
+  @apply space-y-4 p-4;
+}
+
+.preview-container {
+  @apply bg-muted p-4 rounded-md;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .prompt-creation-modal {
+    @apply h-screen max-w-none m-0 rounded-none;
+  }
+  
+  .template-editor {
+    @apply min-h-[200px] text-xs;
+  }
+  
+  .form-section {
+    @apply p-2;
+  }
+}
+
+/* Accessibility */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden clip whitespace-nowrap border-0;
+}
+
+/* Focus styles */
+.prompt-creation-modal button:focus-visible,
+.prompt-creation-modal input:focus-visible,
+.prompt-creation-modal textarea:focus-visible {
+  @apply ring-2 ring-blue-500 outline-none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .template-editor {
+    @apply border-2 border-black bg-white text-black;
+  }
+  
+  .preview-container {
+    @apply bg-white border-2 border-black;
+  }
+}

@@ -3,13 +3,13 @@
 ## Executive Summary
 
 ### Feature Purpose
-The Prompt Creation Form enables users to create new AI prompts with rich template editing, automatic variable detection, and comprehensive configuration. This is the primary entry point for users to build reusable AI prompt templates.
+The Prompt Creation Form enables users to create new AI prompts with template editing, automatic variable detection, and essential configuration. This is the primary entry point for users to build reusable AI prompt templates.
 
 ### User Value
-- **Intuitive Prompt Building**: Rich text editor for creating sophisticated prompt templates
+- **Intuitive Prompt Building**: Clear form for creating prompt templates
 - **Automatic Variable Management**: Seamless integration with Variable Definition Editor
-- **Professional Workflow**: Complete form with validation, preview, and save options
-- **Template Preview**: Real-time preview of how prompts will execute with sample data
+- **Simple Workflow**: Essential form with validation, preview, and save options
+- **Template Preview**: Basic preview of how prompts will execute
 
 ### Architectural Role
 Central component that orchestrates prompt creation workflow. Integrates Variable Definition Editor, template editing, and prompt metadata management. Connects user input to backend storage via `/api/prompts` endpoint.
@@ -66,12 +66,6 @@ interface CreatePromptRequest {
   tags?: string[];
   status?: 'DRAFT' | 'PUBLISHED';
 }
-
-interface CreatePromptResponse {
-  id: string;
-  name: string;
-  // ... full prompt data
-}
 ```
 
 ### State Management
@@ -81,8 +75,6 @@ interface PromptCreationState {
   formData: PromptFormData;
   isSubmitting: boolean;
   errors: Record<string, string>;
-  previewData: Record<string, any>;
-  showPreview: boolean;
 }
 ```
 
@@ -96,7 +88,7 @@ interface PromptCreationState {
 1. User clicks "Create Prompt" button
 2. Modal opens with empty form
 3. User enters prompt name and description
-4. User types template in rich text editor
+4. User types template in text editor
 5. Variable Definition Editor automatically detects {{variables}}
 6. User configures detected variables (type, required, defaults)
 7. User optionally adds tags
@@ -143,12 +135,12 @@ interface PromptCreationState {
 1. **Basic Information Section**
    - Prompt name input (required)
    - Description textarea (optional)
-   - Tags input with autocomplete
+   - Simple tag input with basic autocomplete
 
 2. **Template Editor Section**
-   - Rich text editor with syntax highlighting
-   - Template helper text and examples
-   - Character count and template validation
+   - Basic textarea with syntax highlighting for {{variables}}
+   - Character count display
+   - Template validation feedback
 
 3. **Variable Configuration Section**
    - Integrated Variable Definition Editor
@@ -156,10 +148,10 @@ interface PromptCreationState {
    - Variable configuration table
 
 **Preview Tab Components**
-1. **Template Preview**
-   - Rendered template with variable placeholders
-   - Sample data input form
-   - Preview output showing final prompt
+1. **Simple Template Preview**
+   - Basic template rendering with variable substitution
+   - Sample data input form based on defined variables
+   - Error display for validation issues
 
 ### Validation Rules
 
@@ -173,41 +165,33 @@ const CreatePromptSchema = z.object({
     .optional(),
   template: z.string()
     .min(1, 'Template is required')
-    .max(10000, 'Template too long'),
+    .max(5000, 'Template too long'),
   variables: z.array(VariableDefinitionSchema),
-  tags: z.array(z.string().min(1).max(50)).max(10),
+  tags: z.array(z.string().min(1).max(30)).max(5),
   status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT')
 });
 ```
-
-**Custom Validation:**
-- Template must contain at least one variable or be a valid static prompt
-- Variable names in template must match configured variables
-- No duplicate tag names
 
 ### Responsive Design
 
 **Desktop (>1024px)**
 - Full modal with side-by-side layout for template and variables
-- Rich text editor with full toolbar
 - Complete variable table with all columns
 
 **Tablet (768-1024px)**
 - Stacked layout with collapsible sections
-- Simplified editor toolbar
 - Responsive variable table
 
 **Mobile (<768px)**
 - Full-screen modal
 - Card-based layout for sections
 - Touch-optimized inputs
-- Simplified variable management
 
 ---
 
 ## Implementation Roadmap
 
-### Phase 1: Modal Structure & Basic Form (8 hours)
+### Phase 1: Modal Structure & Basic Form (4 hours)
 
 **Components to Build:**
 - `PromptCreationModal` wrapper component
@@ -224,24 +208,24 @@ const CreatePromptSchema = z.object({
 - [ ] Basic form inputs work with validation
 - [ ] Error messages display correctly
 
-### Phase 2: Template Editor Integration (6 hours)
+### Phase 2: Template Editor Integration (4 hours)
 
 **Components to Build:**
-- `TemplateEditor` with syntax highlighting
+- `TemplateEditor` with basic syntax highlighting
 - Integration with Variable Definition Editor
-- Template validation and preview
+- Template validation
 
 **Functionality:**
-- Rich text editing for template
+- Text editing for template
 - Automatic variable detection
 - Variable configuration workflow
 
 **Acceptance Criteria:**
-- [ ] Template editor has syntax highlighting for {{variables}}
+- [ ] Template editor highlights {{variables}}
 - [ ] Variables are automatically detected and configurable
 - [ ] Template validation works correctly
 
-### Phase 3: Preview & Submission (4 hours)
+### Phase 3: Preview & Submission (3 hours)
 
 **Components to Build:**
 - `PromptPreview` component
@@ -249,7 +233,7 @@ const CreatePromptSchema = z.object({
 - Success/error handling
 
 **Functionality:**
-- Live template preview with sample data
+- Basic template preview with sample data
 - Form submission to backend API
 - Success feedback and modal cleanup
 
@@ -258,7 +242,7 @@ const CreatePromptSchema = z.object({
 - [ ] Form submits successfully to API
 - [ ] Success/error states handled properly
 
-### Phase 4: Polish & Integration (6 hours)
+### Phase 4: Polish & Integration (3 hours)
 
 **Tasks:**
 - Responsive design implementation
@@ -274,12 +258,12 @@ const CreatePromptSchema = z.object({
 
 ### Dependencies
 **Blocked by**: Variable Definition Editor  
-**Blocks**: Prompt Editing Interface (shares components)
+**Blocks**: Prompt Editing Interface
 
 ### Estimated Effort
-**Total: 2 days (24 hours)**
-- Development: 20 hours
-- Testing: 4 hours
+**Total: 2 days (14 hours)**
+- Development: 12 hours
+- Testing: 2 hours
 
 ---
 
@@ -351,13 +335,16 @@ const CreatePromptSchema = z.object({
   
   template: z.string()
     .min(1, 'Template is required')
-    .max(10000, 'Template must be less than 10,000 characters'),
+    .max(5000, 'Template must be less than 5,000 characters'),
   
   variables: z.array(VariableDefinitionSchema)
-    .max(50, 'Maximum 50 variables allowed'),
+    .max(20, 'Maximum 20 variables allowed'),
   
-  tags: z.array(z.string().min(1).max(50))
-    .max(10, 'Maximum 10 tags allowed'),
+  tags: z.array(z.string()
+    .min(1, 'Tag name is required')
+    .max(30, 'Tag name must be less than 30 characters')
+    .regex(/^[a-zA-Z0-9\-_]+$/, 'Tags can only contain letters, numbers, hyphens, and underscores'))
+    .max(5, 'Maximum 5 tags allowed'),
   
   status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT')
 });
@@ -368,12 +355,10 @@ const validateTemplateVariables = (template: string, variables: VariableDefiniti
   const definedVars = variables.map(v => v.name);
   
   const missingDefinitions = templateVars.filter(v => !definedVars.includes(v));
-  const unusedDefinitions = definedVars.filter(v => !templateVars.includes(v));
   
   return {
     isValid: missingDefinitions.length === 0,
-    missingDefinitions,
-    unusedDefinitions
+    missingDefinitions
   };
 };
 ```
@@ -404,11 +389,6 @@ const handleCreatePromptError = (error: unknown): string => {
   }
   
   return 'Failed to create prompt. Please try again.';
-};
-
-const displayFormErrors = (errors: FormValidationError[]) => {
-  // Display field-specific errors inline
-  // Show general errors in toast notifications
 };
 ```
 
@@ -593,4 +573,4 @@ const PromptsPage = () => {
 - [ ] Uses existing API endpoints correctly
 - [ ] Maintains state consistency with parent components
 
-This Prompt Creation Form will serve as the primary interface for users to create sophisticated AI prompts, providing a professional and intuitive experience that matches the quality of FormaOps' backend architecture.
+This Prompt Creation Form provides a balanced approach that delivers essential functionality without overengineering, focusing on core user needs and solid implementation fundamentals.
