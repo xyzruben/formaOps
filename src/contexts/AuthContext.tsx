@@ -38,7 +38,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
       } catch (err) {
         console.error('Error getting initial session:', err);
@@ -50,17 +52,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     getInitialSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        setIsLoading(false);
-        
-        // Clear error on successful auth state change
-        if (event === 'SIGNED_IN') {
-          setError(null);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+
+      // Clear error on successful auth state change
+      if (event === 'SIGNED_IN') {
+        setError(null);
       }
-    );
+    });
 
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
@@ -84,7 +86,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       const data = await response.json();
-      
+
       // The session is automatically handled by the auth state change listener
       // We just need to ensure the response was successful
       if (!data.user) {

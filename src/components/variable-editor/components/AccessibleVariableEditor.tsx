@@ -1,4 +1,4 @@
-// Accessible Variable Editor Component  
+// Accessible Variable Editor Component
 // Implements Phase 3 accessibility from VARIABLE_DEFINITION_EDITOR_PLAN.md
 
 import React, { useCallback, useEffect } from 'react';
@@ -11,12 +11,14 @@ import { VariableDetectionDisplay } from './VariableDetectionDisplay';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 
-export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> = ({
+export const AccessibleVariableEditor: React.FC<
+  VariableDefinitionEditorProps
+> = ({
   template,
   variables,
   onChange,
   disabled: _disabled = false,
-  className = ''
+  className = '',
 }) => {
   // Phase 3: Performance optimization
   const {
@@ -27,7 +29,7 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
     hasMore,
     isDebouncing,
     loadMore,
-    resetVisibleCount: _resetVisibleCount
+    resetVisibleCount: _resetVisibleCount,
   } = useOptimizedVariableParser(template);
 
   // Phase 3: Accessibility
@@ -45,20 +47,18 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
     getTableAriaProps,
     getAnnouncementAriaProps,
     highContrastMode,
-    highContrastStyles
+    highContrastStyles,
   } = useAccessibility(variables);
 
   // Phase 2: History management
-  const {
-    pushToHistory,
-    undo,
-    redo,
-    canUndo,
-    canRedo
-  } = useUndoRedo(variables);
+  const { pushToHistory, undo, redo, canUndo, canRedo } =
+    useUndoRedo(variables);
 
   // Phase 2: Type conversion
-  const { conversionMessages: _conversionMessages, clearConversionMessage: _clearConversionMessage } = useTypeConversion(variables);
+  const {
+    conversionMessages: _conversionMessages,
+    clearConversionMessage: _clearConversionMessage,
+  } = useTypeConversion(variables);
 
   // Extract variable names for detection display
   const detectedVariableNames = allDetectedVariables.map(v => v.fullPath);
@@ -72,132 +72,202 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
 
     if (newVariables.length === 0) return;
 
-    const newVariableDefinitions: VariableDefinition[] = newVariables.map(variableName => {
-      const parsedVar = allDetectedVariables.find(v => v.fullPath === variableName);
-      
-      return {
-        name: variableName,
-        type: 'string',
-        required: true,
-        description: parsedVar?.type !== 'simple' 
-          ? `${parsedVar?.type === 'nested' ? 'Nested object' : 'Array-indexed'} variable` 
-          : undefined,
-        defaultValue: undefined
-      };
-    });
+    const newVariableDefinitions: VariableDefinition[] = newVariables.map(
+      variableName => {
+        const parsedVar = allDetectedVariables.find(
+          v => v.fullPath === variableName
+        );
+
+        return {
+          name: variableName,
+          type: 'string',
+          required: true,
+          description:
+            parsedVar?.type !== 'simple'
+              ? `${parsedVar?.type === 'nested' ? 'Nested object' : 'Array-indexed'} variable`
+              : undefined,
+          defaultValue: undefined,
+        };
+      }
+    );
 
     const updatedVariables = [...variables, ...newVariableDefinitions];
     onChange(updatedVariables);
-    pushToHistory(updatedVariables, `Added ${newVariables.length} new variable(s)`);
-    
+    pushToHistory(
+      updatedVariables,
+      `Added ${newVariables.length} new variable(s)`
+    );
+
     // Announce to screen readers
-    announceVariableUpdate('template', `${newVariables.length} new variables added`);
-  }, [detectedVariableNames, existingVariableNames, variables, onChange, allDetectedVariables, pushToHistory, announceVariableUpdate]);
+    announceVariableUpdate(
+      'template',
+      `${newVariables.length} new variables added`
+    );
+  }, [
+    detectedVariableNames,
+    existingVariableNames,
+    variables,
+    onChange,
+    allDetectedVariables,
+    pushToHistory,
+    announceVariableUpdate,
+  ]);
 
   // Handle variable updates with accessibility announcements
-  const handleUpdateVariable = useCallback((index: number, updatedVariable: VariableDefinition) => {
-    const oldVariable = variables[index];
-    const updatedVariables = [...variables];
-    updatedVariables[index] = updatedVariable;
-    onChange(updatedVariables);
-    
-    // Track in history
-    const action = oldVariable.type !== updatedVariable.type 
-      ? `Changed type of "${updatedVariable.name}" from ${oldVariable.type} to ${updatedVariable.type}`
-      : `Updated variable "${updatedVariable.name}"`;
-    pushToHistory(updatedVariables, action);
-    
-    // Accessibility announcements
-    if (oldVariable.type !== updatedVariable.type) {
-      announceTypeConversion(updatedVariable.name, oldVariable.type, updatedVariable.type);
-    } else {
-      announceVariableUpdate(updatedVariable.name, 'configuration');
-    }
-  }, [variables, onChange, pushToHistory, announceTypeConversion, announceVariableUpdate]);
+  const handleUpdateVariable = useCallback(
+    (index: number, updatedVariable: VariableDefinition) => {
+      const oldVariable = variables[index];
+      const updatedVariables = [...variables];
+      updatedVariables[index] = updatedVariable;
+      onChange(updatedVariables);
+
+      // Track in history
+      const action =
+        oldVariable.type !== updatedVariable.type
+          ? `Changed type of "${updatedVariable.name}" from ${oldVariable.type} to ${updatedVariable.type}`
+          : `Updated variable "${updatedVariable.name}"`;
+      pushToHistory(updatedVariables, action);
+
+      // Accessibility announcements
+      if (oldVariable.type !== updatedVariable.type) {
+        announceTypeConversion(
+          updatedVariable.name,
+          oldVariable.type,
+          updatedVariable.type
+        );
+      } else {
+        announceVariableUpdate(updatedVariable.name, 'configuration');
+      }
+    },
+    [
+      variables,
+      onChange,
+      pushToHistory,
+      announceTypeConversion,
+      announceVariableUpdate,
+    ]
+  );
 
   // Handle variable deletion with accessibility
-  const handleDeleteVariable = useCallback((index: number) => {
-    const variableToDelete = variables[index];
-    const updatedVariables = variables.filter((_, i) => i !== index);
-    onChange(updatedVariables);
-    pushToHistory(updatedVariables, `Deleted variable "${variableToDelete.name}"`);
-    
-    // Announce deletion
-    announceVariableUpdate(variableToDelete.name, 'deleted');
-    
-    // Adjust focus if necessary
-    if (focusedVariableIndex === index) {
-      setFocusedVariable(Math.max(0, index - 1));
-    } else if (focusedVariableIndex > index) {
-      setFocusedVariable(focusedVariableIndex - 1);
-    }
-  }, [variables, onChange, pushToHistory, announceVariableUpdate, focusedVariableIndex, setFocusedVariable]);
+  const handleDeleteVariable = useCallback(
+    (index: number) => {
+      const variableToDelete = variables[index];
+      const updatedVariables = variables.filter((_, i) => i !== index);
+      onChange(updatedVariables);
+      pushToHistory(
+        updatedVariables,
+        `Deleted variable "${variableToDelete.name}"`
+      );
+
+      // Announce deletion
+      announceVariableUpdate(variableToDelete.name, 'deleted');
+
+      // Adjust focus if necessary
+      if (focusedVariableIndex === index) {
+        setFocusedVariable(Math.max(0, index - 1));
+      } else if (focusedVariableIndex > index) {
+        setFocusedVariable(focusedVariableIndex - 1);
+      }
+    },
+    [
+      variables,
+      onChange,
+      pushToHistory,
+      announceVariableUpdate,
+      focusedVariableIndex,
+      setFocusedVariable,
+    ]
+  );
 
   // Enhanced keyboard handling
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    // Handle accessibility navigation first
-    const accessibilityResult = handleAccessibilityKeyDown(event.nativeEvent);
-    
-    if (accessibilityResult) {
-      switch (accessibilityResult.action) {
-        case 'edit':
-          // Implementation would trigger edit mode for focused variable
-          break;
-        case 'duplicate':
-          if (accessibilityResult.index >= 0 && accessibilityResult.index < variables.length) {
-            const variableToDuplicate = variables[accessibilityResult.index];
-            const duplicatedVariable: VariableDefinition = {
-              ...variableToDuplicate,
-              name: `${variableToDuplicate.name}_copy`
-            };
-            const updatedVariables = [...variables, duplicatedVariable];
-            onChange(updatedVariables);
-            pushToHistory(updatedVariables, `Duplicated variable "${variableToDuplicate.name}"`);
-            announceVariableUpdate(duplicatedVariable.name, 'duplicated');
-          }
-          break;
-        case 'delete':
-          if (accessibilityResult.index >= 0 && accessibilityResult.index < variables.length) {
-            handleDeleteVariable(accessibilityResult.index);
-          }
-          break;
-      }
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      // Handle accessibility navigation first
+      const accessibilityResult = handleAccessibilityKeyDown(event.nativeEvent);
 
-    // Handle undo/redo
-    if (event.ctrlKey || event.metaKey) {
-      switch (event.key.toLowerCase()) {
-        case 'z':
-          if (event.shiftKey && canRedo) {
-            event.preventDefault();
-            const nextVariables = redo();
-            if (nextVariables) {
-              onChange(nextVariables);
-              announceHistoryAction('redo', 'last action');
+      if (accessibilityResult) {
+        switch (accessibilityResult.action) {
+          case 'edit':
+            // Implementation would trigger edit mode for focused variable
+            break;
+          case 'duplicate':
+            if (
+              accessibilityResult.index >= 0 &&
+              accessibilityResult.index < variables.length
+            ) {
+              const variableToDuplicate = variables[accessibilityResult.index];
+              const duplicatedVariable: VariableDefinition = {
+                ...variableToDuplicate,
+                name: `${variableToDuplicate.name}_copy`,
+              };
+              const updatedVariables = [...variables, duplicatedVariable];
+              onChange(updatedVariables);
+              pushToHistory(
+                updatedVariables,
+                `Duplicated variable "${variableToDuplicate.name}"`
+              );
+              announceVariableUpdate(duplicatedVariable.name, 'duplicated');
             }
-          } else if (!event.shiftKey && canUndo) {
-            event.preventDefault();
-            const previousVariables = undo();
-            if (previousVariables) {
-              onChange(previousVariables);
-              announceHistoryAction('undo', 'last action');
+            break;
+          case 'delete':
+            if (
+              accessibilityResult.index >= 0 &&
+              accessibilityResult.index < variables.length
+            ) {
+              handleDeleteVariable(accessibilityResult.index);
             }
-          }
-          break;
-        case 'y':
-          if (canRedo) {
-            event.preventDefault();
-            const nextVariables = redo();
-            if (nextVariables) {
-              onChange(nextVariables);
-              announceHistoryAction('redo', 'last action');
-            }
-          }
-          break;
+            break;
+        }
+        return;
       }
-    }
-  }, [handleAccessibilityKeyDown, variables, onChange, pushToHistory, announceVariableUpdate, handleDeleteVariable, canUndo, canRedo, undo, redo, announceHistoryAction]);
+
+      // Handle undo/redo
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key.toLowerCase()) {
+          case 'z':
+            if (event.shiftKey && canRedo) {
+              event.preventDefault();
+              const nextVariables = redo();
+              if (nextVariables) {
+                onChange(nextVariables);
+                announceHistoryAction('redo', 'last action');
+              }
+            } else if (!event.shiftKey && canUndo) {
+              event.preventDefault();
+              const previousVariables = undo();
+              if (previousVariables) {
+                onChange(previousVariables);
+                announceHistoryAction('undo', 'last action');
+              }
+            }
+            break;
+          case 'y':
+            if (canRedo) {
+              event.preventDefault();
+              const nextVariables = redo();
+              if (nextVariables) {
+                onChange(nextVariables);
+                announceHistoryAction('redo', 'last action');
+              }
+            }
+            break;
+        }
+      }
+    },
+    [
+      handleAccessibilityKeyDown,
+      variables,
+      onChange,
+      pushToHistory,
+      announceVariableUpdate,
+      handleDeleteVariable,
+      canUndo,
+      canRedo,
+      undo,
+      redo,
+      announceHistoryAction,
+    ]
+  );
 
   // Announce variable detection
   useEffect(() => {
@@ -218,15 +288,13 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
     >
       {/* Screen reader description */}
       <div id="variable-editor-description" className="sr-only">
-        Configure variables detected in your template. Use arrow keys to navigate, 
-        Enter to edit, Delete to remove variables. Press Ctrl+Z to undo, Ctrl+Y to redo, 
-        Ctrl+D to duplicate focused variable.
+        Configure variables detected in your template. Use arrow keys to
+        navigate, Enter to edit, Delete to remove variables. Press Ctrl+Z to
+        undo, Ctrl+Y to redo, Ctrl+D to duplicate focused variable.
       </div>
 
       {/* Live announcements */}
-      <div {...getAnnouncementAriaProps()}>
-        {announcementText}
-      </div>
+      <div {...getAnnouncementAriaProps()}>{announcementText}</div>
 
       {/* Performance indicator */}
       {isDebouncing && (
@@ -274,7 +342,8 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
             </Button>
           </div>
           <div className="text-xs text-muted-foreground">
-            {canUndo ? 'History available' : ''} {canRedo ? '• Redo available' : ''}
+            {canUndo ? 'History available' : ''}{' '}
+            {canRedo ? '• Redo available' : ''}
           </div>
         </div>
       )}
@@ -300,7 +369,8 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
             onClick={loadMore}
             aria-label={`Load more variables. Showing ${detectedVariables.length} of ${allDetectedVariables.length}`}
           >
-            Load More Variables ({detectedVariables.length} of {allDetectedVariables.length})
+            Load More Variables ({detectedVariables.length} of{' '}
+            {allDetectedVariables.length})
           </Button>
         </div>
       )}
@@ -309,9 +379,9 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
       <section aria-label="Variable Configuration">
         <div {...getTableAriaProps()}>
           <div id="table-help" className="sr-only">
-            Configure each variable's type, requirements, and default values. 
-            Use keyboard shortcuts: Arrow keys to navigate, Enter to edit, Delete to remove, 
-            Ctrl+D to duplicate.
+            Configure each variable's type, requirements, and default values.
+            Use keyboard shortcuts: Arrow keys to navigate, Enter to edit,
+            Delete to remove, Ctrl+D to duplicate.
           </div>
 
           {variables.length === 0 ? (
@@ -329,7 +399,7 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
                   variable={variable}
                   index={index}
                   isFocused={focusedVariableIndex === index}
-                  onUpdate={(updated) => handleUpdateVariable(index, updated)}
+                  onUpdate={updated => handleUpdateVariable(index, updated)}
                   onDelete={() => handleDeleteVariable(index)}
                   onFocus={() => setFocusedVariable(index)}
                   ariaProps={getVariableAriaProps(variable, index)}
@@ -343,25 +413,49 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
 
       {/* Keyboard shortcuts help */}
       <details className="mt-4 p-3 bg-muted/50 rounded-md">
-        <summary className="cursor-pointer text-sm font-medium">Keyboard Shortcuts</summary>
+        <summary className="cursor-pointer text-sm font-medium">
+          Keyboard Shortcuts
+        </summary>
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-          <div><kbd>↑/↓</kbd> Navigate variables</div>
-          <div><kbd>Enter</kbd> Edit focused variable</div>
-          <div><kbd>Delete</kbd> Remove focused variable</div>
-          <div><kbd>Ctrl+D</kbd> Duplicate variable</div>
-          <div><kbd>Ctrl+Z</kbd> Undo last action</div>
-          <div><kbd>Ctrl+Y</kbd> Redo next action</div>
+          <div>
+            <kbd>↑/↓</kbd> Navigate variables
+          </div>
+          <div>
+            <kbd>Enter</kbd> Edit focused variable
+          </div>
+          <div>
+            <kbd>Delete</kbd> Remove focused variable
+          </div>
+          <div>
+            <kbd>Ctrl+D</kbd> Duplicate variable
+          </div>
+          <div>
+            <kbd>Ctrl+Z</kbd> Undo last action
+          </div>
+          <div>
+            <kbd>Ctrl+Y</kbd> Redo next action
+          </div>
         </div>
       </details>
 
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
         <details className="mt-4 p-3 bg-muted rounded-md text-sm">
-          <summary className="cursor-pointer font-medium">Accessibility Debug</summary>
+          <summary className="cursor-pointer font-medium">
+            Accessibility Debug
+          </summary>
           <div className="mt-2 space-y-1">
             <div>High Contrast Mode: {highContrastMode ? 'Yes' : 'No'}</div>
-            <div>Focused Variable: {focusedVariableIndex >= 0 ? variables[focusedVariableIndex]?.name : 'None'}</div>
-            <div>Visible Variables: {detectedVariables.length} of {allDetectedVariables.length}</div>
+            <div>
+              Focused Variable:{' '}
+              {focusedVariableIndex >= 0
+                ? variables[focusedVariableIndex]?.name
+                : 'None'}
+            </div>
+            <div>
+              Visible Variables: {detectedVariables.length} of{' '}
+              {allDetectedVariables.length}
+            </div>
             <div>Is Debouncing: {isDebouncing ? 'Yes' : 'No'}</div>
             <div>Announcement: {announcementText || 'None'}</div>
           </div>
@@ -391,7 +485,7 @@ const AccessibleVariableRow: React.FC<AccessibleVariableRowProps> = ({
   onDelete,
   onFocus,
   ariaProps,
-  highContrastMode
+  highContrastMode,
 }) => {
   return (
     <div
@@ -404,16 +498,21 @@ const AccessibleVariableRow: React.FC<AccessibleVariableRowProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <Badge variant="outline" className="font-mono text-xs">
-            {'{'}{'{'}{variable.name}{'}}'}
+            {'{'}
+            {'{'}
+            {variable.name}
+            {'}}'}
           </Badge>
           <Badge variant="secondary" className="capitalize">
             {variable.type}
           </Badge>
           {variable.required && (
-            <Badge variant="destructive" className="text-xs">Required</Badge>
+            <Badge variant="destructive" className="text-xs">
+              Required
+            </Badge>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button size="sm" variant="outline">
             Edit
@@ -423,9 +522,12 @@ const AccessibleVariableRow: React.FC<AccessibleVariableRowProps> = ({
           </Button>
         </div>
       </div>
-      
+
       {variable.description && (
-        <p className="mt-2 text-sm text-muted-foreground" id={`var-desc-${index}`}>
+        <p
+          className="mt-2 text-sm text-muted-foreground"
+          id={`var-desc-${index}`}
+        >
           {variable.description}
         </p>
       )}

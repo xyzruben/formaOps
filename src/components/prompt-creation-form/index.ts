@@ -7,5 +7,5 @@ export type {
   TemplateEditorProps,
   PromptPreviewProps,
   CreatePromptResponse,
-  CreatePromptRequest
+  CreatePromptRequest,
 } from './types';

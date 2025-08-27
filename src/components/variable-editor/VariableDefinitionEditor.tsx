@@ -3,8 +3,16 @@
 // As specified in VARIABLE_DEFINITION_EDITOR_PLAN.md
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { VariableDefinitionEditorProps, VariableDefinition, AdvancedParseResult } from './types';
-import { AdvancedVariableParser, OptimizedTemplateParser, handleTemplateEdgeCases } from './parsers/AdvancedVariableParser';
+import {
+  VariableDefinitionEditorProps,
+  VariableDefinition,
+  AdvancedParseResult,
+} from './types';
+import {
+  AdvancedVariableParser,
+  OptimizedTemplateParser,
+  handleTemplateEdgeCases,
+} from './parsers/AdvancedVariableParser';
 import { VariableDetectionDisplay } from './components/VariableDetectionDisplay';
 import { VariableConfigurationTable } from './components/VariableConfigurationTable';
 import { AccessibleVariableEditor } from './components/AccessibleVariableEditor';
@@ -16,11 +24,11 @@ export function VariableDefinitionEditor({
   variables,
   onChange,
   disabled = false,
-  className = ''
+  className = '',
 }: VariableDefinitionEditorProps): JSX.Element {
   // Phase 3: Use enhanced accessible version with all optimizations
   const useEnhancedVersion = true; // Can be made configurable via props if needed
-  
+
   if (useEnhancedVersion) {
     return (
       <AccessibleVariableEditor
@@ -32,12 +40,12 @@ export function VariableDefinitionEditor({
       />
     );
   }
-  
+
   // Original implementation (kept for backwards compatibility)
   const [parseResult, setParseResult] = useState<AdvancedParseResult>({
     variables: [],
     errors: [],
-    warnings: []
+    warnings: [],
   });
 
   // Parse template and detect variables
@@ -50,13 +58,16 @@ export function VariableDefinitionEditor({
     if (template.length > 10000) {
       return {
         variables: [],
-        errors: [{
-          type: 'TEMPLATE_TOO_LONG' as const,
-          message: 'Template exceeds maximum length of 10,000 characters',
-          position: 10000,
-          suggestion: 'Consider breaking down your template into smaller parts'
-        }],
-        warnings: []
+        errors: [
+          {
+            type: 'TEMPLATE_TOO_LONG' as const,
+            message: 'Template exceeds maximum length of 10,000 characters',
+            position: 10000,
+            suggestion:
+              'Consider breaking down your template into smaller parts',
+          },
+        ],
+        warnings: [],
       };
     }
 
@@ -66,23 +77,30 @@ export function VariableDefinitionEditor({
     }
 
     // Combine advanced parsing with edge case handling
-    const advancedResult = AdvancedVariableParser.parseAdvancedTemplate(template);
+    const advancedResult =
+      AdvancedVariableParser.parseAdvancedTemplate(template);
     const edgeCaseResult = handleTemplateEdgeCases(template);
 
     // Merge results, prioritizing advanced parsing for valid variables
     const mergedVariables = [...advancedResult.variables];
     const mergedErrors = [...advancedResult.errors, ...edgeCaseResult.errors];
-    const mergedWarnings = [...advancedResult.warnings, ...edgeCaseResult.warnings];
+    const mergedWarnings = [
+      ...advancedResult.warnings,
+      ...edgeCaseResult.warnings,
+    ];
 
     // Remove duplicate errors
-    const uniqueErrors = mergedErrors.filter((error, index, arr) => 
-      arr.findIndex(e => e.position === error.position && e.type === error.type) === index
+    const uniqueErrors = mergedErrors.filter(
+      (error, index, arr) =>
+        arr.findIndex(
+          e => e.position === error.position && e.type === error.type
+        ) === index
     );
 
     return {
       variables: mergedVariables,
       errors: uniqueErrors,
-      warnings: mergedWarnings
+      warnings: mergedWarnings,
     };
   }, [template]);
 
@@ -108,24 +126,35 @@ export function VariableDefinitionEditor({
 
     if (newVariables.length === 0) return;
 
-    const newVariableDefinitions: VariableDefinition[] = newVariables.map(variableName => {
-      // Find the parsed variable for additional context
-      const parsedVar = parseResult.variables.find(v => v.fullPath === variableName);
-      
-      return {
-        name: variableName,
-        type: 'string', // Default type
-        required: true, // Default to required
-        description: parsedVar?.type !== 'simple' 
-          ? `${parsedVar?.type === 'nested' ? 'Nested object' : 'Array-indexed'} variable` 
-          : undefined,
-        defaultValue: undefined
-      };
-    });
+    const newVariableDefinitions: VariableDefinition[] = newVariables.map(
+      variableName => {
+        // Find the parsed variable for additional context
+        const parsedVar = parseResult.variables.find(
+          v => v.fullPath === variableName
+        );
+
+        return {
+          name: variableName,
+          type: 'string', // Default type
+          required: true, // Default to required
+          description:
+            parsedVar?.type !== 'simple'
+              ? `${parsedVar?.type === 'nested' ? 'Nested object' : 'Array-indexed'} variable`
+              : undefined,
+          defaultValue: undefined,
+        };
+      }
+    );
 
     const updatedVariables = [...variables, ...newVariableDefinitions];
     onChange(updatedVariables);
-  }, [detectedVariableNames, existingVariableNames, variables, onChange, parseResult.variables]);
+  }, [
+    detectedVariableNames,
+    existingVariableNames,
+    variables,
+    onChange,
+    parseResult.variables,
+  ]);
 
   // Integrate Phase 2: Undo/Redo and Type Conversion
   const {
@@ -134,32 +163,43 @@ export function VariableDefinitionEditor({
     redo,
     canUndo,
     canRedo,
-    handleKeyDown: _handleHistoryKeyDown
+    handleKeyDown: _handleHistoryKeyDown,
   } = useUndoRedo(variables);
 
-  const { conversionMessages, clearConversionMessage } = useTypeConversion(variables);
+  const { conversionMessages, clearConversionMessage } =
+    useTypeConversion(variables);
 
   // Handle variable updates with history tracking
-  const handleUpdateVariable = useCallback((index: number, updatedVariable: VariableDefinition) => {
-    const oldVariable = variables[index];
-    const updatedVariables = [...variables];
-    updatedVariables[index] = updatedVariable;
-    onChange(updatedVariables);
-    
-    // Track in history
-    const action = oldVariable.type !== updatedVariable.type 
-      ? `Changed type of "${updatedVariable.name}" from ${oldVariable.type} to ${updatedVariable.type}`
-      : `Updated variable "${updatedVariable.name}"`;
-    pushToHistory(updatedVariables, action);
-  }, [variables, onChange, pushToHistory]);
+  const handleUpdateVariable = useCallback(
+    (index: number, updatedVariable: VariableDefinition) => {
+      const oldVariable = variables[index];
+      const updatedVariables = [...variables];
+      updatedVariables[index] = updatedVariable;
+      onChange(updatedVariables);
+
+      // Track in history
+      const action =
+        oldVariable.type !== updatedVariable.type
+          ? `Changed type of "${updatedVariable.name}" from ${oldVariable.type} to ${updatedVariable.type}`
+          : `Updated variable "${updatedVariable.name}"`;
+      pushToHistory(updatedVariables, action);
+    },
+    [variables, onChange, pushToHistory]
+  );
 
   // Handle variable deletion with history tracking
-  const handleDeleteVariable = useCallback((index: number) => {
-    const variableToDelete = variables[index];
-    const updatedVariables = variables.filter((_, i) => i !== index);
-    onChange(updatedVariables);
-    pushToHistory(updatedVariables, `Deleted variable "${variableToDelete.name}"`);
-  }, [variables, onChange, pushToHistory]);
+  const handleDeleteVariable = useCallback(
+    (index: number) => {
+      const variableToDelete = variables[index];
+      const updatedVariables = variables.filter((_, i) => i !== index);
+      onChange(updatedVariables);
+      pushToHistory(
+        updatedVariables,
+        `Deleted variable "${variableToDelete.name}"`
+      );
+    },
+    [variables, onChange, pushToHistory]
+  );
 
   // Announcement handler for screen readers
   const handleVariableDetected = useCallback((_count: number) => {
@@ -167,39 +207,42 @@ export function VariableDefinitionEditor({
   }, []);
 
   // Undo/redo keyboard handler
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.ctrlKey || event.metaKey) {
-      switch (event.key.toLowerCase()) {
-        case 'z':
-          if (event.shiftKey && canRedo) {
-            event.preventDefault();
-            const nextVariables = redo();
-            if (nextVariables) {
-              onChange(nextVariables);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key.toLowerCase()) {
+          case 'z':
+            if (event.shiftKey && canRedo) {
+              event.preventDefault();
+              const nextVariables = redo();
+              if (nextVariables) {
+                onChange(nextVariables);
+              }
+            } else if (!event.shiftKey && canUndo) {
+              event.preventDefault();
+              const previousVariables = undo();
+              if (previousVariables) {
+                onChange(previousVariables);
+              }
             }
-          } else if (!event.shiftKey && canUndo) {
-            event.preventDefault();
-            const previousVariables = undo();
-            if (previousVariables) {
-              onChange(previousVariables);
+            break;
+          case 'y':
+            if (canRedo) {
+              event.preventDefault();
+              const nextVariables = redo();
+              if (nextVariables) {
+                onChange(nextVariables);
+              }
             }
-          }
-          break;
-        case 'y':
-          if (canRedo) {
-            event.preventDefault();
-            const nextVariables = redo();
-            if (nextVariables) {
-              onChange(nextVariables);
-            }
-          }
-          break;
+            break;
+        }
       }
-    }
-  }, [canUndo, canRedo, undo, redo, onChange]);
+    },
+    [canUndo, canRedo, undo, redo, onChange]
+  );
 
   return (
-    <div 
+    <div
       className={`variable-editor space-y-4 ${className}`}
       role="region"
       aria-label="Variable Definition Editor"
@@ -209,9 +252,9 @@ export function VariableDefinitionEditor({
     >
       {/* Screen reader only description */}
       <div id="variable-editor-description" className="sr-only">
-        Configure variables detected in your template. Variables are automatically detected 
-        from your template using double brace syntax like {'{{variableName}}'}.
-        Use Ctrl+Z to undo and Ctrl+Y to redo changes.
+        Configure variables detected in your template. Variables are
+        automatically detected from your template using double brace syntax like{' '}
+        {'{{variableName}}'}. Use Ctrl+Z to undo and Ctrl+Y to redo changes.
       </div>
 
       {/* Phase 2: Undo/Redo Controls */}
@@ -243,9 +286,7 @@ export function VariableDefinitionEditor({
               ↷ Redo
             </button>
           </div>
-          <div className="text-xs text-muted-foreground">
-            History available
-          </div>
+          <div className="text-xs text-muted-foreground">History available</div>
         </div>
       )}
 
@@ -253,10 +294,15 @@ export function VariableDefinitionEditor({
       {Object.entries(conversionMessages)
         .filter(([, message]) => message)
         .map(([variableName, message]) => (
-          <div key={variableName} className="p-3 bg-orange-50 border border-orange-200 rounded-md">
+          <div
+            key={variableName}
+            className="p-3 bg-orange-50 border border-orange-200 rounded-md"
+          >
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-medium text-sm">Type conversion for {variableName}</p>
+                <p className="font-medium text-sm">
+                  Type conversion for {variableName}
+                </p>
                 <p className="text-sm text-muted-foreground">{message}</p>
               </div>
               <button
@@ -268,14 +314,10 @@ export function VariableDefinitionEditor({
               </button>
             </div>
           </div>
-        ))
-      }
+        ))}
 
       {/* Variable detection section */}
-      <section
-        role="status"
-        aria-label="Variable Detection Results"
-      >
+      <section role="status" aria-label="Variable Detection Results">
         <VariableDetectionDisplay
           detectedVariables={detectedVariableNames}
           existingVariables={existingVariableNames}
@@ -298,7 +340,9 @@ export function VariableDefinitionEditor({
       {/* Debug information (development only) */}
       {process.env.NODE_ENV === 'development' && (
         <details className="mt-4 p-4 bg-muted rounded-md text-sm">
-          <summary className="cursor-pointer font-medium">Debug Information</summary>
+          <summary className="cursor-pointer font-medium">
+            Debug Information
+          </summary>
           <div className="mt-2 space-y-2">
             <div>Template length: {template.length} characters</div>
             <div>Variables detected: {parseResult.variables.length}</div>

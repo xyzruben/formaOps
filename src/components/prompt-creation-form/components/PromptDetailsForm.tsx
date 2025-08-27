@@ -20,7 +20,7 @@ export function PromptDetailsForm({
   formData,
   onChange,
   errors,
-  disabled = false
+  disabled = false,
 }: PromptDetailsFormProps): JSX.Element {
   const [tagInput, setTagInput] = useState('');
 
@@ -30,7 +30,7 @@ export function PromptDetailsForm({
       const tag = tagInput.trim();
       if (tag && !formData.tags.includes(tag) && formData.tags.length < 5) {
         onChange({
-          tags: [...formData.tags, tag]
+          tags: [...formData.tags, tag],
         });
         setTagInput('');
       }
@@ -39,19 +39,22 @@ export function PromptDetailsForm({
 
   const handleRemoveTag = (tagToRemove: string): void => {
     onChange({
-      tags: formData.tags.filter(tag => tag !== tagToRemove)
+      tags: formData.tags.filter(tag => tag !== tagToRemove),
     });
   };
 
   // Validate template variables
-  const templateValidation = validateTemplateVariables(formData.template, formData.variables);
+  const templateValidation = validateTemplateVariables(
+    formData.template,
+    formData.variables
+  );
 
   return (
     <div className="form-section space-y-6">
       {/* Basic Information Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Basic Information</h3>
-        
+
         {/* Prompt Name */}
         <div className="space-y-2">
           <label htmlFor="prompt-name" className="text-sm font-medium">
@@ -60,14 +63,12 @@ export function PromptDetailsForm({
           <Input
             id="prompt-name"
             value={formData.name}
-            onChange={(e) => onChange({ name: e.target.value })}
+            onChange={e => onChange({ name: e.target.value })}
             placeholder="Enter prompt name"
             disabled={disabled}
             className={errors.name ? 'border-red-500' : ''}
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name}</p>
-          )}
+          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
         </div>
 
         {/* Description */}
@@ -78,7 +79,7 @@ export function PromptDetailsForm({
           <Textarea
             id="prompt-description"
             value={formData.description || ''}
-            onChange={(e) => onChange({ description: e.target.value })}
+            onChange={e => onChange({ description: e.target.value })}
             placeholder="Describe what this prompt does (optional)"
             rows={3}
             disabled={disabled}
@@ -97,7 +98,7 @@ export function PromptDetailsForm({
           <Input
             id="prompt-tags"
             value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
+            onChange={e => setTagInput(e.target.value)}
             onKeyDown={handleAddTag}
             placeholder="Add tags (press Enter or comma to add)"
             disabled={disabled || formData.tags.length >= 5}
@@ -105,11 +106,11 @@ export function PromptDetailsForm({
           <p className="text-xs text-gray-500">
             Press Enter or comma to add tags. Maximum 5 tags allowed.
           </p>
-          
+
           {/* Display Tags */}
           {formData.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
-              {formData.tags.map((tag) => (
+              {formData.tags.map(tag => (
                 <Badge
                   key={tag}
                   variant="secondary"
@@ -121,51 +122,51 @@ export function PromptDetailsForm({
               ))}
             </div>
           )}
-          
-          {errors.tags && (
-            <p className="text-sm text-red-500">{errors.tags}</p>
-          )}
+
+          {errors.tags && <p className="text-sm text-red-500">{errors.tags}</p>}
         </div>
       </div>
 
       {/* Template Editor Section */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Template Editor</h3>
-        
+
         <TemplateEditor
           value={formData.template}
-          onChange={(template) => onChange({ template })}
+          onChange={template => onChange({ template })}
           disabled={disabled}
         />
-        
+
         {errors.template && (
           <p className="text-sm text-red-500">{errors.template}</p>
         )}
-        
+
         {/* Template validation feedback */}
-        {!templateValidation.isValid && templateValidation.missingDefinitions.length > 0 && (
-          <div className="p-3 bg-orange-50 border border-orange-200 rounded-md">
-            <p className="text-sm text-orange-800">
-              The following variables are used in the template but not configured: {' '}
-              <code className="bg-orange-100 px-1 rounded">
-                {templateValidation.missingDefinitions.join(', ')}
-              </code>
-            </p>
-          </div>
-        )}
+        {!templateValidation.isValid &&
+          templateValidation.missingDefinitions.length > 0 && (
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <p className="text-sm text-orange-800">
+                The following variables are used in the template but not
+                configured:{' '}
+                <code className="bg-orange-100 px-1 rounded">
+                  {templateValidation.missingDefinitions.join(', ')}
+                </code>
+              </p>
+            </div>
+          )}
       </div>
 
       {/* Variable Configuration Section */}
       <div className="variable-section space-y-4 border-t pt-4">
         <h3 className="text-lg font-medium">Variable Configuration</h3>
-        
+
         <VariableDefinitionEditor
           template={formData.template}
           variables={formData.variables}
-          onChange={(variables) => onChange({ variables })}
+          onChange={variables => onChange({ variables })}
           disabled={disabled}
         />
-        
+
         {errors.variables && (
           <p className="text-sm text-red-500">{errors.variables}</p>
         )}

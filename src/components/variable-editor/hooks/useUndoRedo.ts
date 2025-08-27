@@ -9,7 +9,7 @@ export const useUndoRedo = (initialVariables: VariableDefinition[]) => {
   const historyManager = useRef(new VariableHistoryManager(initialVariables));
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  
+
   // Update undo/redo availability
   const updateUndoRedoState = useCallback(() => {
     setCanUndo(historyManager.current.canUndo());
@@ -17,10 +17,13 @@ export const useUndoRedo = (initialVariables: VariableDefinition[]) => {
   }, []);
 
   // Add state to history
-  const pushToHistory = useCallback((variables: VariableDefinition[], action: string) => {
-    historyManager.current.pushState(variables, action);
-    updateUndoRedoState();
-  }, [updateUndoRedoState]);
+  const pushToHistory = useCallback(
+    (variables: VariableDefinition[], action: string) => {
+      historyManager.current.pushState(variables, action);
+      updateUndoRedoState();
+    },
+    [updateUndoRedoState]
+  );
 
   // Undo action
   const undo = useCallback((): VariableDefinition[] | null => {
@@ -37,27 +40,30 @@ export const useUndoRedo = (initialVariables: VariableDefinition[]) => {
   }, [updateUndoRedoState]);
 
   // Keyboard event handler
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.ctrlKey || event.metaKey) {
-      switch (event.key.toLowerCase()) {
-        case 'z':
-          if (event.shiftKey && canRedo) {
-            event.preventDefault();
-            redo();
-          } else if (!event.shiftKey && canUndo) {
-            event.preventDefault();
-            undo();
-          }
-          break;
-        case 'y':
-          if (canRedo) {
-            event.preventDefault();
-            redo();
-          }
-          break;
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        switch (event.key.toLowerCase()) {
+          case 'z':
+            if (event.shiftKey && canRedo) {
+              event.preventDefault();
+              redo();
+            } else if (!event.shiftKey && canUndo) {
+              event.preventDefault();
+              undo();
+            }
+            break;
+          case 'y':
+            if (canRedo) {
+              event.preventDefault();
+              redo();
+            }
+            break;
+        }
       }
-    }
-  }, [canUndo, canRedo, undo, redo]);
+    },
+    [canUndo, canRedo, undo, redo]
+  );
 
   // Attach keyboard listener
   useEffect(() => {
@@ -84,6 +90,6 @@ export const useUndoRedo = (initialVariables: VariableDefinition[]) => {
     canRedo,
     getCurrentState,
     clearHistory,
-    handleKeyDown
+    handleKeyDown,
   };
 };

@@ -14,7 +14,10 @@ interface LoginModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function LoginModal({ isOpen, onOpenChange }: LoginModalProps): JSX.Element {
+export function LoginModal({
+  isOpen,
+  onOpenChange,
+}: LoginModalProps): JSX.Element {
   const handleSuccess = (): void => {
     onOpenChange(false);
   };
@@ -33,12 +36,9 @@ export function LoginModal({ isOpen, onOpenChange }: LoginModalProps): JSX.Eleme
             Enter your credentials to access your account
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4">
-          <LoginForm 
-            onSuccess={handleSuccess} 
-            onError={handleError}
-          />
+          <LoginForm onSuccess={handleSuccess} onError={handleError} />
         </div>
       </DialogContent>
     </Dialog>

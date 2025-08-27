@@ -38,7 +38,14 @@ export interface VariableValidationResult {
 
 // Edge case handling interfaces
 export interface ParseError {
-  type: 'MALFORMED_SYNTAX' | 'INVALID_NESTING' | 'SPECIAL_CHARS' | 'EMPTY_NAME' | 'DUPLICATE_REFERENCE' | 'INVALID_STRUCTURE' | 'TEMPLATE_TOO_LONG';
+  type:
+    | 'MALFORMED_SYNTAX'
+    | 'INVALID_NESTING'
+    | 'SPECIAL_CHARS'
+    | 'EMPTY_NAME'
+    | 'DUPLICATE_REFERENCE'
+    | 'INVALID_STRUCTURE'
+    | 'TEMPLATE_TOO_LONG';
   message: string;
   position: number;
   suggestion?: string;

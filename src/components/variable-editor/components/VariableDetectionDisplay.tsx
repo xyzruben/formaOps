@@ -19,7 +19,7 @@ export function VariableDetectionDisplay({
   onSyncVariables,
   errors = [],
   warnings = [],
-  onVariableDetected
+  onVariableDetected,
 }: EnhancedVariableDetectionProps) {
   // Calculate new variables that aren't in existing definitions
   const newVariables = detectedVariables.filter(
@@ -83,7 +83,7 @@ export function VariableDetectionDisplay({
 
       {/* Detected variables display */}
       {detectedVariables.length > 0 && (
-        <div 
+        <div
           className="detected-variables flex flex-wrap gap-2 p-3 bg-muted rounded-md"
           role="status"
           aria-label="Detected Variables"
@@ -94,11 +94,13 @@ export function VariableDetectionDisplay({
               Detected Variables ({detectedVariables.length})
             </h4>
           </div>
-          
+
           {detectedVariables.map((variable, index) => (
-            <Badge 
-              key={`${variable}-${index}`} 
-              variant={existingVariables.includes(variable) ? "default" : "secondary"}
+            <Badge
+              key={`${variable}-${index}`}
+              variant={
+                existingVariables.includes(variable) ? 'default' : 'secondary'
+              }
               className="text-xs"
             >
               {variable}
@@ -107,18 +109,15 @@ export function VariableDetectionDisplay({
               )}
             </Badge>
           ))}
-          
+
           {hasNewVariables && (
             <div className="w-full mt-2 pt-2 border-t border-border">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  {newVariables.length} new variable{newVariables.length !== 1 ? 's' : ''} detected
+                  {newVariables.length} new variable
+                  {newVariables.length !== 1 ? 's' : ''} detected
                 </p>
-                <Button
-                  size="sm"
-                  onClick={onSyncVariables}
-                  className="ml-2"
-                >
+                <Button size="sm" onClick={onSyncVariables} className="ml-2">
                   Sync Variables
                 </Button>
               </div>
@@ -128,11 +127,16 @@ export function VariableDetectionDisplay({
       )}
 
       {/* Warning for variables in template but not defined */}
-      {existingVariables.some(existing => !detectedVariables.includes(existing)) && (
+      {existingVariables.some(
+        existing => !detectedVariables.includes(existing)
+      ) && (
         <Alert variant="default">
-          <p className="font-medium">Some configured variables not found in template</p>
+          <p className="font-medium">
+            Some configured variables not found in template
+          </p>
           <p className="text-sm text-muted-foreground mt-1">
-            The following variables are configured but not present in the current template:
+            The following variables are configured but not present in the
+            current template:
           </p>
           <div className="flex flex-wrap gap-1 mt-2">
             {existingVariables
@@ -141,16 +145,17 @@ export function VariableDetectionDisplay({
                 <Badge key={variable} variant="outline" className="text-xs">
                   {variable}
                 </Badge>
-              ))
-            }
+              ))}
           </div>
         </Alert>
       )}
 
       {/* Screen reader only description */}
       <div id="detection-help" className="sr-only">
-        Variables are automatically detected from your template using double brace syntax like {'{'}
-        {'{'}variableName{'}}'}. Orange dots indicate newly detected variables that need configuration.
+        Variables are automatically detected from your template using double
+        brace syntax like {'{'}
+        {'{'}variableName{'}}'}. Orange dots indicate newly detected variables
+        that need configuration.
       </div>
     </div>
   );

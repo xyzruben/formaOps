@@ -383,7 +383,6 @@ export class PerformanceMonitor {
       }
 
       if (triggered) {
-         
         console.warn(
           `[ALERT] ${threshold.severity.toUpperCase()}: ${threshold.message}`,
           {

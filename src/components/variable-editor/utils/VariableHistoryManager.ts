@@ -6,16 +6,16 @@ import { VariableDefinition, HistoryState, UndoRedoState } from '../types';
 export class VariableHistoryManager {
   private maxHistorySize = 50;
   private state: UndoRedoState;
-  
+
   constructor(initialVariables: VariableDefinition[]) {
     this.state = {
       past: [],
       present: {
         variables: initialVariables,
         timestamp: Date.now(),
-        action: 'initial'
+        action: 'initial',
       },
-      future: []
+      future: [],
     };
   }
 
@@ -24,7 +24,7 @@ export class VariableHistoryManager {
     const newState: HistoryState = {
       variables: JSON.parse(JSON.stringify(variables)), // Deep clone
       timestamp: Date.now(),
-      action
+      action,
     };
 
     // Don't add if no changes
@@ -33,9 +33,11 @@ export class VariableHistoryManager {
     }
 
     this.state = {
-      past: [...this.state.past, this.state.present].slice(-this.maxHistorySize),
+      past: [...this.state.past, this.state.present].slice(
+        -this.maxHistorySize
+      ),
       present: newState,
-      future: [] // Clear future when new action is performed
+      future: [], // Clear future when new action is performed
     };
   }
 
@@ -51,7 +53,7 @@ export class VariableHistoryManager {
     this.state = {
       past: newPast,
       present: previous,
-      future: [this.state.present, ...this.state.future]
+      future: [this.state.present, ...this.state.future],
     };
 
     return this.state.present;
@@ -69,7 +71,7 @@ export class VariableHistoryManager {
     this.state = {
       past: [...this.state.past, this.state.present],
       present: next,
-      future: newFuture
+      future: newFuture,
     };
 
     return this.state.present;
@@ -95,7 +97,7 @@ export class VariableHistoryManager {
     return {
       past: this.state.past.length,
       present: this.state.present.action,
-      future: this.state.future.length
+      future: this.state.future.length,
     };
   }
 
@@ -104,22 +106,25 @@ export class VariableHistoryManager {
     this.state = {
       past: [],
       present: this.state.present,
-      future: []
+      future: [],
     };
   }
 
   // Deep equality check for variables
   private deepEqual(a: VariableDefinition[], b: VariableDefinition[]): boolean {
     if (a.length !== b.length) return false;
-    
+
     return a.every((varA, index) => {
       const varB = b[index];
-      return varA.name === varB.name &&
-             varA.type === varB.type &&
-             varA.required === varB.required &&
-             varA.description === varB.description &&
-             JSON.stringify(varA.defaultValue) === JSON.stringify(varB.defaultValue) &&
-             JSON.stringify(varA.options) === JSON.stringify(varB.options);
+      return (
+        varA.name === varB.name &&
+        varA.type === varB.type &&
+        varA.required === varB.required &&
+        varA.description === varB.description &&
+        JSON.stringify(varA.defaultValue) ===
+          JSON.stringify(varB.defaultValue) &&
+        JSON.stringify(varA.options) === JSON.stringify(varB.options)
+      );
     });
   }
 }

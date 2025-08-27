@@ -6,7 +6,12 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Textarea } from '../../ui/textarea';
 import { Badge } from '../../ui/badge';
-import { VariableTableProps, VariableDefinition, VariableType, AccessibilityProps } from '../types';
+import {
+  VariableTableProps,
+  VariableDefinition,
+  VariableType,
+  AccessibilityProps,
+} from '../types';
 
 interface VariableRowProps {
   variable: VariableDefinition;
@@ -17,16 +22,17 @@ interface VariableRowProps {
   accessibilityProps?: AccessibilityProps;
 }
 
-function VariableRow({ 
-  variable, 
-  index, 
-  isFocused = false, 
-  onUpdate, 
+function VariableRow({
+  variable,
+  index,
+  isFocused = false,
+  onUpdate,
   onDelete,
-  accessibilityProps 
+  accessibilityProps,
 }: VariableRowProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [localVariable, setLocalVariable] = useState<VariableDefinition>(variable);
+  const [localVariable, setLocalVariable] =
+    useState<VariableDefinition>(variable);
 
   const handleSave = useCallback(() => {
     onUpdate(localVariable);
@@ -38,22 +44,25 @@ function VariableRow({
     setIsEditing(false);
   }, [variable]);
 
-  const handleFieldChange = useCallback((field: keyof VariableDefinition, value: any) => {
-    setLocalVariable(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
+  const handleFieldChange = useCallback(
+    (field: keyof VariableDefinition, value: any) => {
+      setLocalVariable(prev => ({
+        ...prev,
+        [field]: value,
+      }));
+    },
+    []
+  );
 
   const typeOptions = [
     { value: 'string', label: 'String' },
     { value: 'number', label: 'Number' },
     { value: 'boolean', label: 'Boolean' },
-    { value: 'array', label: 'Array' }
+    { value: 'array', label: 'Array' },
   ];
 
   return (
-    <div 
+    <div
       className={`variable-row border-b last:border-b-0 p-4 ${
         isFocused ? 'bg-muted ring-2 ring-primary' : ''
       }`}
@@ -69,14 +78,17 @@ function VariableRow({
             <Input
               id={`var-name-${index}`}
               value={localVariable.name}
-              onChange={(e) => handleFieldChange('name', e.target.value)}
+              onChange={e => handleFieldChange('name', e.target.value)}
               className="text-sm"
               aria-label={`Variable name for ${variable.name}`}
             />
           ) : (
             <div className="flex items-center space-x-2">
               <Badge variant="outline" className="font-mono text-xs">
-                {'{'}{'{'}{variable.name}{'}}'}
+                {'{'}
+                {'{'}
+                {variable.name}
+                {'}}'}
               </Badge>
             </div>
           )}
@@ -91,7 +103,9 @@ function VariableRow({
             <select
               id={`var-type-${index}`}
               value={localVariable.type}
-              onChange={(e) => handleFieldChange('type', e.target.value as VariableType)}
+              onChange={e =>
+                handleFieldChange('type', e.target.value as VariableType)
+              }
               className="w-full p-2 border border-input rounded-md text-sm"
               aria-label={`Variable type for ${variable.name}`}
             >
@@ -110,7 +124,10 @@ function VariableRow({
 
         {/* Required Toggle */}
         <div className="space-y-1">
-          <label className="text-sm font-medium" htmlFor={`var-required-${index}`}>
+          <label
+            className="text-sm font-medium"
+            htmlFor={`var-required-${index}`}
+          >
             Required
           </label>
           {isEditing ? (
@@ -119,14 +136,14 @@ function VariableRow({
                 id={`var-required-${index}`}
                 type="checkbox"
                 checked={localVariable.required}
-                onChange={(e) => handleFieldChange('required', e.target.checked)}
+                onChange={e => handleFieldChange('required', e.target.checked)}
                 className="rounded border-input"
                 aria-label={`Required checkbox for ${variable.name}`}
               />
               <span className="text-sm">Required</span>
             </div>
           ) : (
-            <Badge variant={variable.required ? "default" : "outline"}>
+            <Badge variant={variable.required ? 'default' : 'outline'}>
               {variable.required ? 'Yes' : 'No'}
             </Badge>
           )}
@@ -134,7 +151,10 @@ function VariableRow({
 
         {/* Default Value */}
         <div className="space-y-1">
-          <label className="text-sm font-medium" htmlFor={`var-default-${index}`}>
+          <label
+            className="text-sm font-medium"
+            htmlFor={`var-default-${index}`}
+          >
             Default Value
           </label>
           {isEditing ? (
@@ -142,13 +162,14 @@ function VariableRow({
               id={`var-default-${index}`}
               type={localVariable.type}
               value={localVariable.defaultValue}
-              onChange={(value) => handleFieldChange('defaultValue', value)}
+              onChange={value => handleFieldChange('defaultValue', value)}
               aria-label={`Default value for ${variable.name}`}
             />
           ) : (
             <div className="text-sm text-muted-foreground">
-              {variable.defaultValue !== undefined && variable.defaultValue !== null 
-                ? String(variable.defaultValue) 
+              {variable.defaultValue !== undefined &&
+              variable.defaultValue !== null
+                ? String(variable.defaultValue)
                 : '—'}
             </div>
           )}
@@ -167,16 +188,16 @@ function VariableRow({
             </>
           ) : (
             <>
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => setIsEditing(true)}
                 aria-label={`Edit ${variable.name}`}
               >
                 Edit
               </Button>
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 variant="destructive"
                 onClick={onDelete}
                 aria-label={`Delete ${variable.name}`}
@@ -191,13 +212,16 @@ function VariableRow({
       {/* Description field (full width when editing) */}
       {isEditing && (
         <div className="mt-4 space-y-1">
-          <label className="text-sm font-medium" htmlFor={`var-description-${index}`}>
+          <label
+            className="text-sm font-medium"
+            htmlFor={`var-description-${index}`}
+          >
             Description (optional)
           </label>
           <Textarea
             id={`var-description-${index}`}
             value={localVariable.description || ''}
-            onChange={(e) => handleFieldChange('description', e.target.value)}
+            onChange={e => handleFieldChange('description', e.target.value)}
             placeholder="Describe this variable's purpose..."
             className="text-sm"
             rows={2}
@@ -210,12 +234,12 @@ function VariableRow({
 }
 
 // Type-specific input component
-function TypeSpecificInput({ 
-  id, 
-  type, 
-  value, 
-  onChange, 
-  'aria-label': ariaLabel 
+function TypeSpecificInput({
+  id,
+  type,
+  value,
+  onChange,
+  'aria-label': ariaLabel,
 }: {
   id: string;
   type: VariableType;
@@ -230,26 +254,28 @@ function TypeSpecificInput({
           id={id}
           type="text"
           value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder="Default string value"
           className="text-sm"
           aria-label={ariaLabel}
         />
       );
-    
+
     case 'number':
       return (
         <Input
           id={id}
           type="number"
           value={value || ''}
-          onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+          onChange={e =>
+            onChange(e.target.value ? Number(e.target.value) : undefined)
+          }
           placeholder="Default number"
           className="text-sm"
           aria-label={ariaLabel}
         />
       );
-    
+
     case 'boolean':
       return (
         <div className="flex items-center space-x-2 pt-2">
@@ -257,20 +283,20 @@ function TypeSpecificInput({
             id={id}
             type="checkbox"
             checked={value || false}
-            onChange={(e) => onChange(e.target.checked)}
+            onChange={e => onChange(e.target.checked)}
             className="rounded border-input"
             aria-label={ariaLabel}
           />
           <span className="text-sm">Default to true</span>
         </div>
       );
-    
+
     case 'array':
       return (
         <Textarea
           id={id}
-          value={Array.isArray(value) ? value.join(', ') : (value || '')}
-          onChange={(e) => {
+          value={Array.isArray(value) ? value.join(', ') : value || ''}
+          onChange={e => {
             const arrayValue = e.target.value
               .split(',')
               .map(item => item.trim())
@@ -283,14 +309,14 @@ function TypeSpecificInput({
           aria-label={ariaLabel}
         />
       );
-    
+
     default:
       return (
         <Input
           id={id}
           type="text"
           value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           className="text-sm"
           aria-label={ariaLabel}
         />
@@ -299,32 +325,35 @@ function TypeSpecificInput({
 }
 
 // Main table component
-export function VariableConfigurationTable({ 
-  variables, 
-  onUpdateVariable, 
-  onDeleteVariable 
+export function VariableConfigurationTable({
+  variables,
+  onUpdateVariable,
+  onDeleteVariable,
 }: VariableTableProps) {
   const [focusedVariableIndex, setFocusedVariableIndex] = useState(-1);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        setFocusedVariableIndex(prev => 
-          Math.min(prev + 1, variables.length - 1)
-        );
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        setFocusedVariableIndex(prev => Math.max(prev - 1, 0));
-        break;
-      case 'Delete':
-        if (focusedVariableIndex >= 0) {
-          onDeleteVariable(focusedVariableIndex);
-        }
-        break;
-    }
-  }, [focusedVariableIndex, variables.length, onDeleteVariable]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          setFocusedVariableIndex(prev =>
+            Math.min(prev + 1, variables.length - 1)
+          );
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          setFocusedVariableIndex(prev => Math.max(prev - 1, 0));
+          break;
+        case 'Delete':
+          if (focusedVariableIndex >= 0) {
+            onDeleteVariable(focusedVariableIndex);
+          }
+          break;
+      }
+    },
+    [focusedVariableIndex, variables.length, onDeleteVariable]
+  );
 
   if (variables.length === 0) {
     return (
@@ -348,13 +377,16 @@ export function VariableConfigurationTable({
     >
       {/* Screen reader help */}
       <div id="table-help" className="sr-only">
-        Configure each variable's type, requirements, and default values. 
-        Use arrow keys to navigate, Delete key to remove variables.
+        Configure each variable's type, requirements, and default values. Use
+        arrow keys to navigate, Delete key to remove variables.
       </div>
-      
+
       {/* Table header */}
       <div role="rowgroup" className="bg-muted/50">
-        <div role="row" className="variable-table-header grid grid-cols-1 md:grid-cols-5 gap-4 p-4 font-medium text-sm border-b">
+        <div
+          role="row"
+          className="variable-table-header grid grid-cols-1 md:grid-cols-5 gap-4 p-4 font-medium text-sm border-b"
+        >
           <div role="columnheader">Name</div>
           <div role="columnheader">Type</div>
           <div role="columnheader">Required</div>
@@ -362,7 +394,7 @@ export function VariableConfigurationTable({
           <div role="columnheader">Actions</div>
         </div>
       </div>
-      
+
       {/* Table body */}
       <div role="rowgroup">
         {variables.map((variable, index) => (
@@ -371,13 +403,13 @@ export function VariableConfigurationTable({
             variable={variable}
             index={index}
             isFocused={focusedVariableIndex === index}
-            onUpdate={(updated) => onUpdateVariable(index, updated)}
+            onUpdate={updated => onUpdateVariable(index, updated)}
             onDelete={() => onDeleteVariable(index)}
             accessibilityProps={{
               role: 'row',
               'aria-rowindex': index + 1,
               'aria-selected': focusedVariableIndex === index,
-              tabIndex: focusedVariableIndex === index ? 0 : -1
+              tabIndex: focusedVariableIndex === index ? 0 : -1,
             }}
           />
         ))}

@@ -8,12 +8,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '../ui/dialog';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Button } from '../ui/button';
 import { PromptDetailsForm } from './components/PromptDetailsForm';
 import { PromptPreview } from './components/PromptPreview';
@@ -24,14 +19,14 @@ import type {
   PromptCreationFormProps,
   PromptFormData,
   PromptCreationState,
-  CreatePromptRequest
+  CreatePromptRequest,
 } from './types';
 
 export function PromptCreationModal({
   isOpen,
   onClose,
   onSuccess,
-  onError
+  onError,
 }: PromptCreationFormProps): JSX.Element {
   const [state, setState] = useState<PromptCreationState>({
     formData: {
@@ -40,10 +35,10 @@ export function PromptCreationModal({
       template: '',
       variables: [],
       tags: [],
-      status: 'DRAFT'
+      status: 'DRAFT',
     },
     isSubmitting: false,
-    errors: {}
+    errors: {},
   });
 
   const [activeTab, setActiveTab] = useState('details');
@@ -52,78 +47,85 @@ export function PromptCreationModal({
     setState(prev => ({
       ...prev,
       formData: { ...prev.formData, ...data },
-      errors: {} // Clear errors when user makes changes
+      errors: {}, // Clear errors when user makes changes
     }));
   }, []);
 
-  const validateForm = useCallback((): { isValid: boolean; errors: Record<string, string> } => {
+  const validateForm = useCallback((): {
+    isValid: boolean;
+    errors: Record<string, string>;
+  } => {
     try {
       CreatePromptSchema.parse(state.formData);
       return { isValid: true, errors: {} };
     } catch (error) {
       if (error instanceof ZodError) {
         const errors: Record<string, string> = {};
-        
-        error.errors.forEach((err) => {
+
+        error.errors.forEach(err => {
           const field = err.path[0];
           if (field && typeof field === 'string') {
             errors[field] = err.message;
           }
         });
-        
+
         return { isValid: false, errors };
       }
       return { isValid: false, errors: { general: 'Validation failed' } };
     }
   }, [state.formData]);
 
-  const handleSubmit = useCallback(async (status: 'DRAFT' | 'PUBLISHED') => {
-    // Validate form
-    const validation = validateForm();
-    if (!validation.isValid) {
-      setState(prev => ({ ...prev, errors: validation.errors }));
-      return;
-    }
-
-    setState(prev => ({ ...prev, isSubmitting: true, errors: {} }));
-
-    try {
-      const requestData: CreatePromptRequest = {
-        ...state.formData,
-        status,
-        description: state.formData.description || undefined,
-        tags: state.formData.tags.length > 0 ? state.formData.tags : undefined
-      };
-
-      const newPrompt = await createPrompt(requestData);
-      onSuccess(newPrompt);
-      
-      // Reset form
-      setState({
-        formData: {
-          name: '',
-          description: '',
-          template: '',
-          variables: [],
-          tags: [],
-          status: 'DRAFT'
-        },
-        isSubmitting: false,
-        errors: {}
-      });
-    } catch (error) {
-      const errorMessage = handleCreatePromptError(error);
-      setState(prev => ({ 
-        ...prev, 
-        isSubmitting: false,
-        errors: { general: errorMessage }
-      }));
-      
-      if (onError) {
-        onError(errorMessage);
+  const handleSubmit = useCallback(
+    async (status: 'DRAFT' | 'PUBLISHED') => {
+      // Validate form
+      const validation = validateForm();
+      if (!validation.isValid) {
+        setState(prev => ({ ...prev, errors: validation.errors }));
+        return;
       }
-    }
-  }, [state.formData, validateForm, onSuccess, onError]);
+
+      setState(prev => ({ ...prev, isSubmitting: true, errors: {} }));
+
+      try {
+        const requestData: CreatePromptRequest = {
+          ...state.formData,
+          status,
+          description: state.formData.description || undefined,
+          tags:
+            state.formData.tags.length > 0 ? state.formData.tags : undefined,
+        };
+
+        const newPrompt = await createPrompt(requestData);
+        onSuccess(newPrompt);
+
+        // Reset form
+        setState({
+          formData: {
+            name: '',
+            description: '',
+            template: '',
+            variables: [],
+            tags: [],
+            status: 'DRAFT',
+          },
+          isSubmitting: false,
+          errors: {},
+        });
+      } catch (error) {
+        const errorMessage = handleCreatePromptError(error);
+        setState(prev => ({
+          ...prev,
+          isSubmitting: false,
+          errors: { general: errorMessage },
+        }));
+
+        if (onError) {
+          onError(errorMessage);
+        }
+      }
+    },
+    [state.formData, validateForm, onSuccess, onError]
+  );
 
   const handleClose = useCallback((): void => {
     if (!state.isSubmitting) {
@@ -136,10 +138,10 @@ export function PromptCreationModal({
           template: '',
           variables: [],
           tags: [],
-          status: 'DRAFT'
+          status: 'DRAFT',
         },
         isSubmitting: false,
-        errors: {}
+        errors: {},
       });
     }
   }, [state.isSubmitting, onClose]);
@@ -189,26 +191,30 @@ export function PromptCreationModal({
         <DialogHeader>
           <DialogTitle>Create New Prompt</DialogTitle>
         </DialogHeader>
-        
+
         <div className="flex-1 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="h-full flex flex-col"
+          >
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger 
-                value="details" 
+              <TabsTrigger
+                value="details"
                 className="text-sm"
                 aria-label="Details tab (Ctrl+1)"
               >
                 Details
               </TabsTrigger>
-              <TabsTrigger 
-                value="preview" 
+              <TabsTrigger
+                value="preview"
                 className="text-sm"
                 aria-label="Preview tab (Ctrl+2)"
               >
                 Preview
               </TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="details" className="flex-1 overflow-y-auto">
               <PromptDetailsForm
                 formData={state.formData}
@@ -217,7 +223,7 @@ export function PromptCreationModal({
                 disabled={state.isSubmitting}
               />
             </TabsContent>
-            
+
             <TabsContent value="preview" className="flex-1 overflow-y-auto">
               <PromptPreview
                 template={state.formData.template}
@@ -233,7 +239,7 @@ export function PromptCreationModal({
               <p className="text-sm text-red-500">{state.errors.general}</p>
             )}
           </div>
-          
+
           <div className="flex gap-2">
             <Button
               variant="outline"

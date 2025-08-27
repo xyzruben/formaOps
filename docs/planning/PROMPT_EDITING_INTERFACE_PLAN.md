@@ -3,18 +3,22 @@
 ## Executive Summary
 
 ### Feature Purpose
+
 The Prompt Editing Interface enables users to modify existing prompts with data pre-population, change tracking, and status management. It extends the Prompt Creation Form with edit-specific functionality while maintaining data integrity and handling concurrent edits.
 
 ### User Value
+
 - **Seamless Editing**: Pre-populated form with existing prompt data for quick modifications
 - **Status Management**: Control prompt lifecycle (Draft → Published → Archived)
 - **Change Tracking**: Visual indicators for modified fields and unsaved changes
 - **Data Safety**: Conflict resolution and validation to prevent data loss
 
 ### Architectural Role
+
 Builds upon Prompt Creation Form architecture, adding edit-specific logic for data loading, change tracking, and update operations. Integrates with existing prompt detail views and manages prompt lifecycle states.
 
 ### Implementation Priority
+
 **Position 3** in critical path - depends on Prompt Creation Form and Variable Definition Editor.
 
 ---
@@ -34,7 +38,7 @@ interface PromptEditingInterfaceProps {
 
 interface EditPromptFormData extends PromptFormData {
   id: string;
-  version: number;           // For optimistic concurrency control
+  version: number; // For optimistic concurrency control
   originalData: PromptFormData; // For change detection
 }
 
@@ -63,15 +67,17 @@ Load Existing Data → Pre-populate Form → User Edits → Change Detection →
 ### API Integration
 
 **Primary Endpoints:**
+
 ```typescript
 // Load existing prompt
-GET /api/prompts/[id]
+GET / api / prompts / [id];
 
 // Update prompt
-PUT /api/prompts/[id]
+PUT / api / prompts / [id];
 ```
 
 **Request/Response Types:**
+
 ```typescript
 interface UpdatePromptRequest {
   name?: string;
@@ -98,15 +104,15 @@ interface EditFormState {
   formData: EditPromptFormData;
   originalData: PromptFormData;
   hasUnsavedChanges: boolean;
-  
+
   // Loading states
   loading: boolean;
   isSubmitting: boolean;
-  
+
   // Error states
   error: string | null;
   fieldErrors: Record<string, string>;
-  
+
   // Edit-specific states
   conflictData?: Prompt; // For concurrent edit handling
   showConflictResolution: boolean;
@@ -135,6 +141,7 @@ interface EditFormState {
 ### UI Components
 
 **Modal Structure** (extends Prompt Creation Form)
+
 ```typescript
 <Dialog open={isOpen} onOpenChange={handleClose}>
   <DialogContent className="max-w-4xl h-[90vh]">
@@ -144,7 +151,7 @@ interface EditFormState {
         {hasUnsavedChanges && <Badge variant="outline">Unsaved Changes</Badge>}
       </DialogTitle>
     </DialogHeader>
-    
+
     {loading ? <LoadingState /> : (
       <Tabs>
         <TabsList>
@@ -152,21 +159,21 @@ interface EditFormState {
           <TabsTrigger value="preview">Preview</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="details">
           <EditPromptDetailsForm />
         </TabsContent>
-        
+
         <TabsContent value="preview">
           <PromptPreview />
         </TabsContent>
-        
+
         <TabsContent value="history">
           <PromptVersionHistory />
         </TabsContent>
       </Tabs>
     )}
-    
+
     <DialogFooter>
       <StatusControls />
       <Button variant="outline" onClick={handleClose}>
@@ -191,6 +198,7 @@ interface EditFormState {
    - Change summary in footer
 
 2. **Status Management Controls**
+
    ```typescript
    interface StatusControlsProps {
      currentStatus: PromptStatus;
@@ -198,11 +206,13 @@ interface EditFormState {
      disabled?: boolean;
    }
    ```
+
    - Status transition buttons (Draft ↔ Published ↔ Archived)
    - Status change confirmation dialogs
    - Status history display
 
 3. **Conflict Resolution Interface**
+
    ```typescript
    interface ConflictResolutionProps {
      localChanges: PromptFormData;
@@ -210,6 +220,7 @@ interface EditFormState {
      onResolve: (resolution: 'keep_local' | 'keep_server' | 'merge') => void;
    }
    ```
+
    - Side-by-side comparison of changes
    - Field-by-field merge options
    - "Keep mine", "Keep theirs", "Merge" buttons
@@ -222,10 +233,11 @@ interface EditFormState {
 ### Validation Rules
 
 **Edit-Specific Validation:**
+
 ```typescript
 const EditPromptSchema = CreatePromptSchema.extend({
   id: z.string().uuid(),
-  version: z.number().min(1)
+  version: z.number().min(1),
 }).refine(data => {
   // Ensure at least one field has changed
   // Add business logic validation for status transitions
@@ -234,15 +246,15 @@ const EditPromptSchema = CreatePromptSchema.extend({
 
 // Status transition validation
 const validateStatusTransition = (
-  currentStatus: PromptStatus, 
+  currentStatus: PromptStatus,
   newStatus: PromptStatus
 ): boolean => {
   const validTransitions: Record<PromptStatus, PromptStatus[]> = {
-    'DRAFT': ['PUBLISHED', 'ARCHIVED'],
-    'PUBLISHED': ['ARCHIVED', 'DRAFT'], // Allow unpublishing
-    'ARCHIVED': ['DRAFT'] // Allow restoration
+    DRAFT: ['PUBLISHED', 'ARCHIVED'],
+    PUBLISHED: ['ARCHIVED', 'DRAFT'], // Allow unpublishing
+    ARCHIVED: ['DRAFT'], // Allow restoration
   };
-  
+
   return validTransitions[currentStatus]?.includes(newStatus) ?? false;
 };
 ```
@@ -250,11 +262,13 @@ const validateStatusTransition = (
 ### Responsive Design
 
 **Desktop Enhancements:**
+
 - Split view for before/after comparison
 - Expanded version history with detailed diffs
 - Full conflict resolution interface
 
 **Mobile Adaptations:**
+
 - Simplified conflict resolution (step-by-step)
 - Collapsed version history
 - Touch-optimized status controls
@@ -266,16 +280,19 @@ const validateStatusTransition = (
 ### Phase 1: Data Loading & Pre-population (6 hours)
 
 **Components to Build:**
+
 - `PromptEditingModal` wrapper
 - Data loading logic with error handling
 - Form pre-population system
 
 **Functionality:**
+
 - Load existing prompt data from API
 - Pre-populate all form fields
 - Handle loading states and errors
 
 **Acceptance Criteria:**
+
 - [ ] Modal loads existing prompt data correctly
 - [ ] All form fields pre-populated with current values
 - [ ] Loading and error states handled gracefully
@@ -283,16 +300,19 @@ const validateStatusTransition = (
 ### Phase 2: Change Detection & Tracking (4 hours)
 
 **Components to Build:**
+
 - Change detection utilities
 - Unsaved changes warning system
 - Visual change indicators
 
 **Functionality:**
+
 - Real-time change detection
 - Unsaved changes warning on close
 - Visual indicators for modified fields
 
 **Acceptance Criteria:**
+
 - [ ] Changes detected accurately in real-time
 - [ ] Warning shown when closing with unsaved changes
 - [ ] Modified fields clearly indicated
@@ -300,16 +320,19 @@ const validateStatusTransition = (
 ### Phase 3: Status Management (4 hours)
 
 **Components to Build:**
+
 - `StatusControls` component
 - Status transition validation
 - Confirmation dialogs for status changes
 
 **Functionality:**
+
 - Status change controls and validation
 - Confirmation dialogs for critical transitions
 - Status history tracking
 
 **Acceptance Criteria:**
+
 - [ ] Status transitions work correctly
 - [ ] Invalid transitions are blocked
 - [ ] Confirmation dialogs for destructive actions
@@ -317,16 +340,19 @@ const validateStatusTransition = (
 ### Phase 4: Update API Integration (4 hours)
 
 **Components to Build:**
+
 - Update API integration
 - Optimistic concurrency handling
 - Success/error feedback
 
 **Functionality:**
+
 - Submit updates to backend API
 - Handle version conflicts
 - Success and error feedback
 
 **Acceptance Criteria:**
+
 - [ ] Updates submitted successfully to API
 - [ ] Version conflicts detected and handled
 - [ ] Clear feedback on success/failure
@@ -334,26 +360,32 @@ const validateStatusTransition = (
 ### Phase 5: Conflict Resolution (6 hours)
 
 **Components to Build:**
+
 - `ConflictResolutionDialog`
 - Diff visualization
 - Merge conflict handling
 
 **Functionality:**
+
 - Detect concurrent edits
 - Show conflict resolution interface
 - Enable manual conflict resolution
 
 **Acceptance Criteria:**
+
 - [ ] Concurrent edits detected correctly
 - [ ] Conflict resolution UI is intuitive
 - [ ] Resolved conflicts save correctly
 
 ### Dependencies
+
 **Blocked by**: Prompt Creation Form, Variable Definition Editor  
 **Blocks**: None (terminal node in critical path)
 
 ### Estimated Effort
+
 **Total: 1.5 days (24 hours)**
+
 - Development: 20 hours
 - Testing: 4 hours
 
@@ -413,41 +445,43 @@ interface ConflictResolution {
 // Edit-specific validation schema
 const EditPromptSchema = CreatePromptSchema.extend({
   id: z.string().uuid('Invalid prompt ID'),
-  version: z.number().min(1, 'Invalid version number')
+  version: z.number().min(1, 'Invalid version number'),
 });
 
 // Change detection utilities
 const detectChanges = (
-  original: PromptFormData, 
+  original: PromptFormData,
   current: PromptFormData
 ): ChangeSet => {
   const changes: FieldChange[] = [];
-  
+
   for (const field of Object.keys(original) as Array<keyof PromptFormData>) {
     if (!isEqual(original[field], current[field])) {
       changes.push({
         field,
         oldValue: original[field],
         newValue: current[field],
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     }
   }
-  
+
   return {
     changes,
     hasChanges: changes.length > 0,
-    modifiedFields: changes.map(c => c.field)
+    modifiedFields: changes.map(c => c.field),
   };
 };
 
 // Status transition validation
-const StatusTransitionSchema = z.object({
-  currentStatus: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
-  newStatus: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED'])
-}).refine(({ currentStatus, newStatus }) => {
-  return validateStatusTransition(currentStatus, newStatus);
-}, 'Invalid status transition');
+const StatusTransitionSchema = z
+  .object({
+    currentStatus: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+    newStatus: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+  })
+  .refine(({ currentStatus, newStatus }) => {
+    return validateStatusTransition(currentStatus, newStatus);
+  }, 'Invalid status transition');
 ```
 
 ### Error Handling
@@ -473,15 +507,15 @@ const handleEditError = (error: unknown): EditError => {
       return {
         name: 'ConflictError',
         message: 'This prompt has been modified by another user',
-        type: 'CONFLICT_ERROR'
+        type: 'CONFLICT_ERROR',
       } as ConflictError;
     }
   }
-  
+
   return {
     name: 'EditError',
     message: 'Failed to update prompt',
-    type: 'UPDATE_ERROR'
+    type: 'UPDATE_ERROR',
   } as EditError;
 };
 ```
@@ -489,6 +523,7 @@ const handleEditError = (error: unknown): EditError => {
 ### Testing Strategy
 
 **Unit Tests:**
+
 ```typescript
 describe('PromptEditingInterface', () => {
   test('loads existing prompt data', async () => {
@@ -496,7 +531,7 @@ describe('PromptEditingInterface', () => {
     const { getByDisplayValue } = render(
       <PromptEditingInterface promptId={mockPrompt.id} isOpen={true} />
     );
-    
+
     await waitFor(() => {
       expect(getByDisplayValue(mockPrompt.name)).toBeInTheDocument();
     });
@@ -505,7 +540,7 @@ describe('PromptEditingInterface', () => {
   test('detects changes correctly', () => {
     const original = { name: 'Original', template: 'Hello {{name}}' };
     const modified = { name: 'Modified', template: 'Hello {{name}}' };
-    
+
     const changeSet = detectChanges(original, modified);
     expect(changeSet.hasChanges).toBe(true);
     expect(changeSet.modifiedFields).toContain('name');
@@ -517,13 +552,14 @@ describe('PromptEditingInterface', () => {
       status: 409,
       json: () => Promise.resolve({ conflictData: mockUpdatedPrompt })
     };
-    
+
     // Test conflict detection and resolution
   });
 });
 ```
 
 **Integration Tests:**
+
 - Test full edit workflow from load to save
 - Test conflict resolution scenarios
 - Test status transition workflows
@@ -536,11 +572,13 @@ describe('PromptEditingInterface', () => {
 ### Existing Components to Reuse
 
 **Base Components:**
+
 - Extends `PromptCreationForm` architecture
 - Reuses all UI components from creation form
 - Uses same `VariableDefinitionEditor`
 
 **Additional Components:**
+
 - `LoadingState` - For data loading
 - `Badge` - For unsaved changes indicator
 - `ConfirmDialog` - For status change confirmations
@@ -559,13 +597,13 @@ const loadPrompt = async (promptId: string): Promise<Prompt> => {
 
 // Update prompt data
 const updatePrompt = async (
-  promptId: string, 
+  promptId: string,
   data: UpdatePromptRequest
 ): Promise<UpdatePromptResponse> => {
   const response = await fetch(`/api/prompts/${promptId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data),
   });
 
   if (!response.ok) {
@@ -599,7 +637,7 @@ const PromptDetailPage = () => {
       <Button onClick={() => setShowEditForm(true)}>
         Edit Prompt
       </Button>
-      
+
       <PromptEditingInterface
         promptId={prompt.id}
         isOpen={showEditForm}
@@ -616,6 +654,7 @@ const PromptDetailPage = () => {
 ## Success Criteria
 
 ### Functional Requirements
+
 - [ ] Loads existing prompt data and pre-populates form
 - [ ] Detects and tracks changes in real-time
 - [ ] Manages prompt status transitions correctly
@@ -623,6 +662,7 @@ const PromptDetailPage = () => {
 - [ ] Updates prompt data successfully via API
 
 ### Technical Requirements
+
 - [ ] TypeScript strict mode compliant
 - [ ] Optimistic concurrency control implemented
 - [ ] Change detection with no false positives/negatives
@@ -630,6 +670,7 @@ const PromptDetailPage = () => {
 - [ ] Performance: Load time < 1 second, save time < 2 seconds
 
 ### User Experience Requirements
+
 - [ ] Intuitive edit workflow with clear visual feedback
 - [ ] Unsaved changes warning prevents accidental data loss
 - [ ] Conflict resolution is understandable and actionable
@@ -637,6 +678,7 @@ const PromptDetailPage = () => {
 - [ ] Responsive design works on all devices
 
 ### Integration Requirements
+
 - [ ] Seamlessly extends Prompt Creation Form
 - [ ] Integrates with existing prompt detail views
 - [ ] Maintains consistency with design system

@@ -14,7 +14,7 @@ export type {
   ParseError,
   ParseWarning,
   VariableDetectionProps,
-  VariableTableProps
+  VariableTableProps,
 } from './types';
 
 // Components
@@ -24,7 +24,11 @@ export { VariableEditorWithHistory } from './components/VariableEditorWithHistor
 export { AccessibleVariableEditor } from './components/AccessibleVariableEditor';
 
 // Parsers
-export { AdvancedVariableParser, OptimizedTemplateParser, handleTemplateEdgeCases } from './parsers/AdvancedVariableParser';
+export {
+  AdvancedVariableParser,
+  OptimizedTemplateParser,
+  handleTemplateEdgeCases,
+} from './parsers/AdvancedVariableParser';
 
 // Validation
 export {
@@ -35,7 +39,7 @@ export {
   validateVariableName,
   validateVariableValue,
   validateVariable,
-  extractVariablesFromTemplate
+  extractVariablesFromTemplate,
 } from './validation';
 
 // Phase 2: Type System & History Management
@@ -45,5 +49,8 @@ export { useTypeConversion } from './hooks/useTypeConversion';
 export { useUndoRedo } from './hooks/useUndoRedo';
 
 // Phase 3: Performance & Accessibility
-export { useOptimizedVariableParser, VariablePerformanceMonitor } from './hooks/useOptimizedVariableParser';
+export {
+  useOptimizedVariableParser,
+  VariablePerformanceMonitor,
+} from './hooks/useOptimizedVariableParser';
 export { useAccessibility, HighContrastStyles } from './hooks/useAccessibility';

@@ -3,18 +3,22 @@
 ## Executive Summary
 
 ### Feature Purpose
+
 The AI Results Viewer provides a comprehensive interface for displaying, analyzing, and managing AI execution results. It transforms raw API responses into formatted, actionable information with detailed metrics, cost breakdowns, and user interaction capabilities.
 
 ### User Value
+
 - **Rich Result Display**: Formatted AI output with syntax highlighting and structured presentation
 - **Execution Analytics**: Detailed token usage, cost analysis, and performance metrics
 - **Result Management**: Copy, download, share, and compare execution results
 - **Error Visualization**: Clear error display with actionable troubleshooting information
 
 ### Architectural Role
+
 Terminal component in the execution workflow that bridges AI API responses with user consumption. Integrates with Enhanced Execution Panel and feeds data to Execution History. Provides the final user touchpoint in the prompt execution lifecycle.
 
 ### Implementation Priority
+
 **Position 5** in critical path - depends on Enhanced Execution Panel, enables complete execution workflow.
 
 ---
@@ -86,14 +90,14 @@ interface ResultsViewerState {
   activeTab: 'output' | 'metrics' | 'raw';
   showCopySuccess: boolean;
   downloadInProgress: boolean;
-  
-  // Formatting states  
+
+  // Formatting states
   outputFormat: 'text' | 'json' | 'html';
   syntaxHighlight: boolean;
-  
+
   // Error states
   displayError: string | null;
-  
+
   // Action states
   shareInProgress: boolean;
   saveInProgress: boolean;
@@ -124,32 +128,33 @@ interface ResultsViewerState {
 ### UI Components
 
 **Main Results Display**
+
 ```typescript
 <Card className="results-viewer">
   <CardHeader>
     <ResultsHeader execution={execution} onRetry={onRetry} />
   </CardHeader>
-  
+
   <Tabs value={activeTab} onValueChange={setActiveTab}>
     <TabsList>
       <TabsTrigger value="output">Output</TabsTrigger>
       <TabsTrigger value="metrics">Metrics</TabsTrigger>
       <TabsTrigger value="raw">Raw Data</TabsTrigger>
     </TabsList>
-    
+
     <TabsContent value="output">
       <OutputDisplay />
     </TabsContent>
-    
+
     <TabsContent value="metrics">
       <MetricsDisplay />
     </TabsContent>
-    
+
     <TabsContent value="raw">
       <RawDataDisplay />
     </TabsContent>
   </Tabs>
-  
+
   <CardFooter>
     <ResultsActions />
   </CardFooter>
@@ -157,12 +162,14 @@ interface ResultsViewerState {
 ```
 
 **Output Display Tab**
+
 1. **Status Banner**
    - Success/failure indicator with color coding
    - Execution time and completion timestamp
    - Model used and configuration summary
 
 2. **AI Output Section**
+
    ```typescript
    interface OutputDisplayProps {
      content: string;
@@ -171,6 +178,7 @@ interface ResultsViewerState {
      maxHeight?: number;
    }
    ```
+
    - Formatted AI response with syntax highlighting
    - Auto-detect content type (text, JSON, HTML, code)
    - Expandable/collapsible for long outputs
@@ -182,7 +190,9 @@ interface ResultsViewerState {
    - Template preview showing variable substitution
 
 **Metrics Display Tab**
+
 1. **Token Usage Visualization**
+
    ```typescript
    interface TokenMetricsProps {
      usage: TokenUsage;
@@ -190,11 +200,13 @@ interface ResultsViewerState {
      showBreakdown: boolean;
    }
    ```
+
    - Visual breakdown of prompt vs completion tokens
    - Token efficiency metrics
    - Cost per token analysis
 
 2. **Cost Breakdown**
+
    ```typescript
    interface CostAnalysisProps {
      cost: number;
@@ -203,6 +215,7 @@ interface ResultsViewerState {
      executionTime: number;
    }
    ```
+
    - Total execution cost with currency formatting
    - Cost breakdown by token type
    - Cost comparison with previous executions
@@ -210,10 +223,11 @@ interface ResultsViewerState {
 
 3. **Performance Metrics**
    - Execution duration with breakdown
-   - API response time analysis  
+   - API response time analysis
    - Throughput metrics (tokens per second)
 
 **Raw Data Tab**
+
 1. **Request/Response Inspector**
    - Full API request payload
    - Complete API response with headers
@@ -226,6 +240,7 @@ interface ResultsViewerState {
    - API version and endpoint information
 
 **Results Actions Footer**
+
 ```typescript
 interface ResultsActionsProps {
   execution: PromptExecution;
@@ -236,6 +251,7 @@ interface ResultsActionsProps {
   onSave?: () => void;
 }
 ```
+
 - Copy to clipboard with format options
 - Download in multiple formats
 - Share via generated link
@@ -245,6 +261,7 @@ interface ResultsActionsProps {
 ### Error State Handling
 
 **Failed Execution Display**
+
 ```typescript
 interface ErrorDisplayProps {
   error: ExecutionError;
@@ -278,36 +295,43 @@ const ResultsViewerSchema = z.object({
     id: z.string().uuid(),
     status: z.enum(['PENDING', 'RUNNING', 'COMPLETED', 'FAILED']),
     output: z.string().optional(),
-    tokenUsage: z.object({
-      promptTokens: z.number().min(0),
-      completionTokens: z.number().min(0),
-      totalTokens: z.number().min(0)
-    }).optional(),
+    tokenUsage: z
+      .object({
+        promptTokens: z.number().min(0),
+        completionTokens: z.number().min(0),
+        totalTokens: z.number().min(0),
+      })
+      .optional(),
     cost: z.number().min(0).optional(),
-    error: z.object({
-      code: z.string(),
-      message: z.string(),
-      retryable: z.boolean()
-    }).optional()
-  })
+    error: z
+      .object({
+        code: z.string(),
+        message: z.string(),
+        retryable: z.boolean(),
+      })
+      .optional(),
+  }),
 });
 ```
 
 ### Responsive Design
 
 **Desktop (>1024px)**
+
 - Side-by-side layout for input/output comparison
 - Full metrics dashboard with charts
 - Complete action toolbar
 - Expandable raw data inspector
 
 **Tablet (768-1024px)**
+
 - Tabbed interface with full functionality
 - Responsive metrics cards
 - Touch-optimized action buttons
 - Horizontal scrolling for wide content
 
 **Mobile (<768px)**
+
 - Stacked card layout
 - Swipeable tabs for content sections
 - Simplified metrics with key indicators
@@ -320,18 +344,21 @@ const ResultsViewerSchema = z.object({
 ### Phase 1: Basic Results Display (4 hours)
 
 **Components to Build:**
+
 - `AIResultsViewer` main component
 - `OutputDisplay` for AI response formatting
 - `StatusBanner` for execution status
 - Basic tabbed interface structure
 
 **Functionality:**
+
 - Display AI output with basic formatting
 - Show execution status and timestamp
 - Basic copy to clipboard functionality
 - Error state handling
 
 **Acceptance Criteria:**
+
 - [ ] AI output displays correctly with formatting
 - [ ] Execution status clearly indicated
 - [ ] Basic copy functionality works
@@ -340,18 +367,21 @@ const ResultsViewerSchema = z.object({
 ### Phase 2: Metrics & Analytics (3 hours)
 
 **Components to Build:**
+
 - `MetricsDisplay` component
 - `TokenUsageChart` visualization
 - `CostBreakdown` component
 - Performance metrics display
 
 **Functionality:**
+
 - Token usage visualization
 - Cost calculation and display
 - Performance metrics tracking
 - Comparison with historical data
 
 **Acceptance Criteria:**
+
 - [ ] Token metrics display accurately
 - [ ] Cost calculations are correct
 - [ ] Performance data shows clearly
@@ -360,18 +390,21 @@ const ResultsViewerSchema = z.object({
 ### Phase 3: Advanced Actions (3 hours)
 
 **Components to Build:**
+
 - `ResultsActions` toolbar
 - Download functionality with multiple formats
 - Share functionality with link generation
 - Integration with execution history
 
 **Functionality:**
+
 - Multi-format download (TXT, JSON, HTML)
 - Share results via generated links
 - Save to execution history
 - Advanced copy options
 
 **Acceptance Criteria:**
+
 - [ ] Downloads work in all formats
 - [ ] Share functionality generates valid links
 - [ ] History integration saves correctly
@@ -380,23 +413,28 @@ const ResultsViewerSchema = z.object({
 ### Phase 4: Polish & Integration (2 hours)
 
 **Tasks:**
+
 - Raw data inspector implementation
 - Responsive design optimization
 - Accessibility improvements
 - Integration testing with execution panel
 
 **Acceptance Criteria:**
+
 - [ ] Raw data inspector shows complete information
 - [ ] Responsive on all device sizes
 - [ ] Keyboard navigation works
 - [ ] Integration with parent components seamless
 
 ### Dependencies
+
 **Blocked by**: Enhanced Execution Panel (provides execution data)
 **Blocks**: Execution History Interface (consumes saved results)
 
 ### Estimated Effort
+
 **Total: 1 day (12 hours)**
+
 - Development: 10 hours
 - Testing: 2 hours
 
@@ -456,39 +494,42 @@ interface ShareOptions {
 
 ```typescript
 // Output formatting utilities
-const formatAIOutput = (content: string, type: ContentType): FormattedOutput => {
+const formatAIOutput = (
+  content: string,
+  type: ContentType
+): FormattedOutput => {
   const detectedType = detectContentType(content);
-  
+
   switch (detectedType) {
     case 'json':
       return {
         content,
         type: 'json',
         formatted: JSON.stringify(JSON.parse(content), null, 2),
-        language: 'json'
+        language: 'json',
       };
-    
+
     case 'html':
       return {
         content,
         type: 'html',
         formatted: formatHTML(content),
-        language: 'html'
+        language: 'html',
       };
-    
+
     case 'code':
       return {
         content,
         type: 'code',
         formatted: highlightCode(content),
-        language: detectLanguage(content)
+        language: detectLanguage(content),
       };
-      
+
     default:
       return {
         content,
         type: 'text',
-        formatted: content
+        formatted: content,
       };
   }
 };
@@ -502,17 +543,17 @@ const detectContentType = (content: string): ContentType => {
       return 'json';
     } catch {}
   }
-  
+
   // HTML detection
   if (/<[^>]+>/.test(content)) {
     return 'html';
   }
-  
+
   // Code detection (basic patterns)
   if (/^(function|class|const|let|var|import|export)/.test(content.trim())) {
     return 'code';
   }
-  
+
   return 'text';
 };
 ```
@@ -539,8 +580,8 @@ const formatExecutionError = (error: ExecutionError): ErrorDisplayData => {
     {
       label: 'Try Again',
       action: () => onRetry(),
-      variant: 'primary'
-    }
+      variant: 'primary',
+    },
   ];
 
   switch (error.code) {
@@ -548,45 +589,48 @@ const formatExecutionError = (error: ExecutionError): ErrorDisplayData => {
       return {
         title: 'Rate limit exceeded',
         message: 'Too many requests. Please wait a moment before trying again.',
-        actions: baseActions
+        actions: baseActions,
       };
-    
+
     case 'INVALID_API_KEY':
       return {
         title: 'API Configuration Error',
-        message: 'There\'s an issue with the API configuration. Please contact support.',
+        message:
+          "There's an issue with the API configuration. Please contact support.",
         actions: [
           ...baseActions,
           {
             label: 'Contact Support',
             action: () => openSupportDialog(),
-            variant: 'secondary'
-          }
-        ]
+            variant: 'secondary',
+          },
+        ],
       };
-    
+
     case 'TOKEN_LIMIT_EXCEEDED':
       return {
         title: 'Content too long',
-        message: 'The input exceeds the maximum token limit. Try shortening your prompt or input.',
+        message:
+          'The input exceeds the maximum token limit. Try shortening your prompt or input.',
         actions: [
           {
             label: 'Edit and Retry',
             action: () => openEditDialog(),
-            variant: 'primary'
-          }
-        ]
+            variant: 'primary',
+          },
+        ],
       };
-      
+
     default:
       return {
         title: 'Execution Failed',
-        message: error.message || 'An unexpected error occurred during execution.',
+        message:
+          error.message || 'An unexpected error occurred during execution.',
         actions: error.retryable ? baseActions : [],
         technical: {
           code: error.code,
-          details: error.details
-        }
+          details: error.details,
+        },
       };
   }
 };
@@ -598,10 +642,9 @@ const formatExecutionError = (error: ExecutionError): ErrorDisplayData => {
 // Copy functionality
 const handleCopy = async (content: string, format: 'plain' | 'formatted') => {
   try {
-    const textToCopy = format === 'formatted' 
-      ? formatForClipboard(content)
-      : content;
-    
+    const textToCopy =
+      format === 'formatted' ? formatForClipboard(content) : content;
+
     await navigator.clipboard.writeText(textToCopy);
     setShowCopySuccess(true);
     setTimeout(() => setShowCopySuccess(false), 2000);
@@ -612,40 +655,47 @@ const handleCopy = async (content: string, format: 'plain' | 'formatted') => {
 };
 
 // Download functionality
-const handleDownload = (execution: PromptExecution, options: DownloadOptions) => {
+const handleDownload = (
+  execution: PromptExecution,
+  options: DownloadOptions
+) => {
   const content = generateDownloadContent(execution, options);
-  const blob = new Blob([content], { 
-    type: getContentType(options.format) 
+  const blob = new Blob([content], {
+    type: getContentType(options.format),
   });
-  
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = options.filename || `execution-${execution.id}.${options.format}`;
+  a.download =
+    options.filename || `execution-${execution.id}.${options.format}`;
   a.click();
-  
+
   URL.revokeObjectURL(url);
 };
 
 // Share functionality
-const handleShare = async (execution: PromptExecution, options: ShareOptions) => {
+const handleShare = async (
+  execution: PromptExecution,
+  options: ShareOptions
+) => {
   try {
     const sharePayload = {
       executionId: execution.id,
       includeInput: options.includeInput,
       includeMetrics: options.includeMetrics,
-      expirationHours: options.expirationHours
+      expirationHours: options.expirationHours,
     };
-    
+
     const response = await fetch('/api/executions/share', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sharePayload)
+      body: JSON.stringify(sharePayload),
     });
-    
+
     const { shareUrl } = await response.json();
     await navigator.clipboard.writeText(shareUrl);
-    
+
     // Show success notification
     toast.success('Share link copied to clipboard');
   } catch (error) {
@@ -658,6 +708,7 @@ const handleShare = async (execution: PromptExecution, options: ShareOptions) =>
 ### Testing Strategy
 
 **Unit Tests:**
+
 ```typescript
 describe('AIResultsViewer', () => {
   test('displays successful execution results', () => {
@@ -665,7 +716,7 @@ describe('AIResultsViewer', () => {
     const { getByText } = render(
       <AIResultsViewer execution={mockExecution} />
     );
-    
+
     expect(getByText(mockExecution.output)).toBeInTheDocument();
     expect(getByText('Completed')).toBeInTheDocument();
   });
@@ -675,7 +726,7 @@ describe('AIResultsViewer', () => {
     const { getByText } = render(
       <AIResultsViewer execution={mockExecution} />
     );
-    
+
     expect(getByText('Execution Failed')).toBeInTheDocument();
     expect(getByText('Try Again')).toBeInTheDocument();
   });
@@ -683,7 +734,7 @@ describe('AIResultsViewer', () => {
   test('formats JSON output correctly', () => {
     const jsonOutput = '{"message": "Hello, world!"}';
     const formatted = formatAIOutput(jsonOutput, 'json');
-    
+
     expect(formatted.type).toBe('json');
     expect(formatted.formatted).toContain('"message"');
   });
@@ -691,6 +742,7 @@ describe('AIResultsViewer', () => {
 ```
 
 **Integration Tests:**
+
 - Test with Enhanced Execution Panel integration
 - Test download functionality with various formats
 - Test share functionality end-to-end
@@ -703,6 +755,7 @@ describe('AIResultsViewer', () => {
 ### Existing Components to Reuse
 
 **UI Components:**
+
 - `Card`, `CardHeader`, `CardContent`, `CardFooter` - Main container structure
 - `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` - Content organization
 - `Button` - Actions and navigation
@@ -711,6 +764,7 @@ describe('AIResultsViewer', () => {
 - `Progress` - Loading states during actions
 
 **Patterns to Follow:**
+
 - Error handling from existing forms
 - Loading states from execution panel
 - Toast notifications for user feedback
@@ -721,13 +775,13 @@ describe('AIResultsViewer', () => {
 ```typescript
 // Share endpoint integration
 const createShareLink = async (
-  executionId: string, 
+  executionId: string,
   options: ShareOptions
 ): Promise<string> => {
   const response = await fetch('/api/executions/share', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ executionId, ...options })
+    body: JSON.stringify({ executionId, ...options }),
   });
 
   if (!response.ok) {
@@ -762,7 +816,7 @@ const ExecutionWorkflow = () => {
       <EnhancedExecutionPanel
         onExecutionComplete={handleExecutionComplete}
       />
-      
+
       {showResults && currentExecution && (
         <AIResultsViewer
           execution={currentExecution}
@@ -780,6 +834,7 @@ const ExecutionWorkflow = () => {
 ## Success Criteria
 
 ### Functional Requirements
+
 - [ ] Displays AI execution results with proper formatting
 - [ ] Shows comprehensive metrics (tokens, cost, performance)
 - [ ] Handles all execution states (success, failure, timeout)
@@ -787,6 +842,7 @@ const ExecutionWorkflow = () => {
 - [ ] Integrates seamlessly with execution workflow
 
 ### Technical Requirements
+
 - [ ] TypeScript strict mode compliant
 - [ ] Content formatting handles multiple data types
 - [ ] Error handling with user-friendly messages
@@ -794,6 +850,7 @@ const ExecutionWorkflow = () => {
 - [ ] Memory: No leaks with frequent result updates
 
 ### User Experience Requirements
+
 - [ ] Intuitive tabbed interface for different views
 - [ ] Clear visual hierarchy for information display
 - [ ] Responsive design across all device sizes
@@ -801,6 +858,7 @@ const ExecutionWorkflow = () => {
 - [ ] Consistent styling with design system
 
 ### Integration Requirements
+
 - [ ] Works with Enhanced Execution Panel seamlessly
 - [ ] Feeds data to Execution History correctly
 - [ ] Follows established component patterns

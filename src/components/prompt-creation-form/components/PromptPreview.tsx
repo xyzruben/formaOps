@@ -9,14 +9,15 @@ import type { PromptPreviewProps, VariableDefinition } from '../types';
 export function PromptPreview({
   template,
   variables,
-  sampleData = {}
+  sampleData = {},
 }: PromptPreviewProps): JSX.Element {
-  const [currentSampleData, setCurrentSampleData] = useState<Record<string, any>>(sampleData);
+  const [currentSampleData, setCurrentSampleData] =
+    useState<Record<string, any>>(sampleData);
 
   // Generate default sample data for variables
   const defaultSampleData = useMemo(() => {
     const defaults: Record<string, any> = {};
-    
+
     variables.forEach(variable => {
       if (variable.defaultValue !== undefined) {
         defaults[variable.name] = variable.defaultValue;
@@ -24,7 +25,8 @@ export function PromptPreview({
         // Generate sample data based on type
         switch (variable.type) {
           case 'string':
-            defaults[variable.name] = variable.options?.[0] || `sample_${variable.name}`;
+            defaults[variable.name] =
+              variable.options?.[0] || `sample_${variable.name}`;
             break;
           case 'number':
             defaults[variable.name] = 42;
@@ -50,16 +52,18 @@ export function PromptPreview({
   // Render template with variables
   const renderTemplate = useMemo(() => {
     if (!template) return '';
-    
+
     let rendered = template;
-    
+
     // Replace all variables with sample data
     variables.forEach(variable => {
       const value = effectiveSampleData[variable.name];
       const regex = new RegExp(`\\{\\{\\s*${variable.name}\\s*\\}\\}`, 'g');
-      
+
       if (value !== undefined) {
-        const displayValue = Array.isArray(value) ? value.join(', ') : String(value);
+        const displayValue = Array.isArray(value)
+          ? value.join(', ')
+          : String(value);
         rendered = rendered.replace(regex, displayValue);
       }
     });
@@ -67,14 +71,20 @@ export function PromptPreview({
     return rendered;
   }, [template, variables, effectiveSampleData]);
 
-  const handleSampleDataChange = (variableName: string, value: string | number | boolean | string[]) => {
+  const handleSampleDataChange = (
+    variableName: string,
+    value: string | number | boolean | string[]
+  ) => {
     setCurrentSampleData(prev => ({
       ...prev,
-      [variableName]: value
+      [variableName]: value,
     }));
   };
 
-  const parseInputValue = (value: string, type: VariableDefinition['type']): string | number | boolean | string[] => {
+  const parseInputValue = (
+    value: string,
+    type: VariableDefinition['type']
+  ): string | number | boolean | string[] => {
     switch (type) {
       case 'number': {
         const num = Number(value);
@@ -83,17 +93,22 @@ export function PromptPreview({
       case 'boolean':
         return value.toLowerCase() === 'true';
       case 'array':
-        return value.split(',').map(item => item.trim()).filter(Boolean);
+        return value
+          .split(',')
+          .map(item => item.trim())
+          .filter(Boolean);
       default:
         return value;
     }
   };
 
   // Check for template validation issues
-  const hasErrors = template && variables.length === 0 && template.includes('{{');
+  const hasErrors =
+    template && variables.length === 0 && template.includes('{{');
   const missingVariables = useMemo(() => {
-    const templateVars = (template.match(/\{\{([^}]+)\}\}/g) || [])
-      .map(match => match.slice(2, -2).trim());
+    const templateVars = (template.match(/\{\{([^}]+)\}\}/g) || []).map(match =>
+      match.slice(2, -2).trim()
+    );
     const definedVars = variables.map(v => v.name);
     return templateVars.filter(v => !definedVars.includes(v));
   }, [template, variables]);
@@ -120,18 +135,24 @@ export function PromptPreview({
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {variables.map((variable) => (
+            {variables.map(variable => (
               <div key={variable.name} className="space-y-2">
                 <label className="text-sm font-medium">
                   {variable.name}
-                  {variable.required && <span className="text-red-500 ml-1">*</span>}
-                  <span className="text-xs text-gray-500 ml-2">({variable.type})</span>
+                  {variable.required && (
+                    <span className="text-red-500 ml-1">*</span>
+                  )}
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({variable.type})
+                  </span>
                 </label>
-                
+
                 {variable.options ? (
                   <select
                     value={effectiveSampleData[variable.name] || ''}
-                    onChange={(e) => handleSampleDataChange(variable.name, e.target.value)}
+                    onChange={e =>
+                      handleSampleDataChange(variable.name, e.target.value)
+                    }
                     className="w-full p-2 border rounded-md text-sm"
                   >
                     {variable.options.map(option => (
@@ -143,21 +164,26 @@ export function PromptPreview({
                 ) : (
                   <Input
                     value={String(effectiveSampleData[variable.name] || '')}
-                    onChange={(e) => {
-                      const parsedValue = parseInputValue(e.target.value, variable.type);
+                    onChange={e => {
+                      const parsedValue = parseInputValue(
+                        e.target.value,
+                        variable.type
+                      );
                       handleSampleDataChange(variable.name, parsedValue);
                     }}
                     placeholder={`Sample ${variable.type} value`}
                     className="text-sm"
                   />
                 )}
-                
+
                 {variable.description && (
-                  <p className="text-xs text-gray-500">{variable.description}</p>
+                  <p className="text-xs text-gray-500">
+                    {variable.description}
+                  </p>
                 )}
               </div>
             ))}
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -188,7 +214,8 @@ export function PromptPreview({
           {missingVariables.length > 0 && (
             <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-md">
               <p className="text-sm text-orange-800">
-                Missing variable definitions: <code className="bg-orange-100 px-1 rounded">
+                Missing variable definitions:{' '}
+                <code className="bg-orange-100 px-1 rounded">
                   {missingVariables.join(', ')}
                 </code>
               </p>
@@ -212,10 +239,12 @@ export function PromptPreview({
               <span className="font-medium">Variables:</span> {variables.length}
             </div>
             <div>
-              <span className="font-medium">Words:</span> {template.split(/\s+/).filter(Boolean).length}
+              <span className="font-medium">Words:</span>{' '}
+              {template.split(/\s+/).filter(Boolean).length}
             </div>
             <div>
-              <span className="font-medium">Lines:</span> {template.split('\n').length}
+              <span className="font-medium">Lines:</span>{' '}
+              {template.split('\n').length}
             </div>
           </div>
         </CardContent>

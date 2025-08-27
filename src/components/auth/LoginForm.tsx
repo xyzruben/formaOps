@@ -10,7 +10,10 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
-  password: z.string().min(1, 'Password is required').min(6, 'Password must be at least 6 characters'),
+  password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -44,30 +47,30 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      
+
       // Handle specific error cases
       if (errorMessage.toLowerCase().includes('invalid credentials')) {
-        setError('root', { 
-          type: 'manual', 
-          message: 'Invalid credentials' 
+        setError('root', {
+          type: 'manual',
+          message: 'Invalid credentials',
         });
       } else if (errorMessage.toLowerCase().includes('email')) {
-        setError('email', { 
-          type: 'manual', 
-          message: 'Email is required' 
+        setError('email', {
+          type: 'manual',
+          message: 'Email is required',
         });
       } else if (errorMessage.toLowerCase().includes('password')) {
-        setError('password', { 
-          type: 'manual', 
-          message: 'Password is required' 
+        setError('password', {
+          type: 'manual',
+          message: 'Password is required',
         });
       } else {
-        setError('root', { 
-          type: 'manual', 
-          message: errorMessage 
+        setError('root', {
+          type: 'manual',
+          message: errorMessage,
         });
       }
-      
+
       onError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -111,11 +114,7 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
         </div>
       )}
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isSubmitting}
-      >
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? 'Signing in...' : 'Sign In'}
       </Button>
     </form>

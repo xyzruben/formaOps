@@ -25,8 +25,8 @@ export default function HomePage(): JSX.Element {
             </span>
           </div>
           <nav className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="sm"
               onClick={() => setIsLoginModalOpen(true)}
             >
@@ -187,9 +187,9 @@ export default function HomePage(): JSX.Element {
       </footer>
 
       {/* Login Modal */}
-      <LoginModal 
-        isOpen={isLoginModalOpen} 
-        onOpenChange={setIsLoginModalOpen} 
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onOpenChange={setIsLoginModalOpen}
       />
     </div>
   );

@@ -28,11 +28,11 @@
   .prompt-creation-modal {
     @apply h-screen max-w-none m-0 rounded-none;
   }
-  
+
   .template-editor {
     @apply min-h-[200px] text-xs;
   }
-  
+
   .form-section {
     @apply p-2;
   }
@@ -55,7 +55,7 @@
   .template-editor {
     @apply border-2 border-black bg-white text-black;
   }
-  
+
   .preview-container {
     @apply bg-white border-2 border-black;
   }

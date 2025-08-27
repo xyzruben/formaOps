@@ -21,7 +21,7 @@ import { PromptCreationModal } from '../components/prompt-creation-form';
 
 function PromptsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
-  
+
   const handleCreateSuccess = (newPrompt: Prompt) => {
     setShowCreateForm(false);
     // Refresh prompts list
@@ -34,10 +34,8 @@ function PromptsPage() {
 
   return (
     <>
-      <Button onClick={() => setShowCreateForm(true)}>
-        Create Prompt
-      </Button>
-      
+      <Button onClick={() => setShowCreateForm(true)}>Create Prompt</Button>
+
       <PromptCreationModal
         isOpen={showCreateForm}
         onClose={() => setShowCreateForm(false)}
@@ -53,8 +51,8 @@ function PromptsPage() {
 
 ```tsx
 interface PromptCreationFormProps {
-  isOpen: boolean;                    // Whether modal is open
-  onClose: () => void;               // Called when modal closes
+  isOpen: boolean; // Whether modal is open
+  onClose: () => void; // Called when modal closes
   onSuccess: (prompt: Prompt) => void; // Called when prompt is created
   onError?: (error: string) => void; // Called on error (optional)
 }
@@ -64,22 +62,25 @@ interface PromptCreationFormProps {
 
 - **Escape**: Close modal
 - **Ctrl/Cmd + 1**: Switch to Details tab
-- **Ctrl/Cmd + 2**: Switch to Preview tab  
+- **Ctrl/Cmd + 2**: Switch to Preview tab
 - **Ctrl/Cmd + S**: Save as Draft
 - **Ctrl/Cmd + Shift + Enter**: Publish prompt
 
 ## Form Fields
 
 ### Basic Information
+
 - **Name** (required): Prompt name (max 100 characters)
 - **Description** (optional): Prompt description (max 500 characters)
 - **Tags** (optional): Up to 5 tags for categorization
 
 ### Template
+
 - **Template** (required): Prompt template with `{{variable}}` syntax (max 5,000 characters)
 - **Variables**: Automatically detected from template, configured via Variable Definition Editor
 
 ### Status Options
+
 - **Save Draft**: Saves prompt with `DRAFT` status
 - **Publish**: Saves prompt with `PUBLISHED` status
 

@@ -9,7 +9,7 @@ export function TemplateEditor({
   onChange,
   placeholder = 'Enter your prompt template here. Use {{variableName}} for variables.',
   disabled = false,
-  maxLength = 5000
+  maxLength = 5000,
 }: TemplateEditorProps): JSX.Element {
   const [charCount, setCharCount] = useState(value.length);
 
@@ -41,11 +41,15 @@ export function TemplateEditor({
           Template <span className="text-red-500">*</span>
         </label>
         <div className="text-xs text-gray-500 space-x-4">
-          <span>{variableCount} variable{variableCount !== 1 ? 's' : ''} detected</span>
-          <span>{charCount}/{maxLength} characters</span>
+          <span>
+            {variableCount} variable{variableCount !== 1 ? 's' : ''} detected
+          </span>
+          <span>
+            {charCount}/{maxLength} characters
+          </span>
         </div>
       </div>
-      
+
       <div className="relative">
         <Textarea
           id="template-editor"
@@ -56,7 +60,7 @@ export function TemplateEditor({
           className="template-editor min-h-[300px] p-4 border rounded-md font-mono text-sm resize-none"
           rows={12}
         />
-        
+
         {/* Character limit warning */}
         {charCount > maxLength * 0.9 && (
           <div className="absolute bottom-2 right-2 text-xs text-orange-500 bg-white px-2 py-1 rounded shadow">
@@ -64,10 +68,16 @@ export function TemplateEditor({
           </div>
         )}
       </div>
-      
+
       <div className="text-xs text-gray-500">
-        <p>Use double curly braces to define variables: <code className="bg-gray-100 px-1 rounded">{'{{variableName}}'}</code></p>
-        <p>Variables will be automatically detected and available for configuration.</p>
+        <p>
+          Use double curly braces to define variables:{' '}
+          <code className="bg-gray-100 px-1 rounded">{'{{variableName}}'}</code>
+        </p>
+        <p>
+          Variables will be automatically detected and available for
+          configuration.
+        </p>
       </div>
     </div>
   );
