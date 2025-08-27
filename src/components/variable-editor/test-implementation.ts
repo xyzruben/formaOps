@@ -10,7 +10,7 @@ import {
   validateVariableName, 
   extractVariablesFromTemplate 
 } from './validation';
-import { VariableDefinition } from './types';
+import { VariableDefinition, VariableType } from './types';
 
 // Test suite for all phases
 export const testVariableDefinitionEditor = () => {
@@ -50,21 +50,21 @@ export const testVariableDefinitionEditor = () => {
   console.log('\n🔄 Phase 2: Type System & History Management');
   
   // Test 2.1: Type conversions
-  const stringVar: VariableDefinition = { name: 'test', type: 'string', required: true, defaultValue: '123' };
+  const stringVar: VariableDefinition = { name: 'test', type: 'string' as VariableType, required: true, defaultValue: '123' };
   const convertedToNumber = TypeCoercionSystem.convertVariableType(stringVar, 'number');
   console.log('✅ String to number conversion:', convertedToNumber.defaultValue === 123 ? 'Success' : 'Failed');
   
-  const booleanVar: VariableDefinition = { name: 'flag', type: 'string', required: true, defaultValue: 'true' };
+  const booleanVar: VariableDefinition = { name: 'flag', type: 'string' as VariableType, required: true, defaultValue: 'true' };
   const convertedToBoolean = TypeCoercionSystem.convertVariableType(booleanVar, 'boolean');
   console.log('✅ String to boolean conversion:', convertedToBoolean.defaultValue === true ? 'Success' : 'Failed');
   
   // Test 2.2: History management
   const initialVars: VariableDefinition[] = [
-    { name: 'var1', type: 'string', required: true }
+    { name: 'var1', type: 'string' as VariableType, required: true }
   ];
   const historyManager = new VariableHistoryManager(initialVars);
   
-  const newVars = [...initialVars, { name: 'var2', type: 'number', required: false }];
+  const newVars: VariableDefinition[] = [...initialVars, { name: 'var2', type: 'number' as VariableType, required: false }];
   historyManager.pushState(newVars, 'Added var2');
   
   console.log('✅ History push:', historyManager.canUndo() ? 'Success' : 'Failed');
@@ -87,7 +87,7 @@ export const testVariableDefinitionEditor = () => {
   // Test 3.2: Validation system
   const validVar: VariableDefinition = { 
     name: 'validVar', 
-    type: 'string', 
+    type: 'string' as VariableType, 
     required: true, 
     description: 'A valid variable' 
   };
