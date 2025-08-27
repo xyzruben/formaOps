@@ -15,7 +15,7 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
   template,
   variables,
   onChange,
-  disabled = false,
+  disabled: _disabled = false,
   className = ''
 }) => {
   // Phase 3: Performance optimization
@@ -27,7 +27,7 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
     hasMore,
     isDebouncing,
     loadMore,
-    resetVisibleCount
+    resetVisibleCount: _resetVisibleCount
   } = useOptimizedVariableParser(template);
 
   // Phase 3: Accessibility
@@ -40,7 +40,7 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
     focusedVariableIndex,
     handleKeyDown: handleAccessibilityKeyDown,
     setFocusedVariable,
-    clearFocus,
+    clearFocus: _clearFocus,
     getVariableAriaProps,
     getTableAriaProps,
     getAnnouncementAriaProps,
@@ -58,7 +58,7 @@ export const AccessibleVariableEditor: React.FC<VariableDefinitionEditorProps> =
   } = useUndoRedo(variables);
 
   // Phase 2: Type conversion
-  const { conversionMessages, clearConversionMessage } = useTypeConversion(variables);
+  const { conversionMessages: _conversionMessages, clearConversionMessage: _clearConversionMessage } = useTypeConversion(variables);
 
   // Extract variable names for detection display
   const detectedVariableNames = allDetectedVariables.map(v => v.fullPath);
@@ -387,7 +387,7 @@ const AccessibleVariableRow: React.FC<AccessibleVariableRowProps> = ({
   variable,
   index,
   isFocused,
-  onUpdate,
+  onUpdate: _onUpdate,
   onDelete,
   onFocus,
   ariaProps,

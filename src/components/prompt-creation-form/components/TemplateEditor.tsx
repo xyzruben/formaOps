@@ -10,7 +10,7 @@ export function TemplateEditor({
   placeholder = 'Enter your prompt template here. Use {{variableName}} for variables.',
   disabled = false,
   maxLength = 5000
-}: TemplateEditorProps) {
+}: TemplateEditorProps): JSX.Element {
   const [charCount, setCharCount] = useState(value.length);
 
   useEffect(() => {

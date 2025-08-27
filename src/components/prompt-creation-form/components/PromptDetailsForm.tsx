@@ -21,10 +21,10 @@ export function PromptDetailsForm({
   onChange,
   errors,
   disabled = false
-}: PromptDetailsFormProps) {
+}: PromptDetailsFormProps): JSX.Element {
   const [tagInput, setTagInput] = useState('');
 
-  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
       const tag = tagInput.trim();
@@ -37,7 +37,7 @@ export function PromptDetailsForm({
     }
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
+  const handleRemoveTag = (tagToRemove: string): void => {
     onChange({
       tags: formData.tags.filter(tag => tag !== tagToRemove)
     });

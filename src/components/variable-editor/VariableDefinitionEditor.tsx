@@ -10,8 +10,6 @@ import { VariableConfigurationTable } from './components/VariableConfigurationTa
 import { AccessibleVariableEditor } from './components/AccessibleVariableEditor';
 import { useTypeConversion } from './hooks/useTypeConversion';
 import { useUndoRedo } from './hooks/useUndoRedo';
-import { useOptimizedVariableParser } from './hooks/useOptimizedVariableParser';
-import { useAccessibility } from './hooks/useAccessibility';
 
 export function VariableDefinitionEditor({
   template,
@@ -19,7 +17,7 @@ export function VariableDefinitionEditor({
   onChange,
   disabled = false,
   className = ''
-}: VariableDefinitionEditorProps) {
+}: VariableDefinitionEditorProps): JSX.Element {
   // Phase 3: Use enhanced accessible version with all optimizations
   const useEnhancedVersion = true; // Can be made configurable via props if needed
   
@@ -136,7 +134,7 @@ export function VariableDefinitionEditor({
     redo,
     canUndo,
     canRedo,
-    handleKeyDown: handleHistoryKeyDown
+    handleKeyDown: _handleHistoryKeyDown
   } = useUndoRedo(variables);
 
   const { conversionMessages, clearConversionMessage } = useTypeConversion(variables);
@@ -164,7 +162,7 @@ export function VariableDefinitionEditor({
   }, [variables, onChange, pushToHistory]);
 
   // Announcement handler for screen readers
-  const handleVariableDetected = useCallback((count: number) => {
+  const handleVariableDetected = useCallback((_count: number) => {
     // This will be used by screen readers via the VariableDetectionDisplay component
   }, []);
 

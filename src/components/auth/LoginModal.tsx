@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,12 +14,12 @@ interface LoginModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function LoginModal({ isOpen, onOpenChange }: LoginModalProps) {
-  const handleSuccess = () => {
+export function LoginModal({ isOpen, onOpenChange }: LoginModalProps): JSX.Element {
+  const handleSuccess = (): void => {
     onOpenChange(false);
   };
 
-  const handleError = (error: string) => {
+  const handleError = (error: string): void => {
     // Error handling is managed by the LoginForm component
     console.error('Login error:', error);
   };

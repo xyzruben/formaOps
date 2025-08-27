@@ -32,7 +32,7 @@ export class AdvancedVariableParser {
     const combinedPattern = new RegExp(AdvancedVariableParser.patterns.combined.source, 'g');
     
     while ((match = combinedPattern.exec(template)) !== null) {
-      const fullMatch = match[0];
+      const _fullMatch = match[0];
       const variablePath = match[1];
       const position = match.index;
       
@@ -183,7 +183,7 @@ export function handleTemplateEdgeCases(template: string): AdvancedParseResult {
   const duplicateCount = variables.length - uniqueVariables.length;
   if (duplicateCount > 0) {
     // This is informational, not an error
-    console.info(`Template contains ${duplicateCount} duplicate variable references`);
+    console.warn(`Template contains ${duplicateCount} duplicate variable references`);
   }
   
   return { 

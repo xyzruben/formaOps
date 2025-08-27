@@ -4,7 +4,6 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
-import { Select } from '../../ui/select';
 import { Textarea } from '../../ui/textarea';
 import { Badge } from '../../ui/badge';
 import { VariableTableProps, VariableDefinition, VariableType, AccessibilityProps } from '../types';

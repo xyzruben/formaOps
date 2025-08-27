@@ -18,6 +18,7 @@ import { Button } from '../ui/button';
 import { PromptDetailsForm } from './components/PromptDetailsForm';
 import { PromptPreview } from './components/PromptPreview';
 import { CreatePromptSchema, handleCreatePromptError } from './validation';
+import { ZodError } from 'zod';
 import { createPrompt } from './api';
 import type {
   PromptCreationFormProps,
@@ -31,7 +32,7 @@ export function PromptCreationModal({
   onClose,
   onSuccess,
   onError
-}: PromptCreationFormProps) {
+}: PromptCreationFormProps): JSX.Element {
   const [state, setState] = useState<PromptCreationState>({
     formData: {
       name: '',
@@ -55,16 +56,15 @@ export function PromptCreationModal({
     }));
   }, []);
 
-  const validateForm = useCallback(() => {
+  const validateForm = useCallback((): { isValid: boolean; errors: Record<string, string> } => {
     try {
       CreatePromptSchema.parse(state.formData);
       return { isValid: true, errors: {} };
     } catch (error) {
-      if (error instanceof Error && 'errors' in error) {
-        const zodError = error as any;
+      if (error instanceof ZodError) {
         const errors: Record<string, string> = {};
         
-        zodError.errors?.forEach((err: any) => {
+        error.errors.forEach((err) => {
           const field = err.path[0];
           if (field && typeof field === 'string') {
             errors[field] = err.message;
@@ -125,7 +125,7 @@ export function PromptCreationModal({
     }
   }, [state.formData, validateForm, onSuccess, onError]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback((): void => {
     if (!state.isSubmitting) {
       onClose();
       // Reset form when closing

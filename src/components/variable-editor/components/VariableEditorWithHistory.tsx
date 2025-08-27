@@ -19,7 +19,7 @@ interface VariableEditorWithHistoryProps {
 export const VariableEditorWithHistory: React.FC<VariableEditorWithHistoryProps> = ({
   variables: initialVariables,
   onChange,
-  onVariableDetected
+  onVariableDetected: _onVariableDetected
 }) => {
   const [variables, setVariables] = useState<VariableDefinition[]>(initialVariables);
   const {
@@ -227,7 +227,7 @@ interface VariableRowWithHistoryProps {
 
 const VariableRowWithHistory: React.FC<VariableRowWithHistoryProps> = ({
   variable,
-  index,
+  index: _index,
   onUpdate,
   onDelete,
   onTypeChange,
@@ -246,7 +246,7 @@ const VariableRowWithHistory: React.FC<VariableRowWithHistoryProps> = ({
     setIsEditing(false);
   }, [localVariable, onUpdate]);
 
-  const handleCancel = useCallback(() => {
+  const _handleCancel = useCallback(() => {
     setLocalVariable(variable);
     setIsEditing(false);
   }, [variable]);

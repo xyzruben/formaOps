@@ -10,7 +10,7 @@ export function PromptPreview({
   template,
   variables,
   sampleData = {}
-}: PromptPreviewProps) {
+}: PromptPreviewProps): JSX.Element {
   const [currentSampleData, setCurrentSampleData] = useState<Record<string, any>>(sampleData);
 
   // Generate default sample data for variables
@@ -67,18 +67,19 @@ export function PromptPreview({
     return rendered;
   }, [template, variables, effectiveSampleData]);
 
-  const handleSampleDataChange = (variableName: string, value: any) => {
+  const handleSampleDataChange = (variableName: string, value: string | number | boolean | string[]) => {
     setCurrentSampleData(prev => ({
       ...prev,
       [variableName]: value
     }));
   };
 
-  const parseInputValue = (value: string, type: VariableDefinition['type']) => {
+  const parseInputValue = (value: string, type: VariableDefinition['type']): string | number | boolean | string[] => {
     switch (type) {
-      case 'number':
+      case 'number': {
         const num = Number(value);
         return isNaN(num) ? 0 : num;
+      }
       case 'boolean':
         return value.toLowerCase() === 'true';
       case 'array':
