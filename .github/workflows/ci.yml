@@ -129,6 +129,8 @@ jobs:
         run: npm run build
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Run E2E tests
         run: npm run test:e2e
@@ -184,6 +186,8 @@ jobs:
         run: npm run build
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
@@ -213,6 +217,8 @@ jobs:
         env:
           NODE_ENV: production
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
