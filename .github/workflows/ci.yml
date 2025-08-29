@@ -31,7 +31,7 @@ jobs:
         run: npm run type-check
 
       - name: Check formatting
-        run: npx prettier --check .
+        run: npm run format:check
 
   unit-tests:
     name: Unit Tests
