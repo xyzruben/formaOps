@@ -9,10 +9,23 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { LoginModal } from '@/components/auth';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomePage(): JSX.Element {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [showAuthMessage, setShowAuthMessage] = useState(false);
+  const { user: _user } = useAuth();
+
+  useEffect(() => {
+    // Check if user was redirected here because they need to sign in
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auth') === 'required') {
+      setShowAuthMessage(true);
+      setIsLoginModalOpen(true);
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -40,6 +53,13 @@ export default function HomePage(): JSX.Element {
       {/* Hero Section */}
       <section className="flex flex-1 items-center justify-center bg-gradient-to-b from-background to-secondary/20">
         <div className="container px-4 py-24 text-center">
+          {showAuthMessage && (
+            <div className="mb-8 mx-auto max-w-md p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800">
+                Please sign in to access the dashboard
+              </p>
+            </div>
+          )}
           <div className="mx-auto max-w-3xl space-y-6">
             <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
               AI-Native Prompt Management

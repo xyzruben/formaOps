@@ -23,7 +23,7 @@ interface LoginFormProps {
   onError: (error: string) => void;
 }
 
-export function LoginForm({ onSuccess, onError }: LoginFormProps) {
+export function LoginForm({ onSuccess, onError }: LoginFormProps): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login, error: authError, clearError } = useAuth();
 
@@ -37,13 +37,15 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps) {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData): Promise<void> => {
     try {
       setIsSubmitting(true);
       clearError();
       clearErrors();
 
       await login(data.email, data.password);
+      // Redirect to dashboard after successful login
+      window.location.href = '/dashboard';
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
