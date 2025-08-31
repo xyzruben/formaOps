@@ -6,7 +6,7 @@ import { createSupabaseClient } from '@/lib/auth/client';
 import {
   testAuthManager,
   type MockUser,
-  type TestAuthState,
+  type MockAuthState,
 } from '@/lib/auth/test-mock';
 
 interface AuthContextType {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   useEffect(() => {
     if (isTestMode) {
       // Test mode: use mock auth manager
-      const unsubscribe = testAuthManager.subscribe((state: TestAuthState) => {
+      const unsubscribe = testAuthManager.subscribe((state: MockAuthState) => {
         setUser(state.user);
         setIsLoading(state.isLoading);
         setError(state.error);

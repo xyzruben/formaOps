@@ -67,7 +67,10 @@ class TestAuthManager {
     };
   }
 
-  async login(email: string, password: string): Promise<void> {
+  async login(
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> {
     this.updateState({ isLoading: true, error: null });
 
     // Simulate API delay
@@ -79,7 +82,7 @@ class TestAuthManager {
         isLoading: false,
         error: 'Invalid email format',
       });
-      throw new Error('Invalid email format');
+      return { success: false, error: 'Invalid email format' };
     }
 
     if (!password || password.length < 6) {
@@ -87,7 +90,7 @@ class TestAuthManager {
         isLoading: false,
         error: 'Password is required',
       });
-      throw new Error('Password is required');
+      return { success: false, error: 'Password is required' };
     }
 
     // Mock invalid credentials
@@ -96,7 +99,7 @@ class TestAuthManager {
         isLoading: false,
         error: 'Invalid credentials',
       });
-      throw new Error('Invalid credentials');
+      return { success: false, error: 'Invalid credentials' };
     }
 
     // Mock successful login
@@ -108,9 +111,10 @@ class TestAuthManager {
     this.state.user = user;
     this.saveToStorage();
     this.updateState({ user, isLoading: false, error: null });
+    return { success: true };
   }
 
-  async logout(): Promise<void> {
+  async logout(): Promise<{ success: boolean; error?: string }> {
     this.updateState({ isLoading: true, error: null });
 
     // Simulate API delay
@@ -119,6 +123,7 @@ class TestAuthManager {
     this.state.user = null;
     safeLocalStorage.removeItem('auth-user');
     this.updateState({ user: null, isLoading: false, error: null });
+    return { success: true };
   }
 
   clearError(): void {
