@@ -43,6 +43,11 @@ const nextConfig = {
 
   // Webpack optimizations
   webpack: (config, { isServer }) => {
+    // Suppress critical dependency warnings from Supabase realtime-js
+    config.ignoreWarnings = [
+      /Critical dependency: the request of a dependency is an expression/,
+    ];
+
     // Optimize bundle splitting
     if (!isServer) {
       config.optimization.splitChunks = {
