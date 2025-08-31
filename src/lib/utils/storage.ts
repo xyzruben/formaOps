@@ -11,7 +11,6 @@ export const safeLocalStorage = {
       }
       return null;
     } catch (error) {
-       
       console.warn('localStorage access denied:', error);
       return null;
     }
@@ -24,7 +23,6 @@ export const safeLocalStorage = {
         localStorage.setItem(key, value);
       }
     } catch (error) {
-       
       console.warn('localStorage access denied:', error);
     }
   },
@@ -36,7 +34,6 @@ export const safeLocalStorage = {
         localStorage.removeItem(key);
       }
     } catch (error) {
-       
       console.warn('localStorage access denied:', error);
     }
   },
@@ -48,7 +45,6 @@ export const safeLocalStorage = {
         localStorage.clear();
       }
     } catch (error) {
-       
       console.warn('localStorage access denied:', error);
     }
   },
