@@ -13,8 +13,17 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    actionTimeout: 15000, // Fix: 15s action timeout
-    navigationTimeout: 30000, // Fix: 30s navigation timeout
+    actionTimeout: 15000,
+    navigationTimeout: 30000,
+    // Fix localStorage access in CI
+    permissions: ['storage-access'],
+    browserName: 'chromium',
+    launchOptions: {
+      args: [
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+      ],
+    },
   },
   projects: [
     {

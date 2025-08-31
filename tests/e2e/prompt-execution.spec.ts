@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Prompt Execution Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authenticated state
-    await page.evaluate(() => {
-      localStorage.setItem(
+    // Mock authenticated state using addInitScript
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
         'auth-user',
         JSON.stringify({
           id: 'test-user',
