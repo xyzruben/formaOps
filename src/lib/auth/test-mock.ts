@@ -25,18 +25,50 @@ class TestAuthManager {
   private listeners: ((state: MockAuthState) => void)[] = [];
 
   constructor() {
-    // Initialize from localStorage if available
-    this.loadFromStorage();
+    // Initialize from localStorage if available - start as not loading if data exists
+    const stored = safeLocalStorage.getItem('auth-user');
+    if (stored) {
+      try {
+        const user = JSON.parse(stored);
+        this.state = { user, isLoading: false, error: null };
+      } catch (error) {
+        console.warn('Invalid stored auth data:', error);
+        this.state.isLoading = false;
+      }
+    } else {
+      this.state.isLoading = false;
+    }
+    
+    // Listen for localStorage changes during tests
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', this.handleStorageChange.bind(this));
+      
+      // Also set up a periodic check for E2E tests where storage events might not fire
+      setInterval(() => {
+        this.loadFromStorage();
+      }, 100);
+    }
   }
 
   private loadFromStorage(): void {
     const stored = safeLocalStorage.getItem('auth-user');
     if (stored) {
       try {
-        this.state.user = JSON.parse(stored);
+        const user = JSON.parse(stored);
+        if (!this.state.user || this.state.user.id !== user.id) {
+          this.updateState({ user, isLoading: false, error: null });
+        }
       } catch (error) {
         console.warn('Invalid stored auth data:', error);
       }
+    } else if (this.state.user) {
+      this.updateState({ user: null, isLoading: false, error: null });
+    }
+  }
+
+  private handleStorageChange(event: StorageEvent): void {
+    if (event.key === 'auth-user') {
+      this.loadFromStorage();
     }
   }
 

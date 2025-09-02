@@ -65,7 +65,7 @@ test.describe('Authentication Flow', () => {
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
     // Wait for error in error box
-    await expect(page.locator('.bg-destructive\\/10')).toBeVisible();
+    await expect(page.locator('[class*="bg-destructive/10"]')).toBeVisible();
     await expect(page.getByText('Invalid credentials')).toBeVisible();
   });
 

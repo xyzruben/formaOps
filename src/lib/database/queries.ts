@@ -47,6 +47,7 @@ export const getUserPrompts = async (
         id: true,
         name: true,
         description: true,
+        template: true,
         status: true,
         createdAt: true,
         updatedAt: true,
