@@ -9,7 +9,8 @@ build/
 
 # Generated files
 *.html
-*.md
+# Note: Allow project documentation to be formatted
+# *.md - commented out to allow README, CHANGELOG, etc. formatting
 
 # Test reports
 playwright-report/

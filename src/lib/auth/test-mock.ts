@@ -38,11 +38,11 @@ class TestAuthManager {
     } else {
       this.state.isLoading = false;
     }
-    
+
     // Listen for localStorage changes during tests
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', this.handleStorageChange.bind(this));
-      
+
       // Also set up a periodic check for E2E tests where storage events might not fire
       setInterval(() => {
         this.loadFromStorage();

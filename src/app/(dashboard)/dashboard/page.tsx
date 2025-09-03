@@ -10,11 +10,13 @@ export default function DashboardPage(): JSX.Element {
 
   useEffect(() => {
     // Skip redirect in test mode if localStorage has auth-user
-    const isTestMode = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || process.env.NODE_ENV === 'test');
-    const hasTestAuth = typeof window !== 'undefined' && 
-      window.localStorage.getItem('auth-user');
-    
+    const isTestMode =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        process.env.NODE_ENV === 'test');
+    const hasTestAuth =
+      typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
+
     // Redirect unauthenticated users to login (skip in test mode with auth data)
     if (!isLoading && !user && !(isTestMode && hasTestAuth)) {
       window.location.href = '/?auth=required';
@@ -31,11 +33,13 @@ export default function DashboardPage(): JSX.Element {
   }
 
   // Don't render if not authenticated (will redirect) - except in test mode
-  const isTestMode = typeof window !== 'undefined' && 
-    (window.location.hostname === 'localhost' || process.env.NODE_ENV === 'test');
-  const hasTestAuth = typeof window !== 'undefined' && 
-    window.localStorage.getItem('auth-user');
-    
+  const isTestMode =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' ||
+      process.env.NODE_ENV === 'test');
+  const hasTestAuth =
+    typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
+
   if (!user && !(isTestMode && hasTestAuth)) {
     return (
       <div className="container mx-auto py-8">

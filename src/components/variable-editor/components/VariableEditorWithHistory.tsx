@@ -25,8 +25,9 @@ export const VariableEditorWithHistory: React.FC<
 }) => {
   const [variables, setVariables] =
     useState<VariableDefinition[]>(initialVariables);
-  const prevInitialVariablesRef = useRef<VariableDefinition[]>(initialVariables);
-  
+  const prevInitialVariablesRef =
+    useRef<VariableDefinition[]>(initialVariables);
+
   const { pushToHistory, undo, redo, canUndo, canRedo, handleKeyDown } =
     useUndoRedo(variables);
 
@@ -41,7 +42,9 @@ export const VariableEditorWithHistory: React.FC<
   // Sync with external changes
   useEffect(() => {
     const prevInitialVariables = prevInitialVariablesRef.current;
-    if (JSON.stringify(initialVariables) !== JSON.stringify(prevInitialVariables)) {
+    if (
+      JSON.stringify(initialVariables) !== JSON.stringify(prevInitialVariables)
+    ) {
       setVariables(initialVariables);
       prevInitialVariablesRef.current = initialVariables;
     }

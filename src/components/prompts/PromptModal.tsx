@@ -26,7 +26,10 @@ const detectVariables = (template: string): string[] => {
 const promptSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name too long'),
   description: z.string().max(500, 'Description too long').optional(),
-  template: z.string().min(1, 'Template is required').max(10000, 'Template too long'),
+  template: z
+    .string()
+    .min(1, 'Template is required')
+    .max(10000, 'Template too long'),
 });
 
 type PromptFormData = z.infer<typeof promptSchema>;
@@ -38,12 +41,17 @@ interface PromptModalProps {
   prompt?: Prompt | null; // For edit mode
 }
 
-export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptModalProps): JSX.Element {
+export function PromptModal({
+  isOpen,
+  onOpenChange,
+  onSuccess,
+  prompt,
+}: PromptModalProps): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [detectedVariables, setDetectedVariables] = useState<string[]>([]);
 
   const isEditMode = !!prompt;
-  
+
   const {
     register,
     handleSubmit,
@@ -53,11 +61,13 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
     setError,
   } = useForm<PromptFormData>({
     resolver: zodResolver(promptSchema),
-    defaultValues: isEditMode ? {
-      name: prompt.name,
-      description: prompt.description || '',
-      template: prompt.template,
-    } : undefined,
+    defaultValues: isEditMode
+      ? {
+          name: prompt.name,
+          description: prompt.description || '',
+          template: prompt.template,
+        }
+      : undefined,
   });
 
   // Watch template field for variable detection
@@ -97,8 +107,13 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `Failed to ${isEditMode ? 'update' : 'create'} prompt`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: 'Unknown error' }));
+        throw new Error(
+          errorData.error ||
+            `Failed to ${isEditMode ? 'update' : 'create'} prompt`
+        );
       }
 
       // Success
@@ -107,7 +122,10 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : `Failed to ${isEditMode ? 'update' : 'create'} prompt`;
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : `Failed to ${isEditMode ? 'update' : 'create'} prompt`;
       setError('root', {
         type: 'manual',
         message: errorMessage,
@@ -129,10 +147,12 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Prompt' : 'Create New Prompt'}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? 'Edit Prompt' : 'Create New Prompt'}
+          </DialogTitle>
           <DialogDescription>
-            {isEditMode 
-              ? 'Update your prompt template and variables' 
+            {isEditMode
+              ? 'Update your prompt template and variables'
               : 'Create a reusable prompt template with variables'}
           </DialogDescription>
         </DialogHeader>
@@ -168,7 +188,9 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
               className={errors.description ? 'border-destructive' : ''}
             />
             {errors.description && (
-              <p className="text-sm text-destructive">{errors.description.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.description.message}
+              </p>
             )}
           </div>
 
@@ -186,7 +208,9 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
               className={errors.template ? 'border-destructive' : ''}
             />
             {errors.template && (
-              <p className="text-sm text-destructive">{errors.template.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.template.message}
+              </p>
             )}
           </div>
 
@@ -195,14 +219,15 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
             <div className="space-y-2">
               <label className="text-sm font-medium">Detected Variables</label>
               <div className="flex flex-wrap gap-2">
-                {detectedVariables.map((variable) => (
+                {detectedVariables.map(variable => (
                   <Badge key={variable} variant="outline">
                     {variable}
                   </Badge>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                These variables will be available as input fields when executing the prompt
+                These variables will be available as input fields when executing
+                the prompt
               </p>
             </div>
           )}
@@ -225,9 +250,13 @@ export function PromptModal({ isOpen, onOpenChange, onSuccess, prompt }: PromptM
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting 
-                ? (isEditMode ? 'Updating...' : 'Creating...') 
-                : (isEditMode ? 'Update' : 'Create')}
+              {isSubmitting
+                ? isEditMode
+                  ? 'Updating...'
+                  : 'Creating...'
+                : isEditMode
+                  ? 'Update'
+                  : 'Create'}
             </Button>
           </div>
         </form>

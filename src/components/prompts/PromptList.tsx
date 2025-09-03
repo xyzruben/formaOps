@@ -45,13 +45,13 @@ export function PromptList(): JSX.Element {
       if (search) {
         searchParams.set('search', search);
       }
-      
+
       const response = await fetch(`/api/prompts?${searchParams.toString()}`);
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch prompts');
       }
-      
+
       const data: PromptsResponse = await response.json();
       setPrompts(data.prompts || []);
       setError(null);
@@ -64,11 +64,13 @@ export function PromptList(): JSX.Element {
 
   useEffect(() => {
     // In test mode, allow fetching even without user from AuthContext
-    const isTestMode = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || process.env.NODE_ENV === 'test');
-    const hasTestAuth = typeof window !== 'undefined' && 
-      window.localStorage.getItem('auth-user');
-      
+    const isTestMode =
+      typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        process.env.NODE_ENV === 'test');
+    const hasTestAuth =
+      typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
+
     if (user || (isTestMode && hasTestAuth)) {
       fetchPrompts();
     }
@@ -160,7 +162,7 @@ export function PromptList(): JSX.Element {
         <Input
           placeholder="Search prompts"
           value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={e => handleSearch(e.target.value)}
         />
       </div>
 
@@ -171,7 +173,7 @@ export function PromptList(): JSX.Element {
         </div>
       ) : (
         <div className="grid gap-4">
-          {prompts.map((prompt) => (
+          {prompts.map(prompt => (
             <Card key={prompt.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -182,24 +184,24 @@ export function PromptList(): JSX.Element {
                     )}
                   </div>
                   <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleExecutePrompt(prompt)}
                       disabled={loading}
                     >
                       Execute
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleEditPrompt(prompt)}
                       disabled={loading}
                     >
                       Edit
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => handleDeletePrompt(prompt)}
                       disabled={loading}
@@ -239,7 +241,7 @@ export function PromptList(): JSX.Element {
       {/* Edit Prompt Modal */}
       <PromptModal
         isOpen={!!editPrompt}
-        onOpenChange={(open) => !open && setEditPrompt(null)}
+        onOpenChange={open => !open && setEditPrompt(null)}
         onSuccess={handleEditComplete}
         prompt={editPrompt}
       />
@@ -247,7 +249,7 @@ export function PromptList(): JSX.Element {
       {/* Delete Prompt Dialog */}
       <DeletePromptDialog
         isOpen={!!deletePrompt}
-        onOpenChange={(open) => !open && setDeletePrompt(null)}
+        onOpenChange={open => !open && setDeletePrompt(null)}
         prompt={deletePrompt}
         onSuccess={handleDeleteComplete}
       />
@@ -255,7 +257,7 @@ export function PromptList(): JSX.Element {
       {/* Execute Prompt Modal */}
       <ExecuteModal
         isOpen={!!executePrompt}
-        onOpenChange={(open) => !open && setExecutePrompt(null)}
+        onOpenChange={open => !open && setExecutePrompt(null)}
         prompt={executePrompt}
         onSuccess={handleExecutionComplete}
       />

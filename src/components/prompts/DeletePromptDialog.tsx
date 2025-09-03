@@ -18,11 +18,11 @@ interface DeletePromptDialogProps {
   onSuccess?: () => void;
 }
 
-export function DeletePromptDialog({ 
-  isOpen, 
-  onOpenChange, 
-  prompt, 
-  onSuccess 
+export function DeletePromptDialog({
+  isOpen,
+  onOpenChange,
+  prompt,
+  onSuccess,
 }: DeletePromptDialogProps): JSX.Element {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +39,9 @@ export function DeletePromptDialog({
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: 'Unknown error' }));
         throw new Error(errorData.error || 'Failed to delete prompt');
       }
 
@@ -47,7 +49,8 @@ export function DeletePromptDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete prompt';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to delete prompt';
       setError(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -69,7 +72,8 @@ export function DeletePromptDialog({
         <DialogHeader>
           <DialogTitle>Delete Prompt</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete "{prompt.name}"? This action cannot be undone.
+            Are you sure you want to delete "{prompt.name}"? This action cannot
+            be undone.
           </DialogDescription>
         </DialogHeader>
 

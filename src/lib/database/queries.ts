@@ -8,7 +8,10 @@ export const findUserByEmail = async (email: string): Promise<any> => {
   });
 };
 
-export const createUser = async (data: { email: string; name?: string }): Promise<any> => {
+export const createUser = async (data: {
+  email: string;
+  name?: string;
+}): Promise<any> => {
   return prisma.user.create({
     data,
   });
@@ -75,7 +78,10 @@ export const getUserPrompts = async (
   };
 };
 
-export const getPromptById = async (id: string, userId: string): Promise<any> => {
+export const getPromptById = async (
+  id: string,
+  userId: string
+): Promise<any> => {
   return prisma.prompt.findFirst({
     where: { id, userId },
     include: {
@@ -131,7 +137,10 @@ export const updatePrompt = async (
   });
 };
 
-export const deletePrompt = async (id: string, userId: string): Promise<any> => {
+export const deletePrompt = async (
+  id: string,
+  userId: string
+): Promise<any> => {
   return prisma.prompt.deleteMany({
     where: { id, userId },
   });
