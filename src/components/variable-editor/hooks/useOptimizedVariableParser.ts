@@ -10,7 +10,7 @@ import {
 } from '../parsers/AdvancedVariableParser';
 
 // Debounce utility hook
-const useDebounce = (value: string, delay: number) => {
+const useDebounce = (value: string, delay: number): string => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export const VariablePerformanceMonitor = {
 };
 
 // Main optimized parser hook
-export const useOptimizedVariableParser = (template: string) => {
+export const useOptimizedVariableParser = (template: string): any => {
   // Debounce template changes to prevent excessive parsing
   const debouncedTemplate = useDebounce(template, 300);
 
@@ -118,9 +118,9 @@ export const useOptimizedVariableParser = (template: string) => {
       };
     }
 
-    // Performance tracking
-    const parseTime = performance.now() - parseStartTime;
-    const memoryUsage = VariablePerformanceMonitor.trackMemoryUsage();
+    // Performance tracking (variables prefixed with _ to indicate intentional non-use)
+    const _parseTime = performance.now() - parseStartTime;
+    const _memoryUsage = VariablePerformanceMonitor.trackMemoryUsage();
 
     // Performance tracking completed (debug logging removed for production)
 

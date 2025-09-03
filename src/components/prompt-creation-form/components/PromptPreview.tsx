@@ -47,10 +47,13 @@ export function PromptPreview({
   }, [variables]);
 
   // Merge default sample data with current sample data
-  const effectiveSampleData = useMemo(() => ({ 
-    ...defaultSampleData, 
-    ...currentSampleData 
-  }), [defaultSampleData, currentSampleData]);
+  const effectiveSampleData = useMemo(
+    () => ({
+      ...defaultSampleData,
+      ...currentSampleData,
+    }),
+    [defaultSampleData, currentSampleData]
+  );
 
   // Render template with variables
   const renderTemplate = useMemo(() => {
@@ -77,7 +80,7 @@ export function PromptPreview({
   const handleSampleDataChange = (
     variableName: string,
     value: string | number | boolean | string[]
-  ) => {
+  ): void => {
     setCurrentSampleData(prev => ({
       ...prev,
       [variableName]: value,
