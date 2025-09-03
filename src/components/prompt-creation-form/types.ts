@@ -34,7 +34,7 @@ export interface TemplateEditorProps {
 export interface PromptPreviewProps {
   template: string;
   variables: VariableDefinition[];
-  sampleData?: Record<string, any>;
+  sampleData?: Record<string, string | number | boolean>;
 }
 
 // API response types

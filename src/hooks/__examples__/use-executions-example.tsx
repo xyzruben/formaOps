@@ -52,7 +52,6 @@ export function UseExecutionsExample(): JSX.Element {
         temperature: 0.7,
       });
 
-      console.log('Execution result:', result);
       alert(`Execution completed! ID: ${result.executionId}`);
     } catch (err) {
       console.error('Execution failed:', err);
@@ -81,8 +80,7 @@ export function UseExecutionsExample(): JSX.Element {
   ): Promise<void> => {
     try {
       const execution = await getExecutionById(executionId);
-      console.log('Execution details:', execution);
-      alert(`Execution details logged to console`);
+      alert(`Execution found: ${execution.result.slice(0, 50)}...`);
     } catch (err) {
       console.error('Failed to get execution details:', err);
       alert(

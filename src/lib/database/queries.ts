@@ -2,13 +2,13 @@ import { prisma } from './client';
 import type { Execution, PromptStatus, ExecutionStatus } from '@prisma/client';
 
 // User queries
-export const findUserByEmail = async (email: string) => {
+export const findUserByEmail = async (email: string): Promise<any> => {
   return prisma.user.findUnique({
     where: { email },
   });
 };
 
-export const createUser = async (data: { email: string; name?: string }) => {
+export const createUser = async (data: { email: string; name?: string }): Promise<any> => {
   return prisma.user.create({
     data,
   });
@@ -28,7 +28,7 @@ export const getUserPrompts = async (
     status?: PromptStatus;
     search?: string;
   } = {}
-) => {
+): Promise<any> => {
   const where = {
     userId,
     ...(status && { status }),
@@ -75,7 +75,7 @@ export const getUserPrompts = async (
   };
 };
 
-export const getPromptById = async (id: string, userId: string) => {
+export const getPromptById = async (id: string, userId: string): Promise<any> => {
   return prisma.prompt.findFirst({
     where: { id, userId },
     include: {
@@ -100,7 +100,7 @@ export const createPrompt = async (
     status?: PromptStatus;
     tags?: string[];
   }
-) => {
+): Promise<any> => {
   return prisma.prompt.create({
     data: {
       ...data,
@@ -120,7 +120,7 @@ export const updatePrompt = async (
     status: PromptStatus;
     tags: string[];
   }>
-) => {
+): Promise<any> => {
   return prisma.prompt.updateMany({
     where: { id, userId },
     data: {
@@ -131,7 +131,7 @@ export const updatePrompt = async (
   });
 };
 
-export const deletePrompt = async (id: string, userId: string) => {
+export const deletePrompt = async (id: string, userId: string): Promise<any> => {
   return prisma.prompt.deleteMany({
     where: { id, userId },
   });
@@ -155,7 +155,7 @@ export const getUserExecutions = async (
     from?: Date;
     to?: Date;
   } = {}
-) => {
+): Promise<any> => {
   const where = {
     userId,
     ...(status && { status }),
@@ -220,7 +220,7 @@ export const createExecution = async (
     priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL';
     model?: string;
   }
-) => {
+): Promise<any> => {
   return prisma.execution.create({
     data: {
       userId,
@@ -245,7 +245,7 @@ export const updateExecution = async (
     startedAt: Date;
     completedAt: Date;
   }>
-) => {
+): Promise<any> => {
   return prisma.execution.update({
     where: { id },
     data,
@@ -448,7 +448,7 @@ export async function retryExecution(
 export async function getExecutionStats(
   userId: string,
   dateRange?: { from: Date; to: Date }
-) {
+): Promise<any> {
   const where = {
     userId,
     ...(dateRange && {

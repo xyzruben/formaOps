@@ -148,7 +148,7 @@ export function PromptCreationModal({
 
   // Keyboard navigation support
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (!isOpen) return;
 
       // Escape key to close modal
@@ -182,7 +182,7 @@ export function PromptCreationModal({
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return (): void => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, state.isSubmitting, handleSubmit, handleClose]);
 
   return (

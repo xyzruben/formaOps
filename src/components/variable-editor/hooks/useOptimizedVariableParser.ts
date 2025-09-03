@@ -122,17 +122,7 @@ export const useOptimizedVariableParser = (template: string) => {
     const parseTime = performance.now() - parseStartTime;
     const memoryUsage = VariablePerformanceMonitor.trackMemoryUsage();
 
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('Variable parsing performance:', {
-        parseTime: `${parseTime.toFixed(2)}ms`,
-        memoryUsage: `${memoryUsage.toFixed(2)}MB`,
-        variableCount: result.variables.length,
-        shouldOptimize: VariablePerformanceMonitor.shouldOptimize(
-          parseTime,
-          memoryUsage
-        ),
-      });
-    }
+    // Performance tracking completed (debug logging removed for production)
 
     return result;
   }, [debouncedTemplate]);

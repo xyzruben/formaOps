@@ -24,7 +24,14 @@ export const CreatePromptSchema = z.object({
     .max(5000, 'Template must be less than 5,000 characters'),
 
   variables: z
-    .array(z.any()) // Will use VariableDefinitionSchema from Variable Editor
+    .array(z.object({
+      name: z.string(),
+      type: z.enum(['string', 'number', 'boolean', 'array']),
+      required: z.boolean(),
+      description: z.string().optional(),
+      defaultValue: z.unknown().optional(),
+      options: z.array(z.string()).optional(),
+    }))
     .max(20, 'Maximum 20 variables allowed'),
 
   tags: z
@@ -47,7 +54,7 @@ export const CreatePromptSchema = z.object({
 export const validateTemplateVariables = (
   template: string,
   variables: VariableDefinition[]
-) => {
+): { isValid: boolean; missingDefinitions: string[] } => {
   const templateVars = extractVariablesFromTemplate(template);
   const definedVars = variables.map(v => v.name);
 

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+
 import { Prompt, VariableDefinition } from '@/types/database';
 
 interface ExecutionResult {
@@ -41,7 +41,7 @@ export function ExecuteModal({ isOpen, onOpenChange, prompt, onSuccess }: Execut
   const [executionError, setExecutionError] = useState<string | null>(null);
 
   // Create dynamic schema based on prompt variables
-  const createValidationSchema = (variables: VariableDefinition[]) => {
+  const createValidationSchema = (variables: VariableDefinition[]): z.ZodObject<Record<string, z.ZodTypeAny>> => {
     const schemaFields: Record<string, z.ZodTypeAny> = {};
     
     variables.forEach((variable) => {

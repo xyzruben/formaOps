@@ -1,7 +1,7 @@
 // Enhanced Variable Editor with History
 // Implements Phase 2 integration from VARIABLE_DEFINITION_EDITOR_PLAN.md
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Alert } from '../../ui/alert';
@@ -25,6 +25,8 @@ export const VariableEditorWithHistory: React.FC<
 }) => {
   const [variables, setVariables] =
     useState<VariableDefinition[]>(initialVariables);
+  const prevInitialVariablesRef = useRef<VariableDefinition[]>(initialVariables);
+  
   const { pushToHistory, undo, redo, canUndo, canRedo, handleKeyDown } =
     useUndoRedo(variables);
 
@@ -38,10 +40,12 @@ export const VariableEditorWithHistory: React.FC<
 
   // Sync with external changes
   useEffect(() => {
-    if (JSON.stringify(initialVariables) !== JSON.stringify(variables)) {
+    const prevInitialVariables = prevInitialVariablesRef.current;
+    if (JSON.stringify(initialVariables) !== JSON.stringify(prevInitialVariables)) {
       setVariables(initialVariables);
+      prevInitialVariablesRef.current = initialVariables;
     }
-  }, [initialVariables]); // Only depend on initialVariables, not variables to avoid loop
+  }, [initialVariables]);
 
   // Wrapper functions that include history tracking
   const addVariable = useCallback(
