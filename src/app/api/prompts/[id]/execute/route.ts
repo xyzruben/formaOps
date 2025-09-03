@@ -64,6 +64,13 @@ export async function POST(
 
     execution = await createExecution(user.id, promptId, executionData);
 
+    if (!execution) {
+      return NextResponse.json(
+        { error: 'Failed to create execution record', code: 'INTERNAL_ERROR' },
+        { status: 500 }
+      );
+    }
+
     // Log execution start
     await logger.logExecutionStart(execution.id, {
       promptId,
@@ -96,10 +103,12 @@ export async function POST(
     );
 
     if (!templateResult.isValid) {
-      await updateExecution(execution.id, {
-        status: 'FAILED',
-        completedAt: new Date(),
-      });
+      if (execution) {
+        await updateExecution(execution.id, {
+          status: 'FAILED',
+          completedAt: new Date(),
+        });
+      }
 
       return NextResponse.json(
         {

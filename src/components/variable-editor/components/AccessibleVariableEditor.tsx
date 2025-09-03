@@ -2,7 +2,11 @@
 // Implements Phase 3 accessibility from VARIABLE_DEFINITION_EDITOR_PLAN.md
 
 import React, { useCallback, useEffect } from 'react';
-import { VariableDefinition, VariableDefinitionEditorProps } from '../types';
+import {
+  VariableDefinition,
+  VariableDefinitionEditorProps,
+  ParsedVariable,
+} from '../types';
 import { useOptimizedVariableParser } from '../hooks/useOptimizedVariableParser';
 import { useAccessibility } from '../hooks/useAccessibility';
 import { useUndoRedo } from '../hooks/useUndoRedo';
@@ -61,21 +65,25 @@ export const AccessibleVariableEditor: React.FC<
   } = useTypeConversion(variables);
 
   // Extract variable names for detection display
-  const detectedVariableNames = allDetectedVariables.map(v => v.fullPath);
-  const existingVariableNames = variables.map(v => v.name);
+  const detectedVariableNames = allDetectedVariables.map(
+    (v: ParsedVariable) => v.fullPath
+  );
+  const existingVariableNames = variables.map(
+    (v: VariableDefinition) => v.name
+  );
 
   // Sync newly detected variables
   const handleSyncVariables = useCallback(() => {
     const newVariables = detectedVariableNames.filter(
-      detected => !existingVariableNames.includes(detected)
+      (detected: string) => !existingVariableNames.includes(detected)
     );
 
     if (newVariables.length === 0) return;
 
     const newVariableDefinitions: VariableDefinition[] = newVariables.map(
-      variableName => {
+      (variableName: string) => {
         const parsedVar = allDetectedVariables.find(
-          v => v.fullPath === variableName
+          (v: ParsedVariable) => v.fullPath === variableName
         );
 
         return {

@@ -12,11 +12,11 @@ export function PromptPreview({
   sampleData = {},
 }: PromptPreviewProps): JSX.Element {
   const [currentSampleData, setCurrentSampleData] =
-    useState<Record<string, string | number | boolean>>(sampleData);
+    useState<Record<string, string | number | boolean | string[]>>(sampleData);
 
   // Generate default sample data for variables
   const defaultSampleData = useMemo(() => {
-    const defaults: Record<string, string | number | boolean> = {};
+    const defaults: Record<string, string | number | boolean | string[]> = {};
 
     variables.forEach(variable => {
       if (variable.defaultValue !== undefined) {
@@ -81,10 +81,12 @@ export function PromptPreview({
     variableName: string,
     value: string | number | boolean | string[]
   ): void => {
-    setCurrentSampleData(prev => ({
-      ...prev,
-      [variableName]: value,
-    }));
+    setCurrentSampleData(
+      (prev: Record<string, string | number | boolean | string[]>) => ({
+        ...prev,
+        [variableName]: value,
+      })
+    );
   };
 
   const parseInputValue = (
@@ -155,7 +157,7 @@ export function PromptPreview({
 
                 {variable.options ? (
                   <select
-                    value={effectiveSampleData[variable.name] || ''}
+                    value={String(effectiveSampleData[variable.name] || '')}
                     onChange={e =>
                       handleSampleDataChange(variable.name, e.target.value)
                     }
@@ -193,7 +195,14 @@ export function PromptPreview({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentSampleData(defaultSampleData)}
+              onClick={() =>
+                setCurrentSampleData(
+                  defaultSampleData as Record<
+                    string,
+                    string | number | boolean | string[]
+                  >
+                )
+              }
               className="mt-4"
             >
               Reset to Defaults

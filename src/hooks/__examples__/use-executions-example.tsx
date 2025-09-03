@@ -80,7 +80,9 @@ export function UseExecutionsExample(): JSX.Element {
   ): Promise<void> => {
     try {
       const execution = await getExecutionById(executionId);
-      alert(`Execution found: ${execution.result.slice(0, 50)}...`);
+      alert(
+        `Execution found: ${execution.output?.slice(0, 50) || 'No output'}...`
+      );
     } catch (err) {
       console.error('Failed to get execution details:', err);
       alert(
