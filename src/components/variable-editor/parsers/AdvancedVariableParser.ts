@@ -95,7 +95,11 @@ export class AdvancedVariableParser {
     return { variables, errors, warnings };
   }
 
-  static analyzeVariableStructure(path: string) {
+  static analyzeVariableStructure(path: string): {
+    type: 'simple' | 'nested' | 'array_indexed';
+    depth: number;
+    isValid: boolean;
+  } {
     // Split path into components
     const parts = path.split('.');
     const baseName = parts[0];

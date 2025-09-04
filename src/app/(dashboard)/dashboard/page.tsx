@@ -50,13 +50,16 @@ const PromptList = dynamic(
 );
 
 // Test-mode component that provides basic prompt functionality without complex dependencies
-function TestModePromptList() {
+function TestModePromptList(): JSX.Element {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExecuteModal, setShowExecuteModal] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<MockPrompt | null>(null);
-  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
+  const [executionResult, setExecutionResult] =
+    useState<ExecutionResult | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
   const [formValues, setFormValues] = useState<FormValues>({});
 
   // Mock prompts data that matches what tests expect
@@ -98,7 +101,7 @@ function TestModePromptList() {
   };
 
   // Mock execution
-  const handleExecutePrompt = async () => {
+  const handleExecutePrompt = async (): Promise<void> => {
     if (!selectedPrompt || !validateForm(selectedPrompt)) {
       return;
     }
@@ -123,7 +126,7 @@ function TestModePromptList() {
   };
 
   // Reset modal states
-  const resetExecuteModal = () => {
+  const resetExecuteModal = (): void => {
     setShowExecuteModal(false);
     setSelectedPrompt(null);
     setExecutionResult(null);

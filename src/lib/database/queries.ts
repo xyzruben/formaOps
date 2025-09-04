@@ -1,7 +1,6 @@
 import { prisma } from './client';
 import type {
   User,
-  Prompt,
   Execution,
   PromptStatus,
   ExecutionStatus,
@@ -51,7 +50,15 @@ export const getUserPrompts = async (
     status?: PromptStatus;
     search?: string;
   } = {}
-): Promise<{ prompts: PromptsResult; pagination: { page: number; limit: number; total: number; totalPages: number } }> => {
+): Promise<{
+  prompts: PromptsResult;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> => {
   const where = {
     userId,
     ...(status && { status }),

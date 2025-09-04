@@ -18,7 +18,7 @@ const useDebounce = (value: string, delay: number): string => {
       setDebouncedValue(value);
     }, delay);
 
-    return () => clearTimeout(handler);
+    return (): void => clearTimeout(handler);
   }, [value, delay]);
 
   return debouncedValue;
@@ -40,7 +40,12 @@ export const VariablePerformanceMonitor = {
 
   trackMemoryUsage: (): number => {
     if ('memory' in performance) {
-      return (performance as any).memory.usedJSHeapSize / 1024 / 1024;
+      return (
+        (performance as Performance & { memory: { usedJSHeapSize: number } })
+          .memory.usedJSHeapSize /
+        1024 /
+        1024
+      );
     }
     return 0;
   },
@@ -54,7 +59,18 @@ export const VariablePerformanceMonitor = {
 };
 
 // Main optimized parser hook
-export const useOptimizedVariableParser = (template: string): any => {
+export const useOptimizedVariableParser = (
+  template: string
+): {
+  variables: any[];
+  allVariables: any[];
+  errors: any[];
+  warnings: any[];
+  hasMore: boolean;
+  isDebouncing: boolean;
+  loadMore: () => void;
+  resetVisibleCount: () => void;
+} => {
   // Debounce template changes to prevent excessive parsing
   const debouncedTemplate = useDebounce(template, 300);
 

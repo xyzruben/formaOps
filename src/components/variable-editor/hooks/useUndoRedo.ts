@@ -5,7 +5,15 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { VariableDefinition } from '../types';
 import { VariableHistoryManager } from '../utils/VariableHistoryManager';
 
-export const useUndoRedo = (initialVariables: VariableDefinition[]) => {
+export const useUndoRedo = (
+  initialVariables: VariableDefinition[]
+): {
+  pushToHistory: (variables: VariableDefinition[], action: string) => void;
+  undo: () => VariableDefinition[] | null;
+  redo: () => VariableDefinition[] | null;
+  canUndo: boolean;
+  canRedo: boolean;
+} => {
   const historyManager = useRef(new VariableHistoryManager(initialVariables));
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -41,7 +49,7 @@ export const useUndoRedo = (initialVariables: VariableDefinition[]) => {
 
   // Keyboard event handler
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
+    (event: KeyboardEvent): void => {
       if (event.ctrlKey || event.metaKey) {
         switch (event.key.toLowerCase()) {
           case 'z':

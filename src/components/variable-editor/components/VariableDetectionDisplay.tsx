@@ -20,7 +20,7 @@ export function VariableDetectionDisplay({
   errors = [],
   warnings = [],
   onVariableDetected,
-}: EnhancedVariableDetectionProps) {
+}: EnhancedVariableDetectionProps): JSX.Element {
   // Calculate new variables that aren't in existing definitions
   const newVariables = detectedVariables.filter(
     variable => !existingVariables.includes(variable)

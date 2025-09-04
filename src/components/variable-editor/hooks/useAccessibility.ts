@@ -13,7 +13,7 @@ export const HighContrastStyles = {
     );
   },
 
-  applyHighContrastStyles: () => ({
+  applyHighContrastStyles: (): Record<string, string> => ({
     '--variable-border-color': 'currentColor',
     '--variable-bg-color': 'transparent',
     '--variable-text-color': 'currentColor',
@@ -27,20 +27,30 @@ interface UseAccessibilityReturn {
   announcementText: string;
   announceVariableDetection: (count: number) => void;
   announceVariableUpdate: (variableName: string, action: string) => void;
-  announceTypeConversion: (variableName: string, fromType: string, toType: string, success: boolean) => void;
-  announceHistoryAction: (action: "undo" | "redo", description: string) => void;
-  
+  announceTypeConversion: (
+    variableName: string,
+    fromType: string,
+    toType: string,
+    success: boolean
+  ) => void;
+  announceHistoryAction: (action: 'undo' | 'redo', description: string) => void;
+
   // Navigation
   focusedVariableIndex: number;
-  handleKeyDown: (event: React.KeyboardEvent) => boolean | { action: string; index: number };
+  handleKeyDown: (
+    event: React.KeyboardEvent
+  ) => boolean | { action: string; index: number };
   setFocusedVariable: (index: number) => void;
   clearFocus: () => void;
-  
+
   // ARIA helpers
-  getVariableAriaProps: (variable: VariableDefinition, index: number) => Record<string, any>;
-  getTableAriaProps: () => Record<string, any>;
-  getAnnouncementAriaProps: () => Record<string, any>;
-  
+  getVariableAriaProps: (
+    variable: VariableDefinition,
+    index: number
+  ) => Record<string, string | number | boolean>;
+  getTableAriaProps: () => Record<string, string | number | boolean>;
+  getAnnouncementAriaProps: () => Record<string, string | boolean>;
+
   // High contrast
   highContrastMode: boolean;
   highContrastStyles: Record<string, string>;
@@ -57,7 +67,7 @@ export const useAccessibility = (
 
   // Detect high contrast mode
   useEffect(() => {
-    const updateHighContrast = () => {
+    const updateHighContrast = (): void => {
       setHighContrastMode(HighContrastStyles.detectHighContrast());
     };
 
@@ -67,7 +77,7 @@ export const useAccessibility = (
     const mediaQuery = window.matchMedia('(prefers-contrast: high)');
     mediaQuery.addListener(updateHighContrast);
 
-    return () => {
+    return (): void => {
       mediaQuery.removeListener(updateHighContrast);
     };
   }, []);
@@ -230,7 +240,7 @@ export const useAccessibility = (
 
   // Cleanup
   useEffect(() => {
-    return () => {
+    return (): void => {
       if (announcementTimeoutRef.current) {
         clearTimeout(announcementTimeoutRef.current);
       }
