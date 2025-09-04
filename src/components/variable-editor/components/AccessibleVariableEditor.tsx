@@ -141,7 +141,8 @@ export const AccessibleVariableEditor: React.FC<
         announceTypeConversion(
           updatedVariable.name,
           oldVariable.type,
-          updatedVariable.type
+          updatedVariable.type,
+          true
         );
       } else {
         announceVariableUpdate(updatedVariable.name, 'configuration');
@@ -191,9 +192,9 @@ export const AccessibleVariableEditor: React.FC<
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       // Handle accessibility navigation first
-      const accessibilityResult = handleAccessibilityKeyDown(event.nativeEvent);
+      const accessibilityResult = handleAccessibilityKeyDown(event);
 
-      if (accessibilityResult) {
+      if (accessibilityResult && typeof accessibilityResult === 'object') {
         switch (accessibilityResult.action) {
           case 'edit':
             // Implementation would trigger edit mode for focused variable

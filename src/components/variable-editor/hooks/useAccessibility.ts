@@ -1,7 +1,7 @@
 // Accessibility Hook
 // Implements Phase 3 accessibility features from VARIABLE_DEFINITION_EDITOR_PLAN.md
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { VariableDefinition } from '../types';
 
 // High contrast mode support
@@ -23,14 +23,27 @@ export const HighContrastStyles = {
 };
 
 interface UseAccessibilityReturn {
+  // Announcements
   announcementText: string;
+  announceVariableDetection: (count: number) => void;
+  announceVariableUpdate: (variableName: string, action: string) => void;
+  announceTypeConversion: (variableName: string, fromType: string, toType: string, success: boolean) => void;
+  announceHistoryAction: (action: "undo" | "redo", description: string) => void;
+  
+  // Navigation
   focusedVariableIndex: number;
+  handleKeyDown: (event: React.KeyboardEvent) => boolean | { action: string; index: number };
+  setFocusedVariable: (index: number) => void;
+  clearFocus: () => void;
+  
+  // ARIA helpers
+  getVariableAriaProps: (variable: VariableDefinition, index: number) => Record<string, any>;
+  getTableAriaProps: () => Record<string, any>;
+  getAnnouncementAriaProps: () => Record<string, any>;
+  
+  // High contrast
   highContrastMode: boolean;
-  announceChange: (message: string) => void;
-  handleKeyboardNavigation: (event: React.KeyboardEvent) => boolean;
-  getAriaLabel: (variable: VariableDefinition, index: number) => string;
-  getAriaDescribedBy: (variable: VariableDefinition) => string;
-  styles: Record<string, string>;
+  highContrastStyles: Record<string, string>;
 }
 
 // Main accessibility hook
@@ -124,7 +137,7 @@ export const useAccessibility = (
 
   // Keyboard navigation
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
+    (event: React.KeyboardEvent) => {
       switch (event.key) {
         case 'ArrowDown':
           event.preventDefault();
@@ -163,7 +176,7 @@ export const useAccessibility = (
           }
           break;
       }
-      return null;
+      return false;
     },
     [focusedVariableIndex, variables.length]
   );

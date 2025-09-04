@@ -9,7 +9,16 @@ import type {
 
 // Database result types
 type UserResult = User | null;
-type PromptResult = Prompt & { _count: { executions: number } };
+type PromptResult = {
+  id: string;
+  name: string;
+  description: string | null;
+  template: string;
+  status: PromptStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  _count: { executions: number };
+};
 type PromptsResult = PromptResult[];
 
 // User queries
@@ -42,7 +51,7 @@ export const getUserPrompts = async (
     status?: PromptStatus;
     search?: string;
   } = {}
-): Promise<{ prompts: PromptsResult; totalCount: number }> => {
+): Promise<{ prompts: PromptsResult; pagination: { page: number; limit: number; total: number; totalPages: number } }> => {
   const where = {
     userId,
     ...(status && { status }),

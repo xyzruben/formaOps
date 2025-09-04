@@ -17,7 +17,7 @@ export class TypeCoercionSystem {
       {
         from: 'string',
         to: 'number',
-        converter: (value: string) => {
+        converter: (value: any) => {
           if (value === '' || value === null || value === undefined) {
             return { success: true, convertedValue: undefined };
           }
@@ -40,7 +40,7 @@ export class TypeCoercionSystem {
       {
         from: 'string',
         to: 'boolean',
-        converter: (value: string) => {
+        converter: (value: any) => {
           if (value === '' || value === null || value === undefined) {
             return { success: true, convertedValue: undefined };
           }
@@ -70,7 +70,7 @@ export class TypeCoercionSystem {
       {
         from: 'string',
         to: 'array',
-        converter: (value: string) => {
+        converter: (value: any) => {
           if (value === '' || value === null || value === undefined) {
             return { success: true, convertedValue: [] };
           }
@@ -85,7 +85,7 @@ export class TypeCoercionSystem {
             // Fall back to comma-separated values
             const array = value
               .split(',')
-              .map(item => item.trim())
+              .map((item: any) => item.trim())
               .filter(Boolean);
             return {
               success: true,
@@ -111,7 +111,7 @@ export class TypeCoercionSystem {
       {
         from: 'number',
         to: 'string',
-        converter: (value: number) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: value?.toString() || '',
         }),
@@ -124,7 +124,7 @@ export class TypeCoercionSystem {
       {
         from: 'number',
         to: 'boolean',
-        converter: (value: number) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: value !== 0 && !isNaN(value),
         }),
@@ -137,7 +137,7 @@ export class TypeCoercionSystem {
       {
         from: 'number',
         to: 'array',
-        converter: (value: number) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: [value],
         }),
@@ -151,7 +151,7 @@ export class TypeCoercionSystem {
       {
         from: 'boolean',
         to: 'string',
-        converter: (value: boolean) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: value?.toString() || 'false',
         }),
@@ -164,7 +164,7 @@ export class TypeCoercionSystem {
       {
         from: 'boolean',
         to: 'number',
-        converter: (value: boolean) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: value ? 1 : 0,
         }),
@@ -177,7 +177,7 @@ export class TypeCoercionSystem {
       {
         from: 'boolean',
         to: 'array',
-        converter: (value: boolean) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: [value],
         }),
@@ -191,7 +191,7 @@ export class TypeCoercionSystem {
       {
         from: 'array',
         to: 'string',
-        converter: (value: any[]) => {
+        converter: (value: any) => {
           if (!Array.isArray(value)) {
             return {
               success: false,
@@ -213,7 +213,7 @@ export class TypeCoercionSystem {
       {
         from: 'array',
         to: 'number',
-        converter: (value: any[]) => {
+        converter: (value: any) => {
           if (!Array.isArray(value)) {
             return {
               success: false,
@@ -240,7 +240,7 @@ export class TypeCoercionSystem {
       {
         from: 'array',
         to: 'boolean',
-        converter: (value: any[]) => ({
+        converter: (value: any) => ({
           success: true,
           convertedValue: Array.isArray(value) && value.length > 0,
         }),

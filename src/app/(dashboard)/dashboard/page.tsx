@@ -4,6 +4,38 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 
+// Type definitions for dashboard components
+interface Variable {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array';
+  required: boolean;
+}
+
+interface MockPrompt {
+  id: string;
+  name: string;
+  template: string;
+  variables: Variable[];
+  description: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+}
+
+interface ExecutionResult {
+  result: string;
+  tokens: number;
+  cost: number;
+  latency: number;
+  executionId: string;
+}
+
+interface FormValues {
+  [key: string]: string;
+}
+
+interface ValidationErrors {
+  [key: string]: string | null;
+}
+
 // Lazy load PromptList to handle potential component errors
 import dynamic from 'next/dynamic';
 const PromptList = dynamic(
@@ -21,14 +53,14 @@ const PromptList = dynamic(
 function TestModePromptList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExecuteModal, setShowExecuteModal] = useState(false);
-  const [selectedPrompt, setSelectedPrompt] = useState(null);
-  const [executionResult, setExecutionResult] = useState(null);
+  const [selectedPrompt, setSelectedPrompt] = useState<MockPrompt | null>(null);
+  const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({});
-  const [formValues, setFormValues] = useState({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [formValues, setFormValues] = useState<FormValues>({});
 
   // Mock prompts data that matches what tests expect
-  const mockPrompts = [
+  const mockPrompts: MockPrompt[] = [
     {
       id: 'prompt-1',
       name: 'Greeting Generator',
@@ -45,7 +77,7 @@ function TestModePromptList() {
   ];
 
   // Handle form input changes
-  const handleInputChange = (variableName, value) => {
+  const handleInputChange = (variableName: string, value: string): void => {
     setFormValues(prev => ({ ...prev, [variableName]: value }));
     // Clear validation error when user starts typing
     if (validationErrors[variableName]) {
@@ -54,9 +86,9 @@ function TestModePromptList() {
   };
 
   // Validate required fields
-  const validateForm = prompt => {
-    const errors = {};
-    prompt.variables.forEach(variable => {
+  const validateForm = (prompt: MockPrompt): boolean => {
+    const errors: ValidationErrors = {};
+    prompt.variables.forEach((variable: Variable) => {
       if (variable.required && !formValues[variable.name]?.trim()) {
         errors[variable.name] = `${variable.name} is required`;
       }
