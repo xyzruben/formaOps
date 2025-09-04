@@ -44,12 +44,12 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps): JSX.Element {
       clearErrors();
 
       const result = await login(data.email, data.password);
-      
+
       if (!result.success) {
         // Handle login failure
         throw new Error(result.error || 'Login failed');
       }
-      
+
       // Redirect to dashboard after successful login
       window.location.href = '/dashboard';
       onSuccess();

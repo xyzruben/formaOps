@@ -46,7 +46,9 @@ test.describe('Prompt Execution Flow', () => {
       .first()
       .click();
 
-    await expect(page.getByRole('heading', { name: /execute prompt.*greeting generator/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /execute prompt.*greeting generator/i })
+    ).toBeVisible();
   });
 
   test('should display input fields for variables', async ({ page }) => {
@@ -141,7 +143,9 @@ test.describe('Prompt Execution Flow', () => {
 
     // Should show loading state - look for the specific loading message
     await expect(page.getByText('Executing prompt...')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Executing...' })).toBeDisabled();
+    await expect(
+      page.getByRole('button', { name: 'Executing...' })
+    ).toBeDisabled();
   });
 
   test('should handle execution errors', async ({ page }) => {

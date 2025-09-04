@@ -40,10 +40,12 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isTestMode = process.env.NODE_ENV === 'test' || 
-    (typeof window !== 'undefined' && window.location.hostname === 'localhost' && 
-     window.location.port === '3000');
-  
+  const isTestMode =
+    process.env.NODE_ENV === 'test' ||
+    (typeof window !== 'undefined' &&
+      window.location.hostname === 'localhost' &&
+      window.location.port === '3000');
+
   // Debug logging for test mode detection (commented out for cleaner test output)
   // if (typeof window !== 'undefined') {
   //   console.log('AuthContext - NODE_ENV:', process.env.NODE_ENV);
