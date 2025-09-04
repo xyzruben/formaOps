@@ -12,11 +12,16 @@ export function PromptPreview({
   sampleData = {},
 }: PromptPreviewProps): JSX.Element {
   const [currentSampleData, setCurrentSampleData] =
-    useState<Record<string, string | number | boolean | string[]>>(sampleData);
+    useState<
+      Record<string, string | number | boolean | (string | number | boolean)[]>
+    >(sampleData);
 
   // Generate default sample data for variables
   const defaultSampleData = useMemo(() => {
-    const defaults: Record<string, string | number | boolean | string[]> = {};
+    const defaults: Record<
+      string,
+      string | number | boolean | (string | number | boolean)[]
+    > = {};
 
     variables.forEach(variable => {
       if (variable.defaultValue !== undefined) {
@@ -79,10 +84,15 @@ export function PromptPreview({
 
   const handleSampleDataChange = (
     variableName: string,
-    value: string | number | boolean | string[]
+    value: string | number | boolean | (string | number | boolean)[]
   ): void => {
     setCurrentSampleData(
-      (prev: Record<string, string | number | boolean | string[]>) => ({
+      (
+        prev: Record<
+          string,
+          string | number | boolean | (string | number | boolean)[]
+        >
+      ) => ({
         ...prev,
         [variableName]: value,
       })

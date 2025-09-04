@@ -96,9 +96,13 @@ export class AdvancedVariableParser {
   }
 
   static analyzeVariableStructure(path: string): {
+    baseName: string;
     type: 'simple' | 'nested' | 'array_indexed';
     depth: number;
+    hasArrayIndexing: boolean;
+    usesStringIndex: boolean;
     isValid: boolean;
+    error: string | null;
   } {
     // Split path into components
     const parts = path.split('.');

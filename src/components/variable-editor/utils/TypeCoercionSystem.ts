@@ -18,7 +18,12 @@ export class TypeCoercionSystem {
         from: 'string',
         to: 'number',
         converter: (
-          value: string | number | boolean | string[] | undefined
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
         ): TypeConversionResult => {
           if (value === '' || value === null || value === undefined) {
             return { success: true, convertedValue: undefined };
@@ -43,10 +48,22 @@ export class TypeCoercionSystem {
         from: 'string',
         to: 'boolean',
         converter: (
-          value: string | number | boolean | string[] | undefined
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
         ): TypeConversionResult => {
           if (value === '' || value === null || value === undefined) {
             return { success: true, convertedValue: undefined };
+          }
+          if (typeof value !== 'string') {
+            return {
+              success: false,
+              convertedValue: value,
+              error: `Cannot convert ${typeof value} to boolean. Expected string input.`,
+            };
           }
           const lowerValue = value.toLowerCase().trim();
           const truthyValues = ['true', '1', 'yes', 'on', 'enabled'];
@@ -75,10 +92,22 @@ export class TypeCoercionSystem {
         from: 'string',
         to: 'array',
         converter: (
-          value: string | number | boolean | string[] | undefined
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
         ): TypeConversionResult => {
           if (value === '' || value === null || value === undefined) {
             return { success: true, convertedValue: [] };
+          }
+          if (typeof value !== 'string') {
+            return {
+              success: false,
+              convertedValue: value,
+              error: `Cannot convert ${typeof value} to array. Expected string input.`,
+            };
           }
 
           try {
@@ -118,11 +147,25 @@ export class TypeCoercionSystem {
         from: 'number',
         to: 'string',
         converter: (
-          value: string | number | boolean | string[] | undefined
-        ): TypeConversionResult => ({
-          success: true,
-          convertedValue: value?.toString() || '',
-        }),
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
+        ): TypeConversionResult => {
+          if (typeof value !== 'number') {
+            return {
+              success: false,
+              convertedValue: '',
+              error: `Cannot convert ${typeof value} to string. Expected number input.`,
+            };
+          }
+          return {
+            success: true,
+            convertedValue: value.toString(),
+          };
+        },
         preserveOnFailure: false,
       },
     ],
@@ -133,11 +176,25 @@ export class TypeCoercionSystem {
         from: 'number',
         to: 'boolean',
         converter: (
-          value: string | number | boolean | string[] | undefined
-        ): TypeConversionResult => ({
-          success: true,
-          convertedValue: value !== 0 && !isNaN(value),
-        }),
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
+        ): TypeConversionResult => {
+          if (typeof value !== 'number') {
+            return {
+              success: false,
+              convertedValue: false,
+              error: `Cannot convert ${typeof value} to boolean. Expected number input.`,
+            };
+          }
+          return {
+            success: true,
+            convertedValue: value !== 0 && !isNaN(value),
+          };
+        },
         preserveOnFailure: false,
       },
     ],
@@ -148,11 +205,25 @@ export class TypeCoercionSystem {
         from: 'number',
         to: 'array',
         converter: (
-          value: string | number | boolean | string[] | undefined
-        ): TypeConversionResult => ({
-          success: true,
-          convertedValue: [value],
-        }),
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
+        ): TypeConversionResult => {
+          if (typeof value !== 'number') {
+            return {
+              success: false,
+              convertedValue: [],
+              error: `Cannot convert ${typeof value} to array. Expected number input.`,
+            };
+          }
+          return {
+            success: true,
+            convertedValue: [value],
+          };
+        },
         preserveOnFailure: false,
       },
     ],
@@ -164,11 +235,25 @@ export class TypeCoercionSystem {
         from: 'boolean',
         to: 'string',
         converter: (
-          value: string | number | boolean | string[] | undefined
-        ): TypeConversionResult => ({
-          success: true,
-          convertedValue: value?.toString() || 'false',
-        }),
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
+        ): TypeConversionResult => {
+          if (typeof value !== 'boolean') {
+            return {
+              success: false,
+              convertedValue: 'false',
+              error: `Cannot convert ${typeof value} to string. Expected boolean input.`,
+            };
+          }
+          return {
+            success: true,
+            convertedValue: value.toString(),
+          };
+        },
         preserveOnFailure: false,
       },
     ],
@@ -179,11 +264,25 @@ export class TypeCoercionSystem {
         from: 'boolean',
         to: 'number',
         converter: (
-          value: string | number | boolean | string[] | undefined
-        ): TypeConversionResult => ({
-          success: true,
-          convertedValue: value ? 1 : 0,
-        }),
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
+        ): TypeConversionResult => {
+          if (typeof value !== 'boolean') {
+            return {
+              success: false,
+              convertedValue: 0,
+              error: `Cannot convert ${typeof value} to number. Expected boolean input.`,
+            };
+          }
+          return {
+            success: true,
+            convertedValue: value ? 1 : 0,
+          };
+        },
         preserveOnFailure: false,
       },
     ],
@@ -194,11 +293,25 @@ export class TypeCoercionSystem {
         from: 'boolean',
         to: 'array',
         converter: (
-          value: string | number | boolean | string[] | undefined
-        ): TypeConversionResult => ({
-          success: true,
-          convertedValue: [value],
-        }),
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
+        ): TypeConversionResult => {
+          if (typeof value !== 'boolean') {
+            return {
+              success: false,
+              convertedValue: [],
+              error: `Cannot convert ${typeof value} to array. Expected boolean input.`,
+            };
+          }
+          return {
+            success: true,
+            convertedValue: [value],
+          };
+        },
         preserveOnFailure: false,
       },
     ],
@@ -210,7 +323,12 @@ export class TypeCoercionSystem {
         from: 'array',
         to: 'string',
         converter: (
-          value: string | number | boolean | string[] | undefined
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
         ): TypeConversionResult => {
           if (!Array.isArray(value)) {
             return {
@@ -234,7 +352,12 @@ export class TypeCoercionSystem {
         from: 'array',
         to: 'number',
         converter: (
-          value: string | number | boolean | string[] | undefined
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
         ): TypeConversionResult => {
           if (!Array.isArray(value)) {
             return {
@@ -263,7 +386,12 @@ export class TypeCoercionSystem {
         from: 'array',
         to: 'boolean',
         converter: (
-          value: string | number | boolean | string[] | undefined
+          value:
+            | string
+            | number
+            | boolean
+            | (string | number | boolean)[]
+            | undefined
         ): TypeConversionResult => ({
           success: true,
           convertedValue: Array.isArray(value) && value.length > 0,
@@ -328,7 +456,12 @@ export class TypeCoercionSystem {
 
   // Validation for converted values
   static validateConvertedValue(
-    value: string | number | boolean | string[] | undefined,
+    value:
+      | string
+      | number
+      | boolean
+      | (string | number | boolean)[]
+      | undefined,
     type: VariableType
   ): boolean {
     switch (type) {

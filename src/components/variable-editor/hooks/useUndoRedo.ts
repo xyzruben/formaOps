@@ -13,6 +13,8 @@ export const useUndoRedo = (
   redo: () => VariableDefinition[] | null;
   canUndo: boolean;
   canRedo: boolean;
+  handleKeyDown: (event: KeyboardEvent) => void;
+  getCurrentState: () => VariableDefinition[];
 } => {
   const historyManager = useRef(new VariableHistoryManager(initialVariables));
   const [canUndo, setCanUndo] = useState(false);
@@ -76,19 +78,13 @@ export const useUndoRedo = (
   // Attach keyboard listener
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return (): void => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
   // Get current state
-  const getCurrentState = useCallback(() => {
-    return historyManager.current.getCurrentState();
+  const getCurrentState = useCallback((): VariableDefinition[] => {
+    return historyManager.current.getCurrentState().variables;
   }, []);
-
-  // Clear history
-  const clearHistory = useCallback(() => {
-    historyManager.current.clearHistory();
-    updateUndoRedoState();
-  }, [updateUndoRedoState]);
 
   return {
     pushToHistory,
@@ -97,7 +93,6 @@ export const useUndoRedo = (
     canUndo,
     canRedo,
     getCurrentState,
-    clearHistory,
     handleKeyDown,
   };
 };

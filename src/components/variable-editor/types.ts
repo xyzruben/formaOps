@@ -8,7 +8,12 @@ export interface VariableDefinition {
   type: VariableType;
   required: boolean;
   description?: string;
-  defaultValue?: string | number | boolean | string[] | undefined;
+  defaultValue?:
+    | string
+    | number
+    | boolean
+    | (string | number | boolean)[]
+    | undefined;
   options?: string[];
 }
 
@@ -81,7 +86,12 @@ export interface VariableTableProps {
 // Type conversion interfaces
 export interface TypeConversionResult {
   success: boolean;
-  convertedValue: string | number | boolean | string[] | undefined;
+  convertedValue:
+    | string
+    | number
+    | boolean
+    | (string | number | boolean)[]
+    | undefined;
   error?: string;
   warning?: string;
 }
@@ -90,7 +100,7 @@ export interface TypeConversionRules {
   from: VariableType;
   to: VariableType;
   converter: (
-    value: string | number | boolean | string[] | undefined
+    value: string | number | boolean | (string | number | boolean)[] | undefined
   ) => TypeConversionResult;
   preserveOnFailure: boolean;
 }
