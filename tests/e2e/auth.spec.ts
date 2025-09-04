@@ -25,7 +25,10 @@ test.describe('Authentication Flow', () => {
     // Open login modal
     await page.getByRole('button', { name: 'Sign In' }).click();
 
-    // Try to submit empty form
+    // Wait for modal to open
+    await expect(page.getByText('Sign In to FormaOps')).toBeVisible();
+
+    // Try to submit empty form - use more specific selector for the modal submit button
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
     // Check validation messages
@@ -35,29 +38,26 @@ test.describe('Authentication Flow', () => {
 
   test('should validate email format', async ({ page }) => {
     await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page.getByText('Sign In to FormaOps')).toBeVisible();
 
-    // To test React Hook Form validation, we need to disable HTML5 validation
-    // or use a different approach. Let's test by clearing the input after filling
-    await page.getByPlaceholder('Email').fill('test@example.com');
+    // Fill invalid email format
+    await page.getByPlaceholder('Email').fill('invalid-email');
     await page.getByPlaceholder('Password').fill('password123');
 
-    // Clear email to make it invalid but bypass HTML5 validation
-    await page.getByPlaceholder('Email').clear();
-    await page.getByPlaceholder('Email').fill('invalid-email');
-
-    // Remove the type="email" attribute to bypass HTML5 validation for this test
+    // Remove the type="email" attribute to bypass HTML5 validation
     await page.getByPlaceholder('Email').evaluate((input: any) => {
       input.setAttribute('type', 'text');
     });
 
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
-    // Now React Hook Form validation should trigger
+    // React Hook Form validation should trigger
     await expect(page.getByText('Invalid email format')).toBeVisible();
   });
 
   test('should validate password length', async ({ page }) => {
     await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page.getByText('Sign In to FormaOps')).toBeVisible();
 
     // Fill short password
     await page.getByPlaceholder('Email').fill('test@example.com');
@@ -71,13 +71,14 @@ test.describe('Authentication Flow', () => {
 
   test('should handle login with invalid credentials', async ({ page }) => {
     await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page.getByText('Sign In to FormaOps')).toBeVisible();
 
     await page.getByPlaceholder('Email').fill('test@example.com');
     await page.getByPlaceholder('Password').fill('wrongpassword');
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
-    // Wait for error in error box - use a more reliable selector
-    await expect(page.locator('[class*="bg-destructive/10"]')).toBeVisible();
+    // Wait for error in error box - use more specific selector
+    await expect(page.locator('.bg-destructive\\/10')).toBeVisible();
     // Should show the correct invalid credentials error message
     await expect(page.getByText('Invalid credentials')).toBeVisible();
   });
@@ -86,6 +87,7 @@ test.describe('Authentication Flow', () => {
     // In test mode, the AuthContext uses testAuthManager
     // Any credentials work EXCEPT test@example.com/wrongpassword
     await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page.getByText('Sign In to FormaOps')).toBeVisible();
 
     await page.getByPlaceholder('Email').fill('user@test.com');
     await page.getByPlaceholder('Password').fill('password123');
