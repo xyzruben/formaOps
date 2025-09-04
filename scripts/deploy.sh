@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 ENVIRONMENT=${1:-production}
-HEALTH_CHECK_URL=${HEALTH_CHECK_URL:-https://formaops.com/api/health}
+HEALTH_CHECK_URL=${HEALTH_CHECK_URL:-https://forma-ops.vercel.app/api/health}
 MAX_HEALTH_CHECK_ATTEMPTS=30
 HEALTH_CHECK_INTERVAL=10
 

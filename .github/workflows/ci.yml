@@ -262,7 +262,7 @@ jobs:
             });
 
             if (deployments.length > 0) {
-              const previewUrl = deployments[0].payload?.web_url || 'https://formaops-preview.vercel.app';
+              const previewUrl = deployments[0].payload?.web_url || 'https://forma-ops-git-preview.vercel.app';
               
               github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -280,7 +280,7 @@ jobs:
 
     environment:
       name: production
-      url: https://formaops.com
+      url: https://forma-ops.vercel.app
 
     steps:
       - name: Checkout code
@@ -292,7 +292,9 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: --prod
+          github-comment: true
+          github-deployment: false
           scope: ${{ secrets.VERCEL_ORG_ID }}
 
       - name: Notify deployment success
@@ -304,7 +306,7 @@ jobs:
               repo: context.repo.repo,
               sha: context.sha,
               state: 'success',
-              target_url: 'https://formaops.com',
+              target_url: 'https://forma-ops.vercel.app',
               description: 'Deployment successful',
               context: 'deployment/production'
             });
@@ -320,7 +322,7 @@ jobs:
         uses: treosh/lighthouse-ci-action@v10
         with:
           urls: |
-            https://formaops.com
+            https://forma-ops.vercel.app
           configPath: './lighthouse.config.js'
           uploadArtifacts: true
           temporaryPublicStorage: true
