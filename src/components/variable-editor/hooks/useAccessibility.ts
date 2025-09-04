@@ -22,8 +22,21 @@ export const HighContrastStyles = {
   }),
 };
 
+interface UseAccessibilityReturn {
+  announcementText: string;
+  focusedVariableIndex: number;
+  highContrastMode: boolean;
+  announceChange: (message: string) => void;
+  handleKeyboardNavigation: (event: React.KeyboardEvent) => boolean;
+  getAriaLabel: (variable: VariableDefinition, index: number) => string;
+  getAriaDescribedBy: (variable: VariableDefinition) => string;
+  styles: Record<string, string>;
+}
+
 // Main accessibility hook
-export const useAccessibility = (variables: VariableDefinition[]) => {
+export const useAccessibility = (
+  variables: VariableDefinition[]
+): UseAccessibilityReturn => {
   const [announcementText, setAnnouncementText] = useState('');
   const [focusedVariableIndex, setFocusedVariableIndex] = useState(-1);
   const [highContrastMode, setHighContrastMode] = useState(false);

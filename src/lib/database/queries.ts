@@ -1,8 +1,19 @@
 import { prisma } from './client';
-import type { Execution, PromptStatus, ExecutionStatus } from '@prisma/client';
+import type {
+  User,
+  Prompt,
+  Execution,
+  PromptStatus,
+  ExecutionStatus,
+} from '@prisma/client';
+
+// Database result types
+type UserResult = User | null;
+type PromptResult = Prompt & { _count: { executions: number } };
+type PromptsResult = PromptResult[];
 
 // User queries
-export const findUserByEmail = async (email: string): Promise<any> => {
+export const findUserByEmail = async (email: string): Promise<UserResult> => {
   return prisma.user.findUnique({
     where: { email },
   });
@@ -11,7 +22,7 @@ export const findUserByEmail = async (email: string): Promise<any> => {
 export const createUser = async (data: {
   email: string;
   name?: string;
-}): Promise<any> => {
+}): Promise<User> => {
   return prisma.user.create({
     data,
   });
@@ -31,7 +42,7 @@ export const getUserPrompts = async (
     status?: PromptStatus;
     search?: string;
   } = {}
-): Promise<any> => {
+): Promise<{ prompts: PromptsResult; totalCount: number }> => {
   const where = {
     userId,
     ...(status && { status }),

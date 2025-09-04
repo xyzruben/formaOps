@@ -40,16 +40,16 @@ test.describe('Authentication Flow', () => {
     // or use a different approach. Let's test by clearing the input after filling
     await page.getByPlaceholder('Email').fill('test@example.com');
     await page.getByPlaceholder('Password').fill('password123');
-    
+
     // Clear email to make it invalid but bypass HTML5 validation
     await page.getByPlaceholder('Email').clear();
     await page.getByPlaceholder('Email').fill('invalid-email');
-    
+
     // Remove the type="email" attribute to bypass HTML5 validation for this test
-    await page.getByPlaceholder('Email').evaluate((input: HTMLInputElement) => {
+    await page.getByPlaceholder('Email').evaluate((input: any) => {
       input.setAttribute('type', 'text');
     });
-    
+
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
     // Now React Hook Form validation should trigger
@@ -122,8 +122,10 @@ test.describe('Authentication Flow', () => {
 
     await page.getByRole('button', { name: 'Logout' }).click();
 
-    // Should redirect to home (may include auth=required parameter)  
-    await expect(page).toHaveURL(/^http:\/\/localhost:3000\/(\?auth=required)?$/);
+    // Should redirect to home (may include auth=required parameter)
+    await expect(page).toHaveURL(
+      /^http:\/\/localhost:3000\/(\?auth=required)?$/
+    );
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
   });
 

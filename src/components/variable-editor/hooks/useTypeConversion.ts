@@ -5,7 +5,18 @@ import { useState, useCallback } from 'react';
 import { VariableDefinition, VariableType } from '../types';
 import { TypeCoercionSystem } from '../utils/TypeCoercionSystem';
 
-export const useTypeConversion = (variables: VariableDefinition[]) => {
+interface UseTypeConversionReturn {
+  handleTypeChange: (
+    variableName: string,
+    newType: VariableType
+  ) => VariableDefinition | undefined;
+  conversionMessages: Record<string, string>;
+  clearConversionMessage: (variableName: string) => void;
+}
+
+export const useTypeConversion = (
+  variables: VariableDefinition[]
+): UseTypeConversionReturn => {
   const [conversionMessages, setConversionMessages] = useState<
     Record<string, string>
   >({});

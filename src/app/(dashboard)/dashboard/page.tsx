@@ -6,10 +6,16 @@ import { useEffect, useState } from 'react';
 
 // Lazy load PromptList to handle potential component errors
 import dynamic from 'next/dynamic';
-const PromptList = dynamic(() => import('@/components/prompts/PromptList').then(mod => ({ default: mod.PromptList })), {
-  loading: () => <div>Loading prompts...</div>,
-  ssr: false,
-});
+const PromptList = dynamic(
+  () =>
+    import('@/components/prompts/PromptList').then(mod => ({
+      default: mod.PromptList,
+    })),
+  {
+    loading: () => <div>Loading prompts...</div>,
+    ssr: false,
+  }
+);
 
 // Test-mode component that provides basic prompt functionality without complex dependencies
 function TestModePromptList() {
@@ -26,7 +32,8 @@ function TestModePromptList() {
     {
       id: 'prompt-1',
       name: 'Greeting Generator',
-      template: 'Create a {{tone}} greeting for {{name}} who works at {{company}}.',
+      template:
+        'Create a {{tone}} greeting for {{name}} who works at {{company}}.',
       variables: [
         { name: 'tone', type: 'string', required: true },
         { name: 'name', type: 'string', required: true },
@@ -47,7 +54,7 @@ function TestModePromptList() {
   };
 
   // Validate required fields
-  const validateForm = (prompt) => {
+  const validateForm = prompt => {
     const errors = {};
     prompt.variables.forEach(variable => {
       if (variable.required && !formValues[variable.name]?.trim()) {
@@ -65,19 +72,20 @@ function TestModePromptList() {
     }
 
     setIsExecuting(true);
-    
+
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
+
     // Generate mock result based on the inputs
     const mockResult = {
-      result: "Hello John! Welcome to Acme Corp - we're delighted to have you on board.",
+      result:
+        "Hello John! Welcome to Acme Corp - we're delighted to have you on board.",
       tokens: 60,
       cost: 0.0002,
       latency: 1.2,
-      executionId: 'exec-' + Date.now()
+      executionId: 'exec-' + Date.now(),
     };
-    
+
     setExecutionResult(mockResult);
     setIsExecuting(false);
   };
@@ -102,7 +110,7 @@ function TestModePromptList() {
 
       {/* Prompts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {mockPrompts.map((prompt) => (
+        {mockPrompts.map(prompt => (
           <div key={prompt.id} className="border rounded-lg p-4 space-y-3">
             <div className="flex justify-between items-start">
               <h3 className="font-semibold">{prompt.name}</h3>
@@ -110,14 +118,14 @@ function TestModePromptList() {
                 {prompt.status}
               </span>
             </div>
-            
+
             <p className="text-sm text-gray-600 line-clamp-2">
               {prompt.description || prompt.template}
             </p>
-            
+
             <div className="flex gap-2">
-              <Button 
-                size="sm" 
+              <Button
+                size="sm"
                 onClick={() => {
                   setSelectedPrompt(prompt);
                   setShowExecuteModal(true);
@@ -125,8 +133,12 @@ function TestModePromptList() {
               >
                 Execute
               </Button>
-              <Button size="sm" variant="outline">Edit</Button>
-              <Button size="sm" variant="outline">Delete</Button>
+              <Button size="sm" variant="outline">
+                Edit
+              </Button>
+              <Button size="sm" variant="outline">
+                Delete
+              </Button>
             </div>
           </div>
         ))}
@@ -137,29 +149,36 @@ function TestModePromptList() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 max-h-96 overflow-auto">
             <h3 className="text-lg font-semibold mb-4">Create New Prompt</h3>
-            
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Prompt Name</label>
-                <input 
-                  type="text" 
-                  placeholder="Prompt Name" 
+                <label className="block text-sm font-medium mb-1">
+                  Prompt Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Prompt Name"
                   className="w-full p-2 border rounded"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium mb-1">Template</label>
-                <textarea 
+                <label className="block text-sm font-medium mb-1">
+                  Template
+                </label>
+                <textarea
                   placeholder="Enter your prompt template here..."
                   className="w-full p-2 border rounded h-24"
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-2 mt-6">
               <Button onClick={() => setShowCreateModal(false)}>Create</Button>
-              <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateModal(false)}
+              >
                 Cancel
               </Button>
             </div>
@@ -171,46 +190,61 @@ function TestModePromptList() {
       {showExecuteModal && selectedPrompt && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg w-96 max-h-[80vh] overflow-auto">
-            <h3 className="text-lg font-semibold mb-4">Execute Prompt: {selectedPrompt.name}</h3>
-            
+            <h3 className="text-lg font-semibold mb-4">
+              Execute Prompt: {selectedPrompt.name}
+            </h3>
+
             {!executionResult ? (
               <>
                 {/* Input Fields */}
                 <div className="space-y-4">
-                  {selectedPrompt.variables.map((variable) => (
+                  {selectedPrompt.variables.map(variable => (
                     <div key={variable.name}>
                       <label className="block text-sm font-medium mb-1 capitalize">
-                        {variable.name} {variable.required && <span className="text-red-500">*</span>}
+                        {variable.name}{' '}
+                        {variable.required && (
+                          <span className="text-red-500">*</span>
+                        )}
                       </label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder={variable.name}
                         value={formValues[variable.name] || ''}
-                        onChange={(e) => handleInputChange(variable.name, e.target.value)}
+                        onChange={e =>
+                          handleInputChange(variable.name, e.target.value)
+                        }
                         className={`w-full p-2 border rounded ${
-                          validationErrors[variable.name] ? 'border-red-500' : ''
+                          validationErrors[variable.name]
+                            ? 'border-red-500'
+                            : ''
                         }`}
                       />
                       {validationErrors[variable.name] && (
-                        <p className="text-red-500 text-xs mt-1">{validationErrors[variable.name]}</p>
+                        <p className="text-red-500 text-xs mt-1">
+                          {validationErrors[variable.name]}
+                        </p>
                       )}
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Loading State */}
                 {isExecuting && (
                   <div className="mt-4 p-3 bg-blue-50 rounded">
                     <p className="text-blue-700 text-sm">Executing prompt...</p>
                   </div>
                 )}
-                
+
                 {/* Action Buttons */}
                 <div className="flex gap-2 mt-6">
                   <Button onClick={handleExecutePrompt} disabled={isExecuting}>
                     {isExecuting ? 'Executing...' : 'Execute Prompt'}
                   </Button>
-                  <Button variant="outline" onClick={resetExecuteModal} disabled={isExecuting}>
+                  <Button
+                    variant="outline"
+                    onClick={resetExecuteModal}
+                    disabled={isExecuting}
+                  >
                     Cancel
                   </Button>
                 </div>
@@ -223,28 +257,39 @@ function TestModePromptList() {
                     <h4 className="font-medium text-green-800 mb-2">Result:</h4>
                     <p className="text-green-700">{executionResult.result}</p>
                   </div>
-                  
+
                   {/* Metadata */}
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="p-2 bg-gray-50 rounded">
                       <span className="text-gray-600">Tokens: </span>
-                      <span className="font-medium">{executionResult.tokens}</span>
+                      <span className="font-medium">
+                        {executionResult.tokens}
+                      </span>
                     </div>
                     <div className="p-2 bg-gray-50 rounded">
                       <span className="text-gray-600">Cost: </span>
-                      <span className="font-medium">${executionResult.cost}</span>
+                      <span className="font-medium">
+                        ${executionResult.cost}
+                      </span>
                     </div>
                     <div className="p-2 bg-gray-50 rounded">
                       <span className="text-gray-600">Latency: </span>
-                      <span className="font-medium">{executionResult.latency}s</span>
+                      <span className="font-medium">
+                        {executionResult.latency}s
+                      </span>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Result Actions */}
                 <div className="flex gap-2 mt-6">
                   <Button onClick={resetExecuteModal}>Close</Button>
-                  <Button variant="outline" onClick={() => navigator.clipboard?.writeText(executionResult.result)}>
+                  <Button
+                    variant="outline"
+                    onClick={() =>
+                      navigator.clipboard?.writeText(executionResult.result)
+                    }
+                  >
                     Copy Result
                   </Button>
                 </div>
@@ -259,11 +304,12 @@ function TestModePromptList() {
 
 export default function DashboardPage(): JSX.Element {
   const { user, logout, isLoading } = useAuth();
-  const [componentError, setComponentError] = useState(false);
+  const [_componentError, _setComponentError] = useState(false);
 
   // Detect test mode
-  const isTestMode = typeof window !== 'undefined' && 
-    window.location.hostname === 'localhost' && 
+  const isTestMode =
+    typeof window !== 'undefined' &&
+    window.location.hostname === 'localhost' &&
     window.location.port === '3000';
 
   useEffect(() => {
@@ -286,7 +332,7 @@ export default function DashboardPage(): JSX.Element {
     );
   }
 
-  // Don't render if not authenticated (will redirect) - except in test mode  
+  // Don't render if not authenticated (will redirect) - except in test mode
   const hasTestAuth =
     typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
 
@@ -324,11 +370,7 @@ export default function DashboardPage(): JSX.Element {
 
       {/* Main Prompt Management Interface */}
       <div className="min-h-[200px]">
-        {isTestMode ? (
-          <TestModePromptList />
-        ) : (
-          <PromptList />
-        )}
+        {isTestMode ? <TestModePromptList /> : <PromptList />}
       </div>
     </div>
   );

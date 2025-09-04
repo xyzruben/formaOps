@@ -14,7 +14,18 @@ interface UsePromptsOptions {
   search?: string;
 }
 
-export function usePrompts(options: UsePromptsOptions = {}) {
+interface UsePromptsReturn {
+  prompts: any[];
+  pagination: any;
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  createPrompt: (promptData: CreatePromptRequest) => Promise<any>;
+  updatePrompt: (id: string, promptData: UpdatePromptRequest) => Promise<any>;
+  deletePrompt: (id: string) => Promise<void>;
+}
+
+export function usePrompts(options: UsePromptsOptions = {}): UsePromptsReturn {
   const [data, setData] = useState<PromptsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
