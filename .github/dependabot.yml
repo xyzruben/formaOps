@@ -20,9 +20,9 @@ updates:
     groups:
       dependencies:
         patterns:
-          - "*"
+          - '*'
         exclude-patterns:
-          - "node"
+          - 'node'
     # Ignore certain updates
     ignore:
       - dependency-name: 'node'
