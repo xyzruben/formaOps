@@ -24,7 +24,7 @@
     "db:reset": "npx prisma migrate reset --force",
     "db:studio": "npx prisma studio",
     "config:check": "node scripts/check-config.js",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
