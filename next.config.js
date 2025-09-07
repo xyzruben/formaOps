@@ -7,14 +7,6 @@ const nextConfig = {
     optimizeServerReact: true,
   },
 
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],

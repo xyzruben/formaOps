@@ -56,6 +56,7 @@ This playbook provides systematic responses to CI/CD pipeline failures in FormaO
    ```
 
 2. **If Blocking Critical Fix**: Emergency bypass
+
    ```javascript
    // next.config.js - TEMPORARY ONLY
    typescript: {
@@ -86,6 +87,7 @@ This playbook provides systematic responses to CI/CD pipeline failures in FormaO
    ```
 
 2. **If Blocking Critical Fix**: Emergency bypass
+
    ```javascript
    // next.config.js - TEMPORARY ONLY
    eslint: {

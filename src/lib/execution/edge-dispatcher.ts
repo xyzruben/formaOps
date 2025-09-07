@@ -29,7 +29,11 @@ export interface EdgeExecutionResult {
     overallValid: boolean;
     passedCount: number;
     failedCount: number;
-    results: any[];
+    results: Array<{
+      validationId: string;
+      passed: boolean;
+      message?: string;
+    }>;
   };
   error?: string;
   metrics: {
@@ -125,7 +129,9 @@ export class EdgeDispatcher {
         status: 'COMPLETED',
         output: aiResult.output,
         validatedOutput:
-          validatedOutput !== aiResult.output ? validatedOutput : null,
+          validatedOutput !== aiResult.output
+            ? (validatedOutput as unknown)
+            : undefined,
         validationStatus: validationSummary
           ? validationSummary.overallValid
             ? 'PASSED'
@@ -148,7 +154,11 @@ export class EdgeDispatcher {
               overallValid: validationSummary.overallValid,
               passedCount: validationSummary.passedCount,
               failedCount: validationSummary.failedCount,
-              results: validationSummary.results,
+              results: validationSummary.results.map((r: any) => ({
+                validationId: r.validationId || r.name || 'unknown',
+                passed: r.passed || r.isValid || false,
+                message: r.message || r.errorMessage || '',
+              })),
             }
           : undefined,
         metrics: {
@@ -195,7 +205,7 @@ export class EdgeDispatcher {
     return {
       queuePosition,
       estimatedWaitTime,
-      executeWhenReady: async () => {
+      executeWhenReady: async (): Promise<EdgeExecutionResult> => {
         // Simulate queue waiting time
         if (estimatedWaitTime > 0) {
           await new Promise(resolve =>

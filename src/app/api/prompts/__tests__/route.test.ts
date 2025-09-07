@@ -73,6 +73,7 @@ describe('/api/prompts', () => {
             name: 'Test Prompt',
             description: 'Test description',
             template: 'Test template with {{variable}}',
+            variables: { variable: { type: 'string', required: true } },
             status: 'PUBLISHED' as const,
             createdAt: new Date(),
             updatedAt: new Date(),

@@ -1,6 +1,7 @@
 import { prisma } from './client';
 import type {
   User,
+  Prompt,
   Execution,
   PromptStatus,
   ExecutionStatus,
@@ -13,6 +14,7 @@ type PromptResult = {
   name: string;
   description: string | null;
   template: string;
+  variables: unknown;
   status: PromptStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -78,6 +80,7 @@ export const getUserPrompts = async (
         name: true,
         description: true,
         template: true,
+        variables: true,
         status: true,
         createdAt: true,
         updatedAt: true,
@@ -108,7 +111,7 @@ export const getUserPrompts = async (
 export const getPromptById = async (
   id: string,
   userId: string
-): Promise<any> => {
+): Promise<PromptResult | null> => {
   return prisma.prompt.findFirst({
     where: { id, userId },
     include: {
@@ -133,7 +136,7 @@ export const createPrompt = async (
     status?: PromptStatus;
     tags?: string[];
   }
-): Promise<any> => {
+): Promise<Prompt> => {
   return prisma.prompt.create({
     data: {
       ...data,
@@ -153,7 +156,7 @@ export const updatePrompt = async (
     status: PromptStatus;
     tags: string[];
   }>
-): Promise<any> => {
+): Promise<{ count: number }> => {
   return prisma.prompt.updateMany({
     where: { id, userId },
     data: {
@@ -167,7 +170,7 @@ export const updatePrompt = async (
 export const deletePrompt = async (
   id: string,
   userId: string
-): Promise<any> => {
+): Promise<{ count: number }> => {
   return prisma.prompt.deleteMany({
     where: { id, userId },
   });
@@ -191,7 +194,15 @@ export const getUserExecutions = async (
     from?: Date;
     to?: Date;
   } = {}
-): Promise<any> => {
+): Promise<{
+  executions: Execution[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> => {
   const where = {
     userId,
     ...(status && { status }),
@@ -209,18 +220,10 @@ export const getUserExecutions = async (
   const [executions, total] = await Promise.all([
     prisma.execution.findMany({
       where,
-      select: {
-        id: true,
-        status: true,
-        inputs: true,
-        output: true,
-        validationStatus: true,
-        latencyMs: true,
-        tokenUsage: true,
-        costUsd: true,
-        createdAt: true,
-        startedAt: true,
-        completedAt: true,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
         prompt: {
           select: {
             id: true,
@@ -228,9 +231,6 @@ export const getUserExecutions = async (
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
     }),
     prisma.execution.count({ where }),
   ]);
@@ -252,16 +252,16 @@ export const createExecution = async (
   userId: string,
   promptId: string,
   data: {
-    inputs: Record<string, any>;
+    inputs: any;
     priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL';
     model?: string;
   }
-): Promise<any> => {
+): Promise<Execution> => {
   return prisma.execution.create({
     data: {
       userId,
       promptId,
-      inputs: data.inputs,
+      inputs: data.inputs as any,
       priority: data.priority || 'NORMAL',
       status: 'PENDING',
     },
@@ -281,10 +281,10 @@ export const updateExecution = async (
     startedAt: Date;
     completedAt: Date;
   }>
-): Promise<any> => {
+): Promise<Execution> => {
   return prisma.execution.update({
     where: { id },
-    data,
+    data: data as any,
   });
 };
 
@@ -484,7 +484,17 @@ export async function retryExecution(
 export async function getExecutionStats(
   userId: string,
   dateRange?: { from: Date; to: Date }
-): Promise<any> {
+): Promise<{
+  total: number;
+  completed: number;
+  failed: number;
+  successRate: number;
+  totalExecutions: number;
+  completedExecutions: number;
+  failedExecutions: number;
+  totalCost: number;
+  totalTokens: number;
+}> {
   const where = {
     userId,
     ...(dateRange && {
@@ -495,7 +505,7 @@ export async function getExecutionStats(
     }),
   };
 
-  const [total, completed, failed, pending] = await Promise.all([
+  const [total, completed, failed, _pending] = await Promise.all([
     prisma.execution.count({ where }),
     prisma.execution.count({ where: { ...where, status: 'COMPLETED' } }),
     prisma.execution.count({ where: { ...where, status: 'FAILED' } }),
@@ -504,12 +514,25 @@ export async function getExecutionStats(
 
   const successRate = total > 0 ? (completed / total) * 100 : 0;
 
+  // Calculate aggregated costs and tokens
+  const aggregates = await prisma.execution.aggregate({
+    where,
+    _sum: {
+      costUsd: true,
+      totalTokens: true,
+    },
+  });
+
   return {
     total,
     completed,
     failed,
-    pending,
     successRate,
+    totalExecutions: total,
+    completedExecutions: completed,
+    failedExecutions: failed,
+    totalCost: Number(aggregates._sum.costUsd || 0),
+    totalTokens: aggregates._sum.totalTokens || 0,
   };
 }
 

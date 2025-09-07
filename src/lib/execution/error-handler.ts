@@ -14,9 +14,10 @@ export class ExecutionErrorHandler {
   /**
    * Handles and classifies errors from execution attempts
    */
-  handleError(error: any): ExecutionError {
+  handleError(error: unknown): ExecutionError {
+    const err = error as any;
     // OpenAI rate limiting errors
-    if (error.status === 429 || error.code === 'rate_limit_exceeded') {
+    if (err?.status === 429 || err?.code === 'rate_limit_exceeded') {
       return {
         type: 'RATE_LIMIT',
         message: 'Rate limit exceeded. Please try again later.',
@@ -26,19 +27,19 @@ export class ExecutionErrorHandler {
     }
 
     // OpenAI API errors
-    if (error.status >= 500 || error.code === 'api_error') {
+    if (err?.status >= 500 || err?.code === 'api_error') {
       return {
         type: 'API_ERROR',
-        message: error.message || 'API service temporarily unavailable',
+        message: err?.message || 'API service temporarily unavailable',
         retryable: true,
       };
     }
 
     // Timeout errors
     if (
-      error.code === 'ECONNRESET' ||
-      error.code === 'ETIMEDOUT' ||
-      error.name === 'TimeoutError'
+      err?.code === 'ECONNRESET' ||
+      err?.code === 'ETIMEDOUT' ||
+      err?.name === 'TimeoutError'
     ) {
       return {
         type: 'TIMEOUT',
@@ -48,10 +49,10 @@ export class ExecutionErrorHandler {
     }
 
     // Validation errors (client-side, should not retry)
-    if (error.status === 400 || error.code === 'invalid_request_error') {
+    if (err?.status === 400 || err?.code === 'invalid_request_error') {
       return {
         type: 'VALIDATION_ERROR',
-        message: error.message || 'Invalid request parameters',
+        message: err?.message || 'Invalid request parameters',
         retryable: false,
       };
     }
@@ -59,7 +60,7 @@ export class ExecutionErrorHandler {
     // Default to API error for unknown errors
     return {
       type: 'API_ERROR',
-      message: error.message || 'An unexpected error occurred',
+      message: err?.message || 'An unexpected error occurred',
       retryable: true,
     };
   }
@@ -177,8 +178,10 @@ export class ExecutionErrorHandler {
     );
 
     // Attach error metadata for API responses
-    (finalError as any).executionError = error;
-    (finalError as any).attemptCount = attemptCount;
+    Object.assign(finalError, {
+      executionError: error,
+      attemptCount: attemptCount,
+    });
 
     return finalError;
   }
@@ -186,14 +189,15 @@ export class ExecutionErrorHandler {
   /**
    * Extracts retry-after header from rate limit responses
    */
-  private extractRetryAfter(error: any): number | null {
-    if (error.headers && error.headers['retry-after']) {
-      const retryAfter = parseInt(error.headers['retry-after'], 10);
+  private extractRetryAfter(error: unknown): number | null {
+    const err = error as any;
+    if (err?.headers && err.headers['retry-after']) {
+      const retryAfter = parseInt(err.headers['retry-after'], 10);
       return isNaN(retryAfter) ? null : retryAfter;
     }
 
-    if (error.response?.headers && error.response.headers['retry-after']) {
-      const retryAfter = parseInt(error.response.headers['retry-after'], 10);
+    if (err?.response?.headers && err.response.headers['retry-after']) {
+      const retryAfter = parseInt(err.response.headers['retry-after'], 10);
       return isNaN(retryAfter) ? null : retryAfter;
     }
 
