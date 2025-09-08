@@ -29,7 +29,7 @@ jobs:
         run: |
           echo "🏥 FormaOps Monthly Health Check - $(date)"
           echo "============================================="
-          
+
           # Create summary header
           echo "# 🏥 Monthly Deployment Engineering Health Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -42,7 +42,7 @@ jobs:
         run: |
           echo "## 📦 Dependency Health" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Security audit
           echo "### Security Audit" >> $GITHUB_STEP_SUMMARY
           if npm audit --audit-level=high; then
@@ -51,7 +51,7 @@ jobs:
             echo "⚠️ Security vulnerabilities detected - review required" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Outdated dependencies
           echo "### Outdated Dependencies" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
@@ -64,7 +64,7 @@ jobs:
         run: |
           echo "## 🔍 Environment Drift Detection" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Make script executable and run
           chmod +x ./scripts/environment-drift-check.sh
           if ./scripts/environment-drift-check.sh; then
@@ -79,7 +79,7 @@ jobs:
         run: |
           echo "## 🏭 Production Build Validation" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Clean build test
           rm -rf node_modules
           if npm ci --omit=dev && npm run build; then
@@ -87,7 +87,7 @@ jobs:
           else
             echo "❌ Production build failed - dependency issues detected" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Restore full environment
           rm -rf node_modules
           npm ci
@@ -98,18 +98,18 @@ jobs:
         run: |
           echo "## 🎯 Code Quality Assessment" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # TypeScript check
           if npm run type-check; then
             echo "✅ TypeScript compilation successful" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ TypeScript errors detected" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Linting check
           LINT_WARNINGS=$(npm run lint:check 2>&1 | grep -o '[0-9]\+ problems' | grep -o '[0-9]\+' || echo "0")
           echo "📊 ESLint warnings: $LINT_WARNINGS" >> $GITHUB_STEP_SUMMARY
-          
+
           # Test execution
           if npm test -- --passWithNoTests; then
             echo "✅ All tests passing" >> $GITHUB_STEP_SUMMARY
@@ -123,19 +123,19 @@ jobs:
         run: |
           echo "## 🚨 Emergency Bypass Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           BYPASSES_FOUND=0
-          
+
           if grep -q "ignoreBuildErrors.*true" next.config.js 2>/dev/null; then
             echo "⚠️ TypeScript build errors bypass active" >> $GITHUB_STEP_SUMMARY
             BYPASSES_FOUND=$((BYPASSES_FOUND + 1))
           fi
-          
+
           if grep -q "ignoreDuringBuilds.*true" next.config.js 2>/dev/null; then
             echo "⚠️ ESLint build bypass active" >> $GITHUB_STEP_SUMMARY
             BYPASSES_FOUND=$((BYPASSES_FOUND + 1))
           fi
-          
+
           if [ $BYPASSES_FOUND -eq 0 ]; then
             echo "✅ No emergency bypasses active" >> $GITHUB_STEP_SUMMARY
           else
@@ -149,7 +149,7 @@ jobs:
         run: |
           echo "## 📚 Documentation Health" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Check for deployment documentation
           if [ -d "docs/deployment" ]; then
             DOC_COUNT=$(ls -1 docs/deployment/*.md 2>/dev/null | wc -l || echo "0")
@@ -197,20 +197,20 @@ jobs:
         run: |
           echo "## 🎯 Overall Health Score" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           HEALTH_SCORE=100
-          
+
           # Deduct points for issues
           if [ $BYPASSES_FOUND -gt 0 ]; then
             HEALTH_SCORE=$((HEALTH_SCORE - 20))
           fi
-          
+
           if [ "$LINT_WARNINGS" -gt 200 ]; then
             HEALTH_SCORE=$((HEALTH_SCORE - 10))
           elif [ "$LINT_WARNINGS" -gt 100 ]; then
             HEALTH_SCORE=$((HEALTH_SCORE - 5))
           fi
-          
+
           # Display health score with appropriate emoji
           if [ $HEALTH_SCORE -ge 90 ]; then
             echo "🟢 **Excellent Health: ${HEALTH_SCORE}/100**" >> $GITHUB_STEP_SUMMARY

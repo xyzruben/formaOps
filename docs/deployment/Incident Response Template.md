@@ -39,7 +39,7 @@
 - [ ] User report
 - [ ] Manual discovery
 - [ ] CI/CD pipeline failure
-- [ ] Other: ****\_\_\_****
+- [ ] Other: \***\*\_\_\_\*\***
 
 ### Contributing Factors
 
@@ -49,7 +49,7 @@
 - [ ] External service failure
 - [ ] Human error
 - [ ] Process not followed
-- [ ] Other: ****\_\_\_****
+- [ ] Other: \***\*\_\_\_\*\***
 
 ## 🛠️ Resolution
 

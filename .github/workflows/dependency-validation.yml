@@ -30,7 +30,7 @@ jobs:
       - name: Run TypeScript check (with dev dependencies)
         run: npm run type-check
 
-      - name: Run tests (with dev dependencies) 
+      - name: Run tests (with dev dependencies)
         run: npm test -- --passWithNoTests
 
       - name: Clean for production test
@@ -130,7 +130,7 @@ jobs:
         run: |
           echo "🔍 Checking Node.js version alignment..."
           echo "Current Node.js version: $(node --version)"
-          
+
           # Check package.json engines field
           if grep -q '"engines"' package.json; then
             echo "✅ Engines field found in package.json"
@@ -138,7 +138,7 @@ jobs:
           else
             echo "⚠️  No engines field in package.json - consider adding for version consistency"
           fi
-          
+
           # Check .nvmrc
           if [ -f ".nvmrc" ]; then
             echo "✅ .nvmrc found: $(cat .nvmrc)"
