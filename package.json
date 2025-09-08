@@ -24,6 +24,11 @@
     "db:reset": "npx prisma migrate reset --force",
     "db:studio": "npx prisma studio",
     "config:check": "node scripts/check-config.js",
+    "validate-production": "docker run --rm -v $(pwd):/app -w /app node:20-alpine sh -c 'npm ci --omit=dev && npm run build'",
+    "validate-production-local": "rm -rf node_modules && npm ci --omit=dev && npm run build && npm install",
+    "emergency-format": "npm run format && git add -A && git commit -m 'fix: resolve formatting violations' && git push",
+    "quick-health-check": "npm run type-check && npm run lint:check && npm run format:check && npm test -- --passWithNoTests",
+    "pre-merge": "./scripts/pre-merge-validation.sh",
     "prepare": "husky || true"
   },
   "dependencies": {
