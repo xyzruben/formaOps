@@ -1,0 +1,171 @@
+name: Dependency Validation
+
+# Trigger on package.json or package-lock.json changes
+on:
+  pull_request:
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  validate-dependencies:
+    name: Validate Dependency Classification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (full)
+        run: npm ci
+
+      - name: Run TypeScript check (with dev dependencies)
+        run: npm run type-check
+
+      - name: Run tests (with dev dependencies) 
+        run: npm test -- --passWithNoTests
+
+      - name: Clean for production test
+        run: rm -rf node_modules
+
+      - name: Test production dependencies only
+        run: |
+          echo "🔍 Testing production-only build..."
+          npm ci --omit=dev
+          npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Validate dependency classifications
+        run: |
+          echo "✅ Production build successful!"
+          echo "All dependencies correctly classified:"
+          echo "  - Build-time dependencies → dependencies"
+          echo "  - Development-only tools → devDependencies"
+          echo ""
+          echo "If this job fails, check the Dependency Classification Guide:"
+          echo "  docs/deployment/Dependency Classification Guide.md"
+
+      - name: Generate dependency report
+        if: always()
+        run: |
+          echo "## Dependency Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Production Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          npm list --omit=dev --depth=0 2>/dev/null || echo "Production dependency list unavailable" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Validation Result" >> $GITHUB_STEP_SUMMARY
+          if [ $? -eq 0 ]; then
+            echo "✅ All dependencies correctly classified for production builds" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Production build failed - dependency classification issues detected" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review [Dependency Classification Guide](docs/deployment/Dependency%20Classification%20Guide.md)" >> $GITHUB_STEP_SUMMARY
+            echo "2. Move build-time dependencies to \`dependencies\`" >> $GITHUB_STEP_SUMMARY
+            echo "3. Move development-only tools to \`devDependencies\`" >> $GITHUB_STEP_SUMMARY
+            echo "4. Test locally with \`npm run validate-production\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: |
+          echo "🔒 Running security audit..."
+          npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Check for outdated dependencies
+        run: |
+          echo "📅 Checking for outdated dependencies..."
+          npm outdated || echo "Some dependencies are outdated"
+
+      - name: Generate security report
+        run: |
+          echo "## Security Audit Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### High/Critical Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          AUDIT_RESULT=$(npm audit --json 2>/dev/null | jq -r '.metadata | "High: \(.vulnerabilities.high // 0), Critical: \(.vulnerabilities.critical // 0)"' 2>/dev/null || echo "Audit data unavailable")
+          echo "$AUDIT_RESULT" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recommendation" >> $GITHUB_STEP_SUMMARY
+          echo "Run \`npm audit fix\` to automatically resolve fixable vulnerabilities" >> $GITHUB_STEP_SUMMARY
+
+  environment-parity:
+    name: Environment Parity Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Node.js version consistency
+        run: |
+          echo "🔍 Checking Node.js version alignment..."
+          echo "Current Node.js version: $(node --version)"
+          
+          # Check package.json engines field
+          if grep -q '"engines"' package.json; then
+            echo "✅ Engines field found in package.json"
+            grep -A 5 '"engines"' package.json
+          else
+            echo "⚠️  No engines field in package.json - consider adding for version consistency"
+          fi
+          
+          # Check .nvmrc
+          if [ -f ".nvmrc" ]; then
+            echo "✅ .nvmrc found: $(cat .nvmrc)"
+          else
+            echo "⚠️  No .nvmrc file - consider adding for version consistency"
+          fi
+
+      - name: Setup Node.js (specified version)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Validate production build in clean environment
+        run: |
+          echo "🏭 Testing production build in clean environment..."
+          npm ci --omit=dev
+          npm run build
+          echo "✅ Production build successful in CI environment"
+
+      - name: Environment report
+        run: |
+          echo "## Environment Parity Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Node.js Version" >> $GITHUB_STEP_SUMMARY
+          echo "- CI Environment: $(node --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- npm Version: $(npm --version)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Production Build Status" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Production build successful - environment parity validated" >> $GITHUB_STEP_SUMMARY

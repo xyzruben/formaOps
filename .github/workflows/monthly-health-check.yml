@@ -1,0 +1,250 @@
+name: Monthly Health Check
+
+# Run on first day of each month at 9 AM UTC
+on:
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  comprehensive-health-check:
+    name: Monthly Deployment Engineering Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run comprehensive health check
+        run: |
+          echo "🏥 FormaOps Monthly Health Check - $(date)"
+          echo "============================================="
+          
+          # Create summary header
+          echo "# 🏥 Monthly Deployment Engineering Health Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Dependency audit and analysis
+        id: dependencies
+        run: |
+          echo "## 📦 Dependency Health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Security audit
+          echo "### Security Audit" >> $GITHUB_STEP_SUMMARY
+          if npm audit --audit-level=high; then
+            echo "✅ No high/critical vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Security vulnerabilities detected - review required" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Outdated dependencies
+          echo "### Outdated Dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          npm outdated || echo "No outdated dependencies or check failed" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Environment drift detection
+        id: drift
+        run: |
+          echo "## 🔍 Environment Drift Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Make script executable and run
+          chmod +x ./scripts/environment-drift-check.sh
+          if ./scripts/environment-drift-check.sh; then
+            echo "✅ No environment drift detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Environment drift issues found - review required" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Production build validation
+        id: production
+        run: |
+          echo "## 🏭 Production Build Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Clean build test
+          rm -rf node_modules
+          if npm ci --omit=dev && npm run build; then
+            echo "✅ Production build successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Production build failed - dependency issues detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Restore full environment
+          rm -rf node_modules
+          npm ci
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Code quality assessment
+        id: quality
+        run: |
+          echo "## 🎯 Code Quality Assessment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # TypeScript check
+          if npm run type-check; then
+            echo "✅ TypeScript compilation successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ TypeScript errors detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Linting check
+          LINT_WARNINGS=$(npm run lint:check 2>&1 | grep -o '[0-9]\+ problems' | grep -o '[0-9]\+' || echo "0")
+          echo "📊 ESLint warnings: $LINT_WARNINGS" >> $GITHUB_STEP_SUMMARY
+          
+          # Test execution
+          if npm test -- --passWithNoTests; then
+            echo "✅ All tests passing" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Test failures detected" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Emergency bypass check
+        id: bypasses
+        run: |
+          echo "## 🚨 Emergency Bypass Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          BYPASSES_FOUND=0
+          
+          if grep -q "ignoreBuildErrors.*true" next.config.js 2>/dev/null; then
+            echo "⚠️ TypeScript build errors bypass active" >> $GITHUB_STEP_SUMMARY
+            BYPASSES_FOUND=$((BYPASSES_FOUND + 1))
+          fi
+          
+          if grep -q "ignoreDuringBuilds.*true" next.config.js 2>/dev/null; then
+            echo "⚠️ ESLint build bypass active" >> $GITHUB_STEP_SUMMARY
+            BYPASSES_FOUND=$((BYPASSES_FOUND + 1))
+          fi
+          
+          if [ $BYPASSES_FOUND -eq 0 ]; then
+            echo "✅ No emergency bypasses active" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Action Required:** Review and remove emergency bypasses if no longer needed for P0 issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Documentation health check
+        id: docs
+        run: |
+          echo "## 📚 Documentation Health" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check for deployment documentation
+          if [ -d "docs/deployment" ]; then
+            DOC_COUNT=$(ls -1 docs/deployment/*.md 2>/dev/null | wc -l || echo "0")
+            echo "📊 Deployment docs: $DOC_COUNT files" >> $GITHUB_STEP_SUMMARY
+            
+            # List key documentation files
+            echo "### Available Guides" >> $GITHUB_STEP_SUMMARY
+            for file in docs/deployment/*.md; do
+              if [ -f "$file" ]; then
+                basename="$(basename "$file" .md)"
+                echo "- ✅ $basename" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          else
+            echo "❌ No deployment documentation directory found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate monthly metrics template
+        id: metrics
+        run: |
+          echo "## 📊 Monthly Metrics Template" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Use this template for your monthly review:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "Month: $(date '+%B %Y')" >> $GITHUB_STEP_SUMMARY
+          echo "Health Check Date: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Pipeline Health:" >> $GITHUB_STEP_SUMMARY
+          echo "- Emergency Bypasses: $BYPASSES_FOUND" >> $GITHUB_STEP_SUMMARY
+          echo "- ESLint Warnings: $LINT_WARNINGS" >> $GITHUB_STEP_SUMMARY
+          echo "- Production Build: [Check summary above]" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Action Items:" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Review security vulnerabilities if any" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Update outdated dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Address environment drift issues if any" >> $GITHUB_STEP_SUMMARY
+          echo "- [ ] Remove unnecessary emergency bypasses" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Health score calculation
+        id: score
+        run: |
+          echo "## 🎯 Overall Health Score" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          HEALTH_SCORE=100
+          
+          # Deduct points for issues
+          if [ $BYPASSES_FOUND -gt 0 ]; then
+            HEALTH_SCORE=$((HEALTH_SCORE - 20))
+          fi
+          
+          if [ "$LINT_WARNINGS" -gt 200 ]; then
+            HEALTH_SCORE=$((HEALTH_SCORE - 10))
+          elif [ "$LINT_WARNINGS" -gt 100 ]; then
+            HEALTH_SCORE=$((HEALTH_SCORE - 5))
+          fi
+          
+          # Display health score with appropriate emoji
+          if [ $HEALTH_SCORE -ge 90 ]; then
+            echo "🟢 **Excellent Health: ${HEALTH_SCORE}/100**" >> $GITHUB_STEP_SUMMARY
+            echo "Deployment pipeline is in excellent condition!" >> $GITHUB_STEP_SUMMARY
+          elif [ $HEALTH_SCORE -ge 80 ]; then
+            echo "🟡 **Good Health: ${HEALTH_SCORE}/100**" >> $GITHUB_STEP_SUMMARY
+            echo "Minor improvements recommended." >> $GITHUB_STEP_SUMMARY
+          elif [ $HEALTH_SCORE -ge 70 ]; then
+            echo "🟠 **Fair Health: ${HEALTH_SCORE}/100**" >> $GITHUB_STEP_SUMMARY
+            echo "Several issues need attention." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🔴 **Poor Health: ${HEALTH_SCORE}/100**" >> $GITHUB_STEP_SUMMARY
+            echo "Immediate action required!" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Next steps recommendation
+        id: recommendations
+        run: |
+          echo "## 🎯 Recommended Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Schedule Monthly Review Meeting**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Use [Monthly Review Process](docs/deployment/Monthly%20Review%20Process.md)" >> $GITHUB_STEP_SUMMARY
+          echo "   - Review this health check summary with the team" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Update Metrics Dashboard**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Fill out [Deployment Engineering Metrics](docs/deployment/Deployment%20Engineering%20Metrics.md)" >> $GITHUB_STEP_SUMMARY
+          echo "   - Track improvements from last month" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Address High Priority Items**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Security vulnerabilities (if any)" >> $GITHUB_STEP_SUMMARY
+          echo "   - Emergency bypass removal (if applicable)" >> $GITHUB_STEP_SUMMARY
+          echo "   - Production build failures (if any)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Plan Improvements**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Reference [Deployment Engineering Implementation](docs/deployment/Deployment%20Engineering%20Implementation.md)" >> $GITHUB_STEP_SUMMARY
+          echo "   - Consider team feedback and pain points" >> $GITHUB_STEP_SUMMARY

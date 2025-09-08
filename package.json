@@ -29,6 +29,10 @@
     "emergency-format": "npm run format && git add -A && git commit -m 'fix: resolve formatting violations' && git push",
     "quick-health-check": "npm run type-check && npm run lint:check && npm run format:check && npm test -- --passWithNoTests",
     "pre-merge": "./scripts/pre-merge-validation.sh",
+    "audit-dependencies": "npm audit --audit-level=high && npm outdated",
+    "validate-classifications": "npm ci --omit=dev && npm run build && npm install",
+    "monthly-health-check": "npm run audit-dependencies && npm run validate-classifications && npm run quick-health-check",
+    "drift-check": "./scripts/environment-drift-check.sh",
     "prepare": "husky || true"
   },
   "dependencies": {
