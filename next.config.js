@@ -40,6 +40,12 @@ const nextConfig = {
       /Critical dependency: the request of a dependency is an expression/,
     ];
 
+    // Ensure TypeScript path mapping works correctly
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname, './src'),
+    };
+
     // Optimize bundle splitting
     if (!isServer) {
       config.optimization.splitChunks = {
