@@ -8,7 +8,7 @@
     "env:setup": "cp .env.example .env.local",
     "db:setup": "docker-compose up -d && npx prisma db push && npx prisma db seed",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
