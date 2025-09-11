@@ -1,8 +1,6 @@
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:3000'],
-      startServerCommand: 'npm run start',
       numberOfRuns: 3,
       settings: {
         chromeFlags: '--no-sandbox --headless',
