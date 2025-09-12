@@ -146,6 +146,56 @@ class TestAuthManager {
     return { success: true };
   }
 
+  async register(
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> {
+    this.updateState({ isLoading: true, error: null });
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Test validation logic
+    if (!email || !email.includes('@')) {
+      this.updateState({
+        isLoading: false,
+        error: 'Invalid email format',
+      });
+      return { success: false, error: 'Invalid email format' };
+    }
+
+    if (!password || password.length < 6) {
+      this.updateState({
+        isLoading: false,
+        error: 'Password must be at least 6 characters',
+      });
+      return {
+        success: false,
+        error: 'Password must be at least 6 characters',
+      };
+    }
+
+    // Mock email already exists
+    if (email === 'existing@example.com') {
+      this.updateState({
+        isLoading: false,
+        error: 'Email already registered',
+      });
+      return { success: false, error: 'Email already registered' };
+    }
+
+    // Mock successful registration - create user and log them in
+    const user: MockUser = {
+      id: 'test-user-' + Date.now(),
+      email,
+    };
+
+    this.state.user = user;
+    this.saveToStorage();
+    this.updateState({ user, isLoading: false, error: null });
+    return { success: true };
+  }
+
   async logout(): Promise<{ success: boolean; error?: string }> {
     this.updateState({ isLoading: true, error: null });
 

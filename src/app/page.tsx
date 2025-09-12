@@ -8,13 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { LoginModal } from '@/components/auth';
+import { AuthModal } from '@/components/auth';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
+type AuthMode = 'login' | 'register';
+
 export default function HomePage(): JSX.Element {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<AuthMode>('login');
   const [showAuthMessage, setShowAuthMessage] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const { user, isLoading } = useAuth();
@@ -25,14 +28,28 @@ export default function HomePage(): JSX.Element {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('auth') === 'required') {
       setShowAuthMessage(true);
-      setIsLoginModalOpen(true);
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
     }
   }, []);
 
-  // Enhanced button handlers with user state awareness and analytics
+  // Differentiated button handlers with user state awareness and analytics
+  const handleSignIn = (): void => {
+    // Analytics tracking for sign in
+    console.warn('Sign In clicked:', {
+      action: 'sign_in',
+      authenticated: !!user,
+      timestamp: Date.now(),
+    });
+
+    setAuthModalMode('login');
+    setIsAuthModalOpen(true);
+  };
+
   const handleGetStarted = async (source: 'header' | 'hero'): Promise<void> => {
-    // Simple analytics tracking
-    console.warn('CTA clicked:', {
+    // Analytics tracking for get started
+    console.warn('Get Started clicked:', {
+      action: 'get_started',
       source,
       authenticated: !!user,
       timestamp: Date.now(),
@@ -48,13 +65,17 @@ export default function HomePage(): JSX.Element {
         setIsNavigating(false);
       }
     } else {
-      // Unauthenticated user: Open login modal
-      setIsLoginModalOpen(true);
+      // Unauthenticated user: Open registration modal
+      setAuthModalMode('register');
+      setIsAuthModalOpen(true);
     }
   };
 
   const handleViewDocumentation = (): void => {
-    console.warn('View documentation clicked');
+    console.warn('View Documentation clicked:', {
+      action: 'view_documentation',
+      timestamp: Date.now(),
+    });
     document.getElementById('features')?.scrollIntoView({
       behavior: 'smooth',
     });
@@ -72,18 +93,16 @@ export default function HomePage(): JSX.Element {
             </span>
           </div>
           <nav className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsLoginModalOpen(true)}
-            >
+            <Button variant="ghost" size="sm" onClick={handleSignIn}>
               Sign In
             </Button>
             <Button
               size="sm"
               onClick={() => handleGetStarted('header')}
               disabled={isNavigating || isLoading}
-              aria-label={user ? 'Go to dashboard' : 'Sign in to get started'}
+              aria-label={
+                user ? 'Go to dashboard' : 'Create account to get started'
+              }
             >
               {isNavigating ? 'Loading...' : 'Get Started'}
             </Button>
@@ -119,7 +138,7 @@ export default function HomePage(): JSX.Element {
                 aria-label={
                   user
                     ? 'Go to dashboard to build prompts'
-                    : 'Sign in to start building prompts'
+                    : 'Create account to start building prompts'
                 }
               >
                 {isNavigating ? 'Loading...' : 'Start Building Prompts'}
@@ -263,10 +282,11 @@ export default function HomePage(): JSX.Element {
         </div>
       </footer>
 
-      {/* Login Modal */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onOpenChange={setIsLoginModalOpen}
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onOpenChange={setIsAuthModalOpen}
+        defaultMode={authModalMode}
       />
     </div>
   );

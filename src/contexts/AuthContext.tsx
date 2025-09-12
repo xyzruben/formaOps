@@ -17,6 +17,10 @@ interface AuthContextType {
     email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<{ success: boolean; error?: string }>;
   clearError: () => void;
 }
@@ -146,6 +150,54 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     }
   };
 
+  const register = async (
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (isTestMode) {
+      return testAuthManager.register(email, password);
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Registration failed');
+      }
+
+      const { user: userData, needsEmailConfirmation } = await response.json();
+
+      // If email confirmation is not required, set user immediately
+      if (!needsEmailConfirmation) {
+        setUser(userData);
+      }
+
+      return {
+        success: true,
+        ...(needsEmailConfirmation && {
+          error: 'Please check your email to confirm your account',
+        }),
+      };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Registration failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async (): Promise<{ success: boolean; error?: string }> => {
     if (isTestMode) {
       return testAuthManager.logout();
@@ -184,6 +236,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     isLoading,
     error,
     login,
+    register,
     logout,
     clearError,
   };

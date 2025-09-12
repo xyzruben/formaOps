@@ -1,148 +1,241 @@
-# Get Started Button Implementation Plan
+# "Get Started" → Sign-Up Button Conversion Plan
 
 ## Overview
 
-This plan addresses the non-functional "Get Started" and related CTA buttons on the landing page with a balanced, production-ready approach that includes essential user experience, analytics, and error handling without overengineering.
+Transform the "Get Started" button from a duplicate login trigger into a proper user registration flow, enabling new users to create accounts and access the application.
 
-## Current State
+## Current State Analysis
 
-- "Get Started" button (header): No click handler
-- "Start Building Prompts" button (hero): No click handler
-- "View Documentation" button (hero): No click handler
-- All buttons render but provide no user feedback
+- ✅ Login system fully implemented (API + UI + Auth Context)
+- ❌ Zero registration functionality exists
+- ❌ "Get Started" and "Sign In" buttons identical behavior
+- ❌ New users cannot create accounts
 
 ## Requirements
 
 ### Functional Requirements
 
-1. **User State Awareness**: Different behavior for authenticated vs unauthenticated users
-2. **Analytics Tracking**: Track conversion funnel events for business intelligence
-3. **Error Handling**: Graceful error states and user feedback
-4. **Accessibility**: Screen reader support and keyboard navigation
-5. **Loading States**: Visual feedback during async operations
+1. **Registration API**: Backend endpoint for account creation
+2. **Registration Form**: UI form with proper validation
+3. **Auth Context Extension**: Add `register()` method
+4. **Modal Enhancement**: Support both login and registration modes
+5. **User Flow Differentiation**: Clear distinction between sign-in and sign-up
 
 ### Non-Functional Requirements
 
-- Maintain existing UI/UX design
-- No breaking changes to current authentication flow
-- TypeScript strict mode compliance
-- Performance: No additional bundle size impact
+- Maintain existing login functionality (zero breaking changes)
+- Follow established patterns in codebase
+- TypeScript compliance
+- Proper error handling and validation
+- Accessibility compliance
 
 ## Implementation Strategy
 
-### Single Implementation Phase
+### Phase 1: Backend Registration Support
 
-**Priority**: High | **Effort**: Medium | **Timeline**: 2-3 hours
+**Effort**: Medium | **Timeline**: 2-3 hours
 
-#### Core Functionality with Basic Analytics
+#### 1.1 Registration API Endpoint
 
-```tsx
-const handleGetStarted = (source: 'header' | 'hero') => {
-  // Simple analytics tracking
-  console.log('CTA clicked:', { source, authenticated: !!user });
+```typescript
+// /src/app/api/auth/register/route.ts
+export async function POST(request: Request) {
+  // Email/password validation
+  // Supabase user creation
+  // Return user data or error
+}
+```
 
-  if (user) {
-    // Authenticated user: Go to dashboard
-    router.push('/dashboard');
-  } else {
-    // Unauthenticated user: Open login modal
-    setIsLoginModalOpen(true);
-  }
+#### 1.2 Extend AuthContext
+
+```typescript
+interface AuthContextType {
+  login: (email, password) => Promise<{ success; error? }>;
+  register: (email, password) => Promise<{ success; error? }>; // NEW
+  logout: () => Promise<{ success; error? }>;
+}
+```
+
+### Phase 2: UI Components
+
+**Effort**: Medium | **Timeline**: 2-3 hours
+
+#### 2.1 Registration Form Component
+
+```typescript
+// /src/components/auth/RegisterForm.tsx
+export function RegisterForm({ onSuccess, onError }) {
+  // Email, password, confirm password fields
+  // Form validation with Zod
+  // Calls auth.register()
+}
+```
+
+#### 2.2 Enhanced Auth Modal
+
+```typescript
+// Modify /src/components/auth/LoginModal.tsx → AuthModal.tsx
+export function AuthModal({
+  isOpen,
+  onOpenChange,
+  defaultMode = 'login', // NEW: 'login' | 'register'
+}) {
+  // Tab interface for Login/Sign-Up
+  // Dynamic content based on mode
+}
+```
+
+### Phase 3: Button Flow Differentiation
+
+**Effort**: Small | **Timeline**: 1 hour
+
+#### 3.1 Update Page Handlers
+
+```typescript
+// /src/app/page.tsx
+const handleSignIn = () => {
+  setAuthModalOpen(true);
+  setAuthModalMode('login');
+};
+
+const handleGetStarted = () => {
+  setAuthModalOpen(true);
+  setAuthModalMode('register'); // NEW: Opens in registration mode
 };
 ```
 
-#### Button Enhancements
+#### 3.2 Button Context Updates
 
-- **Get Started** (header) → `handleGetStarted('header')`
-- **Start Building Prompts** (hero) → `handleGetStarted('hero')`
-- **View Documentation** (hero) → Scroll to features section
+- "Sign In" → Opens modal in login mode
+- "Get Started" → Opens modal in registration mode
+- Clear visual/textual differentiation
 
-#### Essential UX & Accessibility
+## Technical Implementation Details
 
-```tsx
-<Button
-  onClick={() => handleGetStarted('header')}
-  disabled={isLoading}
-  aria-label={user ? 'Go to dashboard' : 'Sign in to get started'}
->
-  {isLoading ? 'Loading...' : 'Get Started'}
-</Button>
-```
-
-## Technical Implementation
-
-### File Changes
+### File Structure Changes
 
 ```
-src/app/page.tsx  # Modified: Enhanced existing buttons with handlers
+src/
+├── app/api/auth/
+│   ├── login/route.ts          # Existing
+│   └── register/route.ts       # NEW
+├── components/auth/
+│   ├── AuthModal.tsx           # RENAMED from LoginModal.tsx
+│   ├── LoginForm.tsx           # Existing
+│   ├── RegisterForm.tsx        # NEW
+│   └── index.ts                # UPDATED exports
+├── contexts/
+│   └── AuthContext.tsx         # MODIFIED: Add register method
+└── app/
+    └── page.tsx                # MODIFIED: Differentiate button behaviors
 ```
 
-### Implementation Approach
+### Registration Schema
 
-- Enhance existing Button components inline (no new components)
-- Add simple console logging for analytics (upgrade to service later)
-- Use existing loading state from auth context
+```typescript
+const registerSchema = z
+  .object({
+    email: z.string().email('Invalid email format'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
+```
+
+## User Experience Flow
+
+### New User Journey
+
+1. Clicks "Get Started" → Registration modal opens
+2. Fills registration form → Account created
+3. Automatic login → Redirected to dashboard
+4. Optional: Welcome/onboarding flow
+
+### Existing User Journey
+
+1. Clicks "Sign In" → Login modal opens (unchanged)
+2. Authenticates → Dashboard (unchanged)
 
 ## Testing Strategy
 
 ### Manual Testing Checklist
 
-- [ ] Unauthenticated user: Buttons open login modal
-- [ ] Authenticated user: Buttons navigate to dashboard
-- [ ] Loading states display correctly
-- [ ] Basic keyboard navigation works
-- [ ] Console logs show click events
+- [ ] "Get Started" opens registration modal
+- [ ] "Sign In" opens login modal
+- [ ] Registration creates new accounts
+- [ ] Login still works for existing users
+- [ ] Form validation works correctly
+- [ ] Error states display properly
+- [ ] Modal switching between login/register modes
+
+### Edge Cases
+
+- [ ] Email already exists during registration
+- [ ] Network errors during registration
+- [ ] User switches between login/register in modal
+- [ ] Form validation edge cases
 
 ## Success Metrics
 
-### Immediate (Technical)
+### Technical
 
 - Zero TypeScript errors
-- All tests passing
-- No performance regression
-- Accessibility compliance
+- All existing functionality preserved
+- New user registration working
+- Proper error handling
 
-### Business (Post-deployment)
+### Business
 
-- Conversion rate from landing page to signup
-- User engagement on dashboard after CTA clicks
-- Error rate reduction on landing page interactions
+- New user conversion funnel operational
+- Clear distinction between sign-in and sign-up
+- Reduced bounce rate for new users
 
 ## Risk Assessment
 
 ### Low Risk
 
-- Breaking existing functionality (minimal changes to proven auth flow)
-- Performance impact (no new dependencies)
+- Breaking existing login flow (well-isolated changes)
+- Performance impact (minimal new code)
+
+### Medium Risk
+
+- Supabase registration integration complexity
+- Form validation edge cases
 
 ### Mitigation
 
-- Test manually before deployment
-- Use existing patterns from working Sign In button
+- Follow existing login patterns exactly
+- Comprehensive manual testing
+- Progressive rollout capability
 
 ## Definition of Done
 
-- [ ] All CTA buttons have functional click handlers
-- [ ] User state awareness implemented
-- [ ] Analytics tracking operational
-- [ ] Error handling and loading states
-- [ ] Accessibility compliance verified
-- [ ] Unit and integration tests passing
-- [ ] Code review completed
-- [ ] Performance impact assessed
-- [ ] Documentation updated
+- [ ] Registration API endpoint functional
+- [ ] Registration form with proper validation
+- [ ] Auth context supports registration
+- [ ] Modal supports both login and registration
+- [ ] "Get Started" triggers registration flow
+- [ ] "Sign In" maintains existing behavior
+- [ ] All existing functionality preserved
+- [ ] Manual testing completed
+- [ ] TypeScript compliance verified
 
-## Future Considerations (Not in Scope)
+## Effort Estimation
 
-- A/B testing different CTA copy
-- Personalized messaging based on user segments
-- Advanced analytics (heatmaps, session recordings)
-- Internationalization support
-- Advanced loading animations
+- **Backend API**: 2-3 hours
+- **Frontend Components**: 2-3 hours
+- **Integration & Testing**: 1-2 hours
+- **Total**: 5-8 hours over 1-2 days
+
+## Dependencies
+
+- Existing Supabase authentication setup
+- Current UI component library (shadcn/ui)
+- Existing form validation patterns (react-hook-form + zod)
 
 ---
 
-**Estimated Total Effort**: 2-3 hours
-**Target Timeline**: Half day
-**Dependencies**: Existing authentication system, UI components
-**Risk Level**: Low-Medium
+This plan transforms "Get Started" into proper registration functionality while maintaining all existing login capabilities and following established codebase patterns.
