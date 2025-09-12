@@ -11,11 +11,14 @@ import {
 import { LoginModal } from '@/components/auth';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage(): JSX.Element {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showAuthMessage, setShowAuthMessage] = useState(false);
-  const { user: _user } = useAuth();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     // Check if user was redirected here because they need to sign in
@@ -25,6 +28,37 @@ export default function HomePage(): JSX.Element {
       setIsLoginModalOpen(true);
     }
   }, []);
+
+  // Enhanced button handlers with user state awareness and analytics
+  const handleGetStarted = async (source: 'header' | 'hero'): Promise<void> => {
+    // Simple analytics tracking
+    console.warn('CTA clicked:', {
+      source,
+      authenticated: !!user,
+      timestamp: Date.now(),
+    });
+
+    if (user) {
+      // Authenticated user: Navigate to dashboard
+      setIsNavigating(true);
+      try {
+        router.push('/dashboard');
+      } catch (error) {
+        console.error('Navigation error:', error);
+        setIsNavigating(false);
+      }
+    } else {
+      // Unauthenticated user: Open login modal
+      setIsLoginModalOpen(true);
+    }
+  };
+
+  const handleViewDocumentation = (): void => {
+    console.warn('View documentation clicked');
+    document.getElementById('features')?.scrollIntoView({
+      behavior: 'smooth',
+    });
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -45,7 +79,14 @@ export default function HomePage(): JSX.Element {
             >
               Sign In
             </Button>
-            <Button size="sm">Get Started</Button>
+            <Button
+              size="sm"
+              onClick={() => handleGetStarted('header')}
+              disabled={isNavigating || isLoading}
+              aria-label={user ? 'Go to dashboard' : 'Sign in to get started'}
+            >
+              {isNavigating ? 'Loading...' : 'Get Started'}
+            </Button>
           </nav>
         </div>
       </header>
@@ -70,10 +111,26 @@ export default function HomePage(): JSX.Element {
               with enterprise-grade reliability and AI-first architecture.
             </p>
             <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="text-base">
-                Start Building Prompts
+              <Button
+                size="lg"
+                className="text-base"
+                onClick={() => handleGetStarted('hero')}
+                disabled={isNavigating || isLoading}
+                aria-label={
+                  user
+                    ? 'Go to dashboard to build prompts'
+                    : 'Sign in to start building prompts'
+                }
+              >
+                {isNavigating ? 'Loading...' : 'Start Building Prompts'}
               </Button>
-              <Button variant="outline" size="lg" className="text-base">
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-base"
+                onClick={handleViewDocumentation}
+                aria-label="Scroll to features section"
+              >
                 View Documentation
               </Button>
             </div>
@@ -82,7 +139,7 @@ export default function HomePage(): JSX.Element {
       </section>
 
       {/* Features Section */}
-      <section className="py-24">
+      <section id="features" className="py-24">
         <div className="container px-4">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight">
