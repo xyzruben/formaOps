@@ -52,7 +52,7 @@ export function AuthModal({
           <div className="mt-6">
             <TabsContent value="login" className="space-y-4">
               <div className="text-center">
-                <h3 className="text-lg font-medium">Sign In</h3>
+                <h3 className="text-lg font-medium">Sign In to FormaOps</h3>
                 <p className="text-sm text-muted-foreground">
                   Enter your credentials to access your account
                 </p>
