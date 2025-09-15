@@ -30,6 +30,7 @@ export const findUserByEmail = async (email: string): Promise<UserResult> => {
 };
 
 export const createUser = async (data: {
+  id?: string;
   email: string;
   name?: string;
 }): Promise<User> => {

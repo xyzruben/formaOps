@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import type { Database } from '@/types/supabase';
+import { createUser, findUserByEmail } from '@/lib/database/queries';
 
 const LoginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -42,6 +43,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' },
         { status: 401 }
       );
+    }
+
+    try {
+      // Ensure user exists in application database
+      // This handles cases where users confirmed their email but weren't synced during registration
+      const existingUser = await findUserByEmail(data.user.email!);
+
+      if (!existingUser) {
+        // Create user in application database to sync with Supabase Auth
+        await createUser({
+          id: data.user.id,
+          email: data.user.email!,
+          name: data.user.user_metadata?.name || null,
+        });
+      }
+    } catch (dbError) {
+      console.error(
+        'Failed to ensure user exists in application database:',
+        dbError
+      );
+      // Don't fail the login if database sync fails
+      // Log the error and continue with the login
     }
 
     return NextResponse.json({

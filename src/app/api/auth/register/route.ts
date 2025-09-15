@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 import type { Database } from '@/types/supabase';
+import { createUser, findUserByEmail } from '@/lib/database/queries';
 
 const RegisterSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -39,6 +40,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (error) {
+      console.error('Supabase registration error:', error);
+
       // Handle specific Supabase registration errors
       if (error.message.includes('already registered')) {
         return NextResponse.json(
@@ -74,6 +77,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { error: 'Registration failed', code: 'REGISTRATION_FAILED' },
         { status: 400 }
       );
+    }
+
+    try {
+      // Check if user already exists in application database
+      const existingUser = await findUserByEmail(email);
+
+      if (!existingUser) {
+        // Create user in application database to sync with Supabase Auth
+        await createUser({
+          id: data.user.id, // Use the same ID as Supabase Auth
+          email: data.user.email!,
+          name: data.user.user_metadata?.name || null,
+        });
+      }
+    } catch (dbError) {
+      console.error('Failed to create user in application database:', dbError);
+      // Don't fail the registration if database sync fails
+      // The user exists in Supabase Auth, so they can still log in
+      // We'll need to handle this case gracefully in the login flow
     }
 
     // Return user data and session if available
