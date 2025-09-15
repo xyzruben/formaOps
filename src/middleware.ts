@@ -16,7 +16,8 @@ const securityHeaders = {
 
 // Rate limit configuration
 const RATE_LIMIT_CONFIG = {
-  '/api/auth/login': { limit: 5, window: 15 * 60 * 1000 }, // 5 attempts per 15 minutes
+  '/api/auth/login': { limit: 20, window: 15 * 60 * 1000 }, // 20 attempts per 15 minutes (more reasonable for signup flow)
+  '/api/auth/register': { limit: 10, window: 15 * 60 * 1000 }, // 10 registration attempts per 15 minutes
   '/api/executions': { limit: 50, window: 60 * 60 * 1000 }, // 50 executions per hour
   '/api/prompts': { limit: 100, window: 60 * 60 * 1000 }, // 100 requests per hour
   default: { limit: 200, window: 60 * 60 * 1000 }, // 200 requests per hour default
