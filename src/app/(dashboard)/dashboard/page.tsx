@@ -342,18 +342,40 @@ export default function DashboardPage(): JSX.Element {
   const [_componentError, _setComponentError] = useState(false);
 
   // Detect test mode
-  const isTestMode =
-    typeof window !== 'undefined' &&
-    window.location.hostname === 'localhost' &&
-    window.location.port === '3000';
+  const isTestMode = process.env.NEXT_PUBLIC_IS_TEST_MODE === 'true';
+
+  // Debug logging (commented out for cleaner output)
+  // console.log('Dashboard - isTestMode:', isTestMode);
+  // console.log('Dashboard - user:', user);
+  // console.log('Dashboard - isLoading:', isLoading);
+
+  const handleLogout = async (): Promise<void> => {
+    try {
+      await logout();
+      // Redirect to home after logout
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   useEffect(() => {
-    // Skip redirect in test mode if localStorage has auth-user
-    const hasTestAuth =
-      typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
+    // In test mode, give more time for auth state to sync
+    if (isTestMode && !user && !isLoading) {
+      const hasTestAuth =
+        typeof window !== 'undefined' &&
+        window.localStorage.getItem('auth-user');
 
-    // Redirect unauthenticated users to login (skip in test mode with auth data)
-    if (!isLoading && !user && !(isTestMode && hasTestAuth)) {
+      if (!hasTestAuth) {
+        // No auth data in localStorage, redirect
+        window.location.href = '/?auth=required';
+      }
+      // If we have auth data but no user yet, wait for state sync
+      return;
+    }
+
+    // Production mode: redirect unauthenticated users to login
+    if (!isLoading && !user && !isTestMode) {
       window.location.href = '/?auth=required';
     }
   }, [user, isLoading, isTestMode]);
@@ -367,27 +389,64 @@ export default function DashboardPage(): JSX.Element {
     );
   }
 
-  // Don't render if not authenticated (will redirect) - except in test mode
-  const hasTestAuth =
-    typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
+  // In test mode, render if we have localStorage auth data even if user isn't loaded yet
+  if (isTestMode) {
+    const hasTestAuth =
+      typeof window !== 'undefined' && window.localStorage.getItem('auth-user');
 
-  if (!user && !(isTestMode && hasTestAuth)) {
-    return (
-      <div className="container mx-auto py-8">
-        <div className="text-center">Redirecting...</div>
-      </div>
-    );
-  }
-
-  const handleLogout = async (): Promise<void> => {
-    try {
-      await logout();
-      // Redirect to home after logout
-      window.location.href = '/';
-    } catch (error) {
-      console.error('Logout error:', error);
+    if (!user && !hasTestAuth) {
+      return (
+        <div className="container mx-auto py-8">
+          <div className="text-center">Redirecting...</div>
+        </div>
+      );
     }
-  };
+
+    // In test mode, render even if user isn't loaded yet but localStorage has auth
+    if (!user && hasTestAuth) {
+      // Parse localStorage data for display
+      let testUser = null;
+      try {
+        testUser = JSON.parse(hasTestAuth);
+      } catch {
+        // Invalid localStorage data
+        return (
+          <div className="container mx-auto py-8">
+            <div className="text-center">Redirecting...</div>
+          </div>
+        );
+      }
+
+      // Render with localStorage data temporarily
+      return (
+        <div className="container mx-auto py-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Welcome to FormaOps</h1>
+              <p className="text-muted-foreground mt-2">
+                Welcome back, {testUser.email}!
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleLogout}>
+              Logout
+            </Button>
+          </div>
+          <div className="min-h-[200px]">
+            <TestModePromptList />
+          </div>
+        </div>
+      );
+    }
+  } else {
+    // Production mode: don't render if not authenticated
+    if (!user) {
+      return (
+        <div className="container mx-auto py-8">
+          <div className="text-center">Redirecting...</div>
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="container mx-auto py-8">

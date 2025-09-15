@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Expose test mode to the browser
+  env: {
+    NEXT_PUBLIC_IS_TEST_MODE:
+      process.env.NODE_ENV === 'test' ? 'true' : 'false',
+  },
   // Enable experimental features for better performance
   experimental: {
     typedRoutes: true,

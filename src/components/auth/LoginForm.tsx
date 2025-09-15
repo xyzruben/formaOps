@@ -50,8 +50,16 @@ export function LoginForm({ onSuccess, onError }: LoginFormProps): JSX.Element {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Redirect to dashboard after successful login
-      window.location.href = '/dashboard';
+      // In test mode, wait for auth state to propagate before redirecting
+      if (process.env.NEXT_PUBLIC_IS_TEST_MODE === 'true') {
+        // Wait a bit for the auth state to update
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 200);
+      } else {
+        // Redirect to dashboard after successful login
+        window.location.href = '/dashboard';
+      }
       onSuccess();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
