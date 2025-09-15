@@ -23,30 +23,45 @@ class TestAuthManager {
   };
 
   private listeners: ((state: MockAuthState) => void)[] = [];
+  private initialized = false;
 
   constructor() {
-    // Initialize from localStorage if available - start as not loading if data exists
-    const stored = safeLocalStorage.getItem('auth-user');
-    if (stored) {
-      try {
-        const user = JSON.parse(stored);
-        this.state = { user, isLoading: false, error: null };
-      } catch (error) {
-        console.warn('Invalid stored auth data:', error);
+    // Defer initialization to avoid issues during module loading
+  }
+
+  private ensureInitialized(): void {
+    if (this.initialized) return;
+
+    try {
+      // Initialize from localStorage if available - start as not loading if data exists
+      const stored = safeLocalStorage.getItem('auth-user');
+      if (stored) {
+        try {
+          const user = JSON.parse(stored);
+          this.state = { user, isLoading: false, error: null };
+        } catch (error) {
+          console.warn('Invalid stored auth data:', error);
+          this.state.isLoading = false;
+        }
+      } else {
         this.state.isLoading = false;
       }
-    } else {
+
+      // Listen for localStorage changes during tests
+      if (typeof window !== 'undefined') {
+        window.addEventListener('storage', this.handleStorageChange.bind(this));
+
+        // Also set up a periodic check for E2E tests where storage events might not fire
+        setInterval(() => {
+          this.loadFromStorage();
+        }, 100);
+      }
+
+      this.initialized = true;
+    } catch (error) {
+      console.warn('TestAuthManager initialization failed:', error);
       this.state.isLoading = false;
-    }
-
-    // Listen for localStorage changes during tests
-    if (typeof window !== 'undefined') {
-      window.addEventListener('storage', this.handleStorageChange.bind(this));
-
-      // Also set up a periodic check for E2E tests where storage events might not fire
-      setInterval(() => {
-        this.loadFromStorage();
-      }, 100);
+      this.initialized = true;
     }
   }
 
@@ -86,10 +101,12 @@ class TestAuthManager {
   }
 
   getState(): MockAuthState {
+    this.ensureInitialized();
     return { ...this.state };
   }
 
   subscribe(listener: (state: MockAuthState) => void): () => void {
+    this.ensureInitialized();
     this.listeners.push(listener);
     return () => {
       const index = this.listeners.indexOf(listener);
@@ -103,6 +120,7 @@ class TestAuthManager {
     email: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> {
+    this.ensureInitialized();
     this.updateState({ isLoading: true, error: null });
 
     // Simulate API delay
@@ -150,6 +168,7 @@ class TestAuthManager {
     email: string,
     password: string
   ): Promise<{ success: boolean; error?: string }> {
+    this.ensureInitialized();
     this.updateState({ isLoading: true, error: null });
 
     // Simulate API delay
@@ -197,6 +216,7 @@ class TestAuthManager {
   }
 
   async logout(): Promise<{ success: boolean; error?: string }> {
+    this.ensureInitialized();
     this.updateState({ isLoading: true, error: null });
 
     // Simulate API delay
@@ -209,6 +229,7 @@ class TestAuthManager {
   }
 
   clearError(): void {
+    this.ensureInitialized();
     this.updateState({ error: null });
   }
 }
