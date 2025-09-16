@@ -13,6 +13,12 @@ const LoginSchema = z.object({
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const cookieStore = await cookies();
+    let pendingCookies: Array<{
+      name: string;
+      value: string;
+      options: Record<string, unknown>;
+    }> = [];
+
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,6 +28,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             return cookieStore.getAll();
           },
           setAll(cookiesToSet) {
+            // Capture cookies to be set instead of setting immediately
+            pendingCookies = [...cookiesToSet];
             cookiesToSet.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options);
             });
@@ -67,7 +75,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Log the error and continue with the login
     }
 
-    return NextResponse.json({
+    // Create response with user data
+    const response = NextResponse.json({
       user: {
         id: data.user.id,
         email: data.user.email,
@@ -76,6 +85,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
     });
+
+    // Set cookies in response headers - CRITICAL FIX for session persistence
+    pendingCookies.forEach(({ name, value, options }) => {
+      response.cookies.set(name, value, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: options.maxAge || 60 * 60 * 24 * 30, // 30 days default
+        path: '/',
+        ...options,
+      });
+    });
+
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
