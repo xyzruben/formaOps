@@ -5,20 +5,37 @@ declare global {
 }
 
 // Enhanced Prisma Client configuration for connection stability
-export const prisma =
-  globalThis.prisma ??
-  new PrismaClient({
+// Handle build-time scenarios where DATABASE_URL might not be available
+const createPrismaClient = () => {
+  // During build time, provide minimal configuration to prevent errors
+  if (
+    !process.env.DATABASE_URL &&
+    (process.env.NODE_ENV === 'test' || process.env.VERCEL)
+  ) {
+    console.warn(
+      'DATABASE_URL not available during build, using minimal Prisma configuration'
+    );
+    return new PrismaClient({
+      log: ['error'],
+      errorFormat: 'pretty',
+    });
+  }
+
+  return new PrismaClient({
     log:
       process.env.NODE_ENV === 'development'
         ? ['query', 'error', 'warn']
         : ['error'],
 
     // Connection pool and timeout configuration for better stability
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
+    // Provide fallback for build-time when DATABASE_URL might not be available
+    ...(process.env.DATABASE_URL && {
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL,
+        },
       },
-    },
+    }),
 
     // Enhanced error handling and connection management
     errorFormat: 'pretty',
@@ -29,6 +46,9 @@ export const prisma =
       log: ['error', 'warn'], // More verbose logging in production for debugging
     }),
   });
+};
+
+export const prisma = globalThis.prisma ?? createPrismaClient();
 
 // Connection event handlers for monitoring
 // Note: Event handlers temporarily disabled due to TypeScript compatibility issues
