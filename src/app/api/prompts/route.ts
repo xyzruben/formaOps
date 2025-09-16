@@ -52,11 +52,14 @@ const PromptsQuerySchema = z.object({
 });
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  let user: any = null;
+  let query: any = null;
+
   try {
-    const user = await requireAuth();
+    user = await requireAuth();
     const { searchParams } = new URL(request.url);
 
-    const query = PromptsQuerySchema.parse({
+    query = PromptsQuerySchema.parse({
       page: searchParams.get('page'),
       limit: searchParams.get('limit'),
       status: searchParams.get('status') || undefined,
@@ -67,6 +70,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(result);
   } catch (error) {
+    // Enhanced error logging for debugging
+    console.error('API Prompts GET Error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      userId: user?.id,
+      query: query,
+      timestamp: new Date().toISOString(),
+      type: error?.constructor?.name,
+      code: (error as any)?.code,
+      url: request.url,
+    });
+
     if (error instanceof Error && error.message === 'Authentication required') {
       return NextResponse.json(
         { error: 'Unauthorized', code: 'UNAUTHORIZED' },
@@ -88,8 +103,61 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // Database-specific error handling
+    const errorCode = (error as any)?.code;
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+
+    // Prisma connection errors
+    if (
+      errorCode === 'P1001' ||
+      errorMessage.includes('connection') ||
+      errorMessage.includes('timeout')
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'Database connection temporarily unavailable. Please try again.',
+          code: 'DB_CONNECTION_ERROR',
+          retryable: true,
+        },
+        { status: 503 }
+      );
+    }
+
+    // Prisma query errors
+    if (typeof errorCode === 'string' && errorCode.startsWith('P')) {
+      return NextResponse.json(
+        {
+          error: 'Database query error. Please try again.',
+          code: 'DB_QUERY_ERROR',
+          retryable: true,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Authentication errors from requireAuth
+    if (
+      errorMessage.includes('Authentication failed') ||
+      errorMessage.includes('session missing')
+    ) {
+      return NextResponse.json(
+        {
+          error: 'Authentication session invalid',
+          code: 'AUTH_SESSION_INVALID',
+        },
+        { status: 401 }
+      );
+    }
+
+    // Generic server error with retry indication
     return NextResponse.json(
-      { error: 'Internal server error', code: 'INTERNAL_ERROR' },
+      {
+        error: 'Internal server error. Please try again.',
+        code: 'INTERNAL_ERROR',
+        retryable: true,
+      },
       { status: 500 }
     );
   }

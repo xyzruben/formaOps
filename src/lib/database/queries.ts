@@ -7,6 +7,124 @@ import type {
   ExecutionStatus,
 } from '@prisma/client';
 
+// Database retry utility for connection stability
+interface RetryOptions {
+  maxRetries?: number;
+  baseDelayMs?: number;
+  maxDelayMs?: number;
+  retryableErrors?: string[];
+}
+
+const DEFAULT_RETRY_OPTIONS: Required<RetryOptions> = {
+  maxRetries: 3,
+  baseDelayMs: 100,
+  maxDelayMs: 5000,
+  retryableErrors: [
+    'P1001',
+    'connection',
+    'timeout',
+    'ECONNRESET',
+    'ENOTFOUND',
+  ],
+};
+
+/**
+ * Determines if an error is retryable based on error codes and messages
+ */
+function isRetryableError(error: any, retryableErrors: string[]): boolean {
+  if (!error) return false;
+
+  const errorCode = error.code;
+  const errorMessage = error.message || '';
+
+  // Check for specific Prisma error codes
+  if (typeof errorCode === 'string' && retryableErrors.includes(errorCode)) {
+    return true;
+  }
+
+  // Check for connection-related error messages
+  return retryableErrors.some(keyword =>
+    errorMessage.toLowerCase().includes(keyword.toLowerCase())
+  );
+}
+
+/**
+ * Calculate exponential backoff delay with jitter
+ */
+function calculateDelay(
+  attempt: number,
+  baseDelayMs: number,
+  maxDelayMs: number
+): number {
+  const exponentialDelay = baseDelayMs * Math.pow(2, attempt - 1);
+  const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
+  return Math.min(exponentialDelay + jitter, maxDelayMs);
+}
+
+/**
+ * Retry wrapper for database operations with exponential backoff
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string = 'database operation',
+  options: RetryOptions = {}
+): Promise<T> {
+  const config = { ...DEFAULT_RETRY_OPTIONS, ...options };
+  let lastError: any;
+
+  for (let attempt = 1; attempt <= config.maxRetries; attempt++) {
+    try {
+      const result = await operation();
+
+      // Log successful retry if it's not the first attempt
+      if (attempt > 1) {
+        console.log(
+          `Database retry succeeded for ${operationName} on attempt ${attempt}`
+        );
+      }
+
+      return result;
+    } catch (error) {
+      lastError = error;
+
+      // Enhanced error logging with retry context
+      console.error(
+        `Database error on attempt ${attempt}/${config.maxRetries} for ${operationName}:`,
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          code: (error as any)?.code,
+          attempt,
+          retryable: isRetryableError(error, config.retryableErrors),
+          timestamp: new Date().toISOString(),
+        }
+      );
+
+      // Don't retry if this is the last attempt or error is not retryable
+      if (
+        attempt === config.maxRetries ||
+        !isRetryableError(error, config.retryableErrors)
+      ) {
+        break;
+      }
+
+      // Wait before retrying with exponential backoff
+      const delay = calculateDelay(
+        attempt,
+        config.baseDelayMs,
+        config.maxDelayMs
+      );
+      console.log(
+        `Retrying ${operationName} in ${delay}ms (attempt ${attempt + 1}/${config.maxRetries})`
+      );
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  // If we get here, all retries failed
+  console.error(`All retry attempts failed for ${operationName}`, lastError);
+  throw lastError;
+}
+
 // Database result types
 type UserResult = User | null;
 type PromptResult = {
@@ -73,40 +191,51 @@ export const getUserPrompts = async (
     }),
   };
 
-  const [prompts, total] = await Promise.all([
-    prisma.prompt.findMany({
-      where,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        template: true,
-        variables: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
+  // Apply retry logic to the critical database operation
+  return withRetry(
+    async () => {
+      const [prompts, total] = await Promise.all([
+        prisma.prompt.findMany({
+          where,
           select: {
-            executions: true,
+            id: true,
+            name: true,
+            description: true,
+            template: true,
+            variables: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            _count: {
+              select: {
+                executions: true,
+              },
+            },
           },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.prompt.count({ where }),
-  ]);
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.prompt.count({ where }),
+      ]);
 
-  return {
-    prompts,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+      return {
+        prompts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
     },
-  };
+    `getUserPrompts for user ${userId}`,
+    {
+      maxRetries: 3,
+      baseDelayMs: 200, // Slightly higher delay for complex queries
+      maxDelayMs: 3000,
+    }
+  );
 };
 
 export const getPromptById = async (
