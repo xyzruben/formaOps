@@ -23,7 +23,6 @@ export async function GET(): Promise<NextResponse> {
       // Test a typical query similar to getUserPrompts to verify full functionality
       const testQuery = await prisma.user.findFirst({
         select: { id: true },
-        where: { email: { not: null } },
       });
 
       connectionInfo = {
