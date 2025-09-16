@@ -11,7 +11,7 @@ import { getUser } from '@/lib/auth/server';
  */
 export async function GET(): Promise<NextResponse> {
   // Security: Only allow debug endpoint in non-production environments
-  if (process.env.NODE_ENV === 'production') {
+  if ((process.env.NODE_ENV as string) === 'production') {
     return NextResponse.json(
       { error: 'Debug endpoint not available in production' },
       { status: 404 }
@@ -37,7 +37,7 @@ export async function GET(): Promise<NextResponse> {
       timestamp: new Date().toISOString(),
       environment: {
         nodeEnv: process.env.NODE_ENV,
-        isProduction: process.env.NODE_ENV === 'production',
+        isProduction: (process.env.NODE_ENV as string) === 'production',
         supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing',
         supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
           ? 'Set'

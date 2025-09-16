@@ -88,11 +88,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Set cookies in response headers - CRITICAL FIX for session persistence
     pendingCookies.forEach(({ name, value, options }) => {
+      const maxAge =
+        typeof options.maxAge === 'number' ? options.maxAge : 60 * 60 * 24 * 30; // 30 days default
+
       response.cookies.set(name, value, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: options.maxAge || 60 * 60 * 24 * 30, // 30 days default
+        maxAge,
         path: '/',
         ...options,
       });
