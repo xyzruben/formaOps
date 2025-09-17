@@ -1,6 +1,12 @@
 import { NextRequest } from 'next/server';
 import { POST as loginPOST } from '../../../app/api/auth/login/route';
 
+// Mock database queries
+jest.mock('@/lib/database/queries', () => ({
+  findUserByEmail: jest.fn(),
+  createUser: jest.fn(),
+}));
+
 describe('Auth Integration Tests', () => {
   describe('POST /api/auth/login', () => {
     it('should handle login flow with valid credentials', async () => {

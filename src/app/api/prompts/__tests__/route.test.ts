@@ -118,6 +118,13 @@ describe('/api/prompts', () => {
         expect(mockGetUserPrompts).toHaveBeenCalledWith('user-123', {
           page: 1,
           limit: 20,
+          search: undefined,
+          status: undefined,
+          select: {
+            lightweight: true,
+            enableCache: true,
+            includeExecutionCount: true,
+          },
         });
       } catch (error) {
         console.error('Error during test execution:', error);
@@ -154,6 +161,13 @@ describe('/api/prompts', () => {
       expect(mockGetUserPrompts).toHaveBeenCalledWith('user-123', {
         page: 2,
         limit: 10,
+        search: undefined,
+        status: undefined,
+        select: {
+          lightweight: false, // limit <= 10, so lightweight is false
+          enableCache: true,
+          includeExecutionCount: true,
+        },
       });
     });
 
@@ -172,6 +186,12 @@ describe('/api/prompts', () => {
         page: 1,
         limit: 20,
         search: 'test',
+        status: undefined,
+        select: {
+          lightweight: true, // limit > 10, so lightweight is true
+          enableCache: true,
+          includeExecutionCount: true,
+        },
       });
     });
   });

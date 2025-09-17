@@ -5,6 +5,12 @@ import { NextRequest } from 'next/server';
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-supabase-anon-key';
 
+// Mock database queries
+jest.mock('@/lib/database/queries', () => ({
+  findUserByEmail: jest.fn(),
+  createUser: jest.fn(),
+}));
+
 // Create mocks that can be shared between the mock and tests
 const mockSignInWithPassword = jest.fn();
 const mockGetUser = jest.fn();
