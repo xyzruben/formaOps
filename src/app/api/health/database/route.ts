@@ -68,11 +68,11 @@ export async function GET(): Promise<NextResponse> {
       stack: error instanceof Error ? error.stack : undefined,
       responseTimeMs: responseTime,
       timestamp: new Date().toISOString(),
-      code: (error as any)?.code,
+      code: (error as { code?: string })?.code,
       type: error?.constructor?.name,
     });
 
-    const errorCode = (error as any)?.code;
+    const errorCode = (error as { code?: string })?.code;
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
 
