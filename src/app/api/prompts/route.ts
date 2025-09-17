@@ -66,7 +66,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       search: searchParams.get('search') || undefined,
     });
 
-    const result = await getUserPrompts(user.id, query);
+    // Use optimized query with caching for better performance
+    const result = await getUserPrompts(user.id, {
+      ...query,
+      select: {
+        lightweight: query.limit > 10, // Use lightweight for large result sets
+        enableCache: true, // Enable caching for list queries
+        includeExecutionCount: true, // Include execution count for dashboard
+      },
+    });
 
     return NextResponse.json(result);
   } catch (error) {

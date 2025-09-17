@@ -1,4 +1,10 @@
 import { prisma } from './client';
+import { performanceMonitor } from '../monitoring/performance-monitor';
+import { queryCache } from '../cache/query-cache';
+import {
+  queryCircuitBreaker,
+  withCircuitBreaker,
+} from '../resilience/circuit-breaker';
 import type {
   User,
   Prompt,
@@ -157,6 +163,16 @@ export const createUser = async (data: {
   });
 };
 
+// Field selection options for optimized queries
+export interface PromptSelectOptions {
+  includeTemplate?: boolean;
+  includeVariables?: boolean;
+  includeExecutionCount?: boolean;
+  lightweight?: boolean; // For dashboard lists, only essential fields
+  enableCache?: boolean; // Enable caching for this query
+  cacheKeyPrefix?: string; // Custom cache key prefix
+}
+
 // Prompt queries
 export const getUserPrompts = async (
   userId: string,
@@ -165,11 +181,13 @@ export const getUserPrompts = async (
     limit = 20,
     status,
     search,
+    select = {},
   }: {
     page?: number;
     limit?: number;
     status?: PromptStatus;
     search?: string;
+    select?: PromptSelectOptions;
   } = {}
 ): Promise<{
   prompts: PromptsResult;
@@ -191,43 +209,151 @@ export const getUserPrompts = async (
     }),
   };
 
-  // Apply retry logic to the critical database operation
+  // Build dynamic select based on options for optimal performance
+  const selectFields = {
+    id: true,
+    name: true,
+    description: true,
+    status: true,
+    createdAt: true,
+    updatedAt: true,
+    // Conditional fields based on select options
+    ...(select.lightweight
+      ? {}
+      : {
+          template: select.includeTemplate !== false,
+          variables: select.includeVariables !== false,
+        }),
+    // Execution count is expensive, only include when needed
+    ...(select.includeExecutionCount !== false &&
+      !select.lightweight && {
+        _count: {
+          select: {
+            executions: true,
+          },
+        },
+      }),
+  };
+
+  // Generate cache key if caching is enabled
+  const cacheKey = select.enableCache
+    ? queryCache.generateKey(select.cacheKeyPrefix || 'getUserPrompts', {
+        userId,
+        page,
+        limit,
+        status,
+        search,
+        selectOptions: select,
+      })
+    : null;
+
+  // Check cache first if enabled
+  if (cacheKey) {
+    const cached = queryCache.get<{
+      prompts: PromptsResult;
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+      };
+    }>(cacheKey);
+    if (cached) {
+      // Record cache hit metrics
+      performanceMonitor.recordMetric({
+        name: 'cache_hit',
+        value: 1,
+        unit: 'count',
+        timestamp: new Date(),
+        metadata: {
+          operation: 'getUserPrompts',
+          userId,
+          cacheKey,
+        },
+      });
+      return cached;
+    }
+  }
+
+  // Apply retry logic and performance monitoring to the critical database operation
   return withRetry(
     async () => {
-      const [prompts, total] = await Promise.all([
-        prisma.prompt.findMany({
-          where,
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            template: true,
-            variables: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-            _count: {
-              select: {
-                executions: true,
-              },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          skip: (page - 1) * limit,
-          take: limit,
-        }),
-        prisma.prompt.count({ where }),
-      ]);
+      const startTime = Date.now();
 
-      return {
-        prompts,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
+      try {
+        // Wrap database operations with circuit breaker protection
+        const [prompts, total] = await withCircuitBreaker(
+          queryCircuitBreaker,
+          async () => {
+            return Promise.all([
+              prisma.prompt.findMany({
+                where,
+                select: selectFields,
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * limit,
+                take: limit,
+              }),
+              prisma.prompt.count({ where }),
+            ]);
+          }
+        );
+
+        const result = {
+          prompts,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+          },
+        };
+
+        // Cache the result if caching is enabled
+        if (cacheKey) {
+          // Cache for shorter time if results are large or user-specific
+          const ttl = prompts.length > 50 ? 2 * 60 * 1000 : 5 * 60 * 1000; // 2-5 minutes
+          queryCache.set(cacheKey, result, ttl);
+        }
+
+        // Record performance metrics
+        const duration = Date.now() - startTime;
+        performanceMonitor.recordMetric({
+          name: 'database_query_latency',
+          value: duration,
+          unit: 'ms',
+          timestamp: new Date(),
+          metadata: {
+            operation: 'getUserPrompts',
+            userId,
+            resultCount: prompts.length,
+            totalCount: total,
+            page,
+            limit,
+            hasSearch: !!search,
+            hasStatusFilter: !!status,
+            cached: !!cacheKey,
+            lightweight: !!select.lightweight,
+          },
+        });
+
+        return result;
+      } catch (error) {
+        // Record failed query metrics
+        const duration = Date.now() - startTime;
+        performanceMonitor.recordMetric({
+          name: 'database_query_error',
+          value: 1,
+          unit: 'count',
+          timestamp: new Date(),
+          metadata: {
+            operation: 'getUserPrompts',
+            userId,
+            duration,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
+        throw error;
+      }
     },
     `getUserPrompts for user ${userId}`,
     {
