@@ -36,18 +36,8 @@ interface ValidationErrors {
   [key: string]: string | null;
 }
 
-// Lazy load PromptList to handle potential component errors
-import dynamic from 'next/dynamic';
-const PromptList = dynamic(
-  () =>
-    import('@/components/prompts/PromptList').then(mod => ({
-      default: mod.PromptList,
-    })),
-  {
-    loading: () => <div>Loading prompts...</div>,
-    ssr: false,
-  }
-);
+// Import PromptList directly
+import { PromptList } from '@/components/prompts/PromptList';
 
 // Test-mode component that provides basic prompt functionality without complex dependencies
 function TestModePromptList(): JSX.Element {

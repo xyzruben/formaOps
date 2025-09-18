@@ -46,7 +46,12 @@ export function PromptList(): JSX.Element {
         searchParams.set('search', search);
       }
 
-      const response = await fetch(`/api/prompts?${searchParams.toString()}`);
+      const response = await fetch(`/api/prompts?${searchParams.toString()}`, {
+        credentials: 'include', // Include cookies for authentication
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         throw new Error('Failed to fetch prompts');
