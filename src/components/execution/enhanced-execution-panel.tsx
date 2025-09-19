@@ -533,7 +533,7 @@ export function EnhancedExecutionPanel({
                           </span>
                           <span
                             className={`ml-1 font-medium ${
-                              execution.validationStatus === 'COMPLETED'
+                              execution.validationStatus === 'PASSED'
                                 ? 'text-green-600'
                                 : execution.validationStatus === 'FAILED'
                                   ? 'text-red-600'
@@ -1310,14 +1310,19 @@ function ExecutionStatusDisplay({
                   Validation Issues:
                 </p>
                 <ul className="text-sm text-yellow-700 space-y-1">
-                  {result.validationErrors.map((error, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-yellow-600">•</span>
-                      <span>
-                        <strong>{error.path}:</strong> {error.message}
-                      </span>
-                    </li>
-                  ))}
+                  {result.validationErrors.map(
+                    (
+                      error: { path: string; message: string },
+                      index: number
+                    ) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-yellow-600">•</span>
+                        <span>
+                          <strong>{error.path}:</strong> {error.message}
+                        </span>
+                      </li>
+                    )
+                  )}
                 </ul>
               </div>
             )}
