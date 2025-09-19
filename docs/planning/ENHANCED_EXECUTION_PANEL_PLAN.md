@@ -10,7 +10,7 @@ The Enhanced Execution Panel transforms the existing basic execution functionali
 
 - **Dynamic Input Forms**: Automatically generates input forms based on prompt variable definitions
 - **Model Selection**: Choose between GPT models with cost estimation and capability insights
-- **Real-time Execution**: Live status updates with progress indicators and streaming responses
+- **Immediate Execution**: Fast API execution with loading states and instant results
 - **Parameter Control**: Fine-tune AI behavior with temperature, token limits, and other settings
 
 ### Architectural Role
@@ -45,7 +45,6 @@ interface ExecutionFormData {
 interface ExecutionState {
   status: 'idle' | 'executing' | 'completed' | 'failed';
   executionId?: string;
-  progress?: number;
   result?: ExecutionResult;
   error?: ExecutionError;
 }
@@ -54,14 +53,14 @@ interface ExecutionState {
 ### Data Flow
 
 ```
-Prompt Variables → Generate Form → User Input → Validate → Execute API → Real-time Updates → Results
+Prompt Variables → Generate Form → User Input → Validate → Execute API → Immediate Results
 ```
 
 1. **Form Generation**: Create dynamic form from prompt variable definitions
 2. **Input Validation**: Validate user inputs against variable types and constraints
 3. **Execution Request**: Submit to `/api/prompts/[id]/execute` with inputs and parameters
-4. **Status Tracking**: Monitor execution status with periodic polling or WebSocket
-5. **Result Handling**: Process successful results or error states
+4. **Loading State**: Show loading indicator during API execution (1-3 seconds)
+5. **Result Handling**: Process successful results or error states immediately
 6. **Callback Triggers**: Notify parent components of execution completion
 
 ### API Integration
@@ -97,9 +96,6 @@ interface ExecutionResult {
 **Secondary Endpoints:**
 
 ```typescript
-// For execution status polling
-GET / api / executions / [id];
-
 // For execution retry
 POST / api / executions / [id] / retry;
 ```
@@ -120,10 +116,7 @@ interface ExecutionPanelState {
   // UI state
   showAdvancedOptions: boolean;
   estimatedCost: number;
-
-  // Real-time updates
-  statusPollingInterval?: NodeJS.Timeout;
-  lastStatusCheck: Date;
+  isExecuting: boolean;
 }
 ```
 
@@ -140,10 +133,9 @@ interface ExecutionPanelState {
 4. User optionally adjusts AI parameters (model, temperature, tokens)
 5. User sees cost estimation before execution
 6. User clicks "Execute" button
-7. Execution starts with real-time status indicator
-8. User sees progress updates and can cancel if needed
-9. Results appear with token usage, cost, and validation status
-10. User can retry, modify inputs, or view detailed results
+7. Button shows loading state while API executes (1-3 seconds)
+8. Results appear immediately with token usage, cost, and validation status
+9. User can retry, modify inputs, or view detailed results
 ```
 
 ### UI Components
@@ -215,22 +207,21 @@ interface ParametersControlProps {
 - Max tokens input with output length estimation
 - Advanced options collapse/expand
 
-**Real-time Status Display**
+**Execution Status Display**
 
 ```typescript
 interface StatusDisplayProps {
   status: ExecutionStatus;
-  progress?: number;
   executionId?: string;
-  startTime?: Date;
-  onCancel?: () => void;
+  isExecuting: boolean;
+  onRetry?: () => void;
 }
 ```
 
 - Status badge with color coding (idle/running/success/error)
-- Progress bar with estimated completion time
-- Execution timer and cancel button
-- Token usage and cost updates during execution
+- Loading spinner during execution
+- Retry button for failed executions
+- Clear success/error messaging
 
 ### Validation Rules
 
@@ -350,24 +341,26 @@ const ExecutionParametersSchema = z.object({
 - [ ] Parameter controls function smoothly
 - [ ] Cost estimation is accurate
 
-### Phase 3: Execution Engine (6 hours)
+### Phase 3: Execution Engine (4 hours)
 
 **Components to Build:**
 
 - Execution submission logic
-- Real-time status tracking
+- Loading state management
 - Error handling and retry logic
 
 **Functionality:**
 
 - Submit execution requests to API
-- Poll for status updates
+- Show loading states during execution
 - Handle execution errors gracefully
+- Process immediate API responses
 
 **Acceptance Criteria:**
 
 - [ ] Executions submit successfully
-- [ ] Status updates work in real-time
+- [ ] Loading states display during API calls
+- [ ] Results appear immediately after API response
 - [ ] Error states handled properly
 
 ### Phase 4: Results Integration (4 hours)
@@ -397,9 +390,9 @@ const ExecutionParametersSchema = z.object({
 
 ### Estimated Effort
 
-**Total: 1 day (20 hours)**
+**Total: 18 hours**
 
-- Development: 16 hours
+- Development: 14 hours
 - Testing: 4 hours
 
 ---
@@ -422,17 +415,8 @@ interface ExecutionFormData {
 }
 
 interface ExecutionStatus {
-  status:
-    | 'idle'
-    | 'validating'
-    | 'queued'
-    | 'executing'
-    | 'completed'
-    | 'failed'
-    | 'cancelled';
+  status: 'idle' | 'validating' | 'executing' | 'completed' | 'failed';
   executionId?: string;
-  progress?: number;
-  estimatedTimeRemaining?: number;
   message?: string;
 }
 
@@ -683,12 +667,35 @@ const executePrompt = async (
   return response.json();
 };
 
-// Poll for execution status
-const pollExecutionStatus = async (
-  executionId: string
-): Promise<ExecutionStatus> => {
-  const response = await fetch(`/api/executions/${executionId}`);
-  return response.json();
+// Simple execution with immediate response
+const executePromptWithResults = async (
+  promptId: string,
+  data: ExecutionFormData
+): Promise<ExecutionResult> => {
+  // Set loading state
+  setIsExecuting(true);
+
+  try {
+    const response = await fetch(`/api/prompts/${promptId}/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inputs: data.inputs,
+        model: data.parameters.model,
+        maxTokens: data.parameters.maxTokens,
+        temperature: data.parameters.temperature,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Execution failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } finally {
+    setIsExecuting(false);
+  }
 };
 ```
 
@@ -736,14 +743,14 @@ const PromptDetailPage = () => {
 - [ ] TypeScript strict mode compliant
 - [ ] Dynamic form generation without runtime errors
 - [ ] Cost estimation within 10% accuracy
-- [ ] Real-time updates with < 1 second latency
+- [ ] API response handling < 5 second timeout
 - [ ] Proper error boundaries and recovery
 
 ### User Experience Requirements
 
 - [ ] Intuitive form interface for all variable types
 - [ ] Clear parameter controls with helpful descriptions
-- [ ] Real-time feedback during execution
+- [ ] Immediate feedback with loading states
 - [ ] Responsive design on all devices
 - [ ] Accessible with keyboard navigation
 
@@ -754,4 +761,4 @@ const PromptDetailPage = () => {
 - [ ] Follows existing API patterns and error handling
 - [ ] Maintains design consistency with other components
 
-This Enhanced Execution Panel will serve as the core interface for running AI prompts, providing users with professional-grade execution controls while maintaining simplicity and ease of use.
+This Enhanced Execution Panel will serve as the core interface for running AI prompts, providing users with professional-grade execution controls while maintaining simplicity and immediate responsiveness. The simplified approach focuses on the fast, reliable execution model that matches the current API architecture.
