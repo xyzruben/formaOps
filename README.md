@@ -69,7 +69,7 @@ FormaOps is a **sophisticated, enterprise-grade AI-native prompt management plat
 - **Role-Based Access Control** - Granular permissions and user management
 - **Security Headers** - CSP, HSTS, and comprehensive security hardening
 
-### 🛡️ **Data Validation & Quality**
+### **Data Validation & Quality**
 
 - **Schema Validation** - Zod-powered type-safe data validation
 - **Regex Pattern Matching** - Advanced pattern recognition and validation
