@@ -13,7 +13,7 @@ import {
 import { Prompt } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
 import { PromptModal } from './PromptModal';
-import { ExecuteModal } from './ExecuteModal';
+import { EnhancedExecutionPanel } from '../execution/enhanced-execution-panel';
 import { DeletePromptDialog } from './DeletePromptDialog';
 
 interface PromptsResponse {
@@ -35,6 +35,7 @@ export function PromptList(): JSX.Element {
   const [editPrompt, setEditPrompt] = useState<Prompt | null>(null);
   const [deletePrompt, setDeletePrompt] = useState<Prompt | null>(null);
   const [executePrompt, setExecutePrompt] = useState<Prompt | null>(null);
+  const [showExecutionPanel, setShowExecutionPanel] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { user } = useAuth();
 
@@ -99,11 +100,15 @@ export function PromptList(): JSX.Element {
 
   const handleExecutePrompt = (prompt: Prompt): void => {
     setExecutePrompt(prompt);
+    setShowExecutionPanel(true);
   };
 
   const handleExecutionComplete = (): void => {
-    // Could add success notification here
+    // Add success notification and close panel
+    setSuccessMessage('Prompt executed successfully');
+    setTimeout(() => setSuccessMessage(null), 3000);
     setExecutePrompt(null);
+    setShowExecutionPanel(false);
   };
 
   const handleEditPrompt = (prompt: Prompt): void => {
@@ -259,13 +264,39 @@ export function PromptList(): JSX.Element {
         onSuccess={handleDeleteComplete}
       />
 
-      {/* Execute Prompt Modal */}
-      <ExecuteModal
-        isOpen={!!executePrompt}
-        onOpenChange={open => !open && setExecutePrompt(null)}
-        prompt={executePrompt}
-        onSuccess={handleExecutionComplete}
-      />
+      {/* Enhanced Execution Panel */}
+      {showExecutionPanel && executePrompt && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Execute Prompt: {executePrompt.name}</CardTitle>
+            <CardDescription>
+              Configure variables and model settings for execution
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <EnhancedExecutionPanel
+              prompt={executePrompt}
+              onExecutionComplete={_result => {
+                handleExecutionComplete();
+              }}
+              onExecutionStart={_executionId => {
+                // Optional: Add execution tracking
+              }}
+            />
+            <div className="mt-4 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExecutionPanel(false);
+                  setExecutePrompt(null);
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
