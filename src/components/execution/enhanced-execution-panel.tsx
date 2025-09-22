@@ -391,7 +391,7 @@ export function EnhancedExecutionPanel({
   };
 
   return (
-    <Card className="execution-panel">
+    <Card className="execution-panel" data-testid="enhanced-execution-panel">
       <CardHeader>
         <CardTitle>Execute Prompt</CardTitle>
         <CardDescription>
@@ -1172,6 +1172,7 @@ function ExecutionControls({ isExecuting, isFormValid, onReset }: any) {
         type="submit"
         disabled={isExecuting || !isFormValid}
         className="flex-1"
+        data-testid="execute-prompt-button"
       >
         {isExecuting ? (
           <>
@@ -1246,7 +1247,10 @@ function ExecutionStatusDisplay({
       </div>
 
       {result && (
-        <div className="rounded-md border bg-muted/50 p-4">
+        <div
+          className="rounded-md border bg-muted/50 p-4"
+          data-testid="execution-result"
+        >
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium">Execution Result</p>
             <Badge
