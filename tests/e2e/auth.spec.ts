@@ -84,6 +84,27 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should login with valid credentials', async ({ page }) => {
+    // Mock prompts API for dashboard after login
+    await page.route('/api/prompts', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          prompts: [],
+        }),
+      });
+    });
+
+    // Mock execution API to prevent auth errors
+    await page.route('/api/prompts/*/execute', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
+    });
+
     // In test mode, the AuthContext uses testAuthManager
     // Any credentials work EXCEPT test@example.com/wrongpassword
     await page.getByRole('button', { name: 'Sign In' }).click();
@@ -109,6 +130,26 @@ test.describe('Authentication Flow', () => {
           email: 'test@example.com',
         })
       );
+    });
+
+    // Mock APIs before navigation to prevent auth errors
+    await page.route('/api/prompts', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          prompts: [],
+        }),
+      });
+    });
+
+    await page.route('/api/prompts/*/execute', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
     });
 
     await page.goto('/dashboard');
@@ -154,6 +195,26 @@ test.describe('Authentication Flow', () => {
           email: 'test@example.com',
         })
       );
+    });
+
+    // Mock APIs to prevent auth errors
+    await page.route('/api/prompts', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          prompts: [],
+        }),
+      });
+    });
+
+    await page.route('/api/prompts/*/execute', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true }),
+      });
     });
 
     await page.goto('/dashboard');
