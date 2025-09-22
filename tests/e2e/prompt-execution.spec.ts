@@ -107,7 +107,9 @@ test.describe('Prompt Execution Flow', () => {
     await expect(page.locator('.text-destructive').first()).toBeVisible();
 
     // Look for the specific required field error messages that Zod generates
-    await expect(page.locator('text=Required')).toHaveCount({ min: 3 });
+    // Check that we have at least 3 validation errors (one for each required field)
+    const errorCount = await page.locator('text=Required').count();
+    expect(errorCount).toBeGreaterThanOrEqual(3);
   });
 
   test('should execute prompt successfully', async ({ page }) => {
