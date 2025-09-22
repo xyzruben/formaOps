@@ -90,7 +90,7 @@ const createInputValidationSchema = (variables: VariableDefinition[]) => {
 
     switch (variable.type) {
       case 'string':
-        fieldSchema = z.string();
+        fieldSchema = z.string().min(1, `${variable.name} is required`);
         if (variable.options) {
           fieldSchema = z.enum(variable.options as [string, ...string[]]);
         }
