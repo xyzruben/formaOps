@@ -122,7 +122,8 @@ test.describe('Authentication Flow', () => {
       });
     });
 
-    await page.getByRole('button', { name: 'Logout' }).click();
+    // More specific logout button selector to avoid modal interference from Enhanced Panel
+    await page.getByRole('button', { name: 'Logout' }).first().click();
 
     // Should redirect to home (may include auth=required parameter)
     await expect(page).toHaveURL(

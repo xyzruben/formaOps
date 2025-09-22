@@ -65,10 +65,10 @@ test.describe('Prompt Execution Flow', () => {
       page.getByText('Execute Prompt: Greeting Generator')
     ).toBeVisible();
 
-    // Should show input fields for all variables - use exact placeholder names
-    await expect(page.getByPlaceholder('tone')).toBeVisible();
-    await expect(page.getByPlaceholder('name')).toBeVisible();
-    await expect(page.getByPlaceholder('company')).toBeVisible();
+    // Should show input fields for all variables - Enhanced Panel uses "Enter {name}" format
+    await expect(page.getByPlaceholder('Enter tone')).toBeVisible();
+    await expect(page.getByPlaceholder('Enter name')).toBeVisible();
+    await expect(page.getByPlaceholder('Enter company')).toBeVisible();
   });
 
   test('should validate required inputs', async ({ page }) => {
@@ -84,14 +84,15 @@ test.describe('Prompt Execution Flow', () => {
     // Try to execute without filling inputs
     await page.getByRole('button', { name: /execute prompt/i }).click();
 
-    await expect(page.getByText('tone is required')).toBeVisible();
-    await expect(page.getByText('name is required')).toBeVisible();
-    await expect(page.getByText('company is required')).toBeVisible();
+    // Enhanced Panel uses React Hook Form + Zod validation with flexible error messages
+    await expect(page.getByText(/tone.*required/i)).toBeVisible();
+    await expect(page.getByText(/name.*required/i)).toBeVisible();
+    await expect(page.getByText(/company.*required/i)).toBeVisible();
   });
 
   test('should execute prompt successfully', async ({ page }) => {
-    // Mock execution API
-    await page.route('/api/executions', async route => {
+    // Mock execution API - Enhanced Panel uses prompt-specific endpoint
+    await page.route('/api/prompts/prompt-1/execute', async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -99,9 +100,9 @@ test.describe('Prompt Execution Flow', () => {
           success: true,
           execution: {
             id: 'exec-1',
-            result:
+            output:
               "Hello John! We're delighted to have you at TechCorp. Your friendly demeanor and expertise make you a valuable addition to our team.",
-            tokenUsage: { input: 25, output: 35, total: 60 },
+            tokenUsage: { inputTokens: 25, outputTokens: 35, totalTokens: 60 },
             costUsd: 0.0002,
             latencyMs: 1200,
           },
@@ -114,17 +115,17 @@ test.describe('Prompt Execution Flow', () => {
       .first()
       .click();
 
-    // Fill inputs with exact placeholder names
-    await page.getByPlaceholder('tone').fill('friendly');
-    await page.getByPlaceholder('name').fill('John');
-    await page.getByPlaceholder('company').fill('TechCorp');
+    // Fill inputs with Enhanced Panel placeholder format
+    await page.getByPlaceholder('Enter tone').fill('friendly');
+    await page.getByPlaceholder('Enter name').fill('John');
+    await page.getByPlaceholder('Enter company').fill('TechCorp');
 
     // Execute
     await page.getByRole('button', { name: /execute prompt/i }).click();
 
-    // Should show result - match the exact format from TestModePromptList
+    // Should show result - Enhanced Panel displays API response output
     await expect(
-      page.getByText(/Hello John! Welcome to Acme Corp/i)
+      page.getByText(/Hello John.*delighted.*TechCorp/i)
     ).toBeVisible();
     await expect(page.getByText('60')).toBeVisible(); // Token count
     await expect(page.getByText('$0.0002')).toBeVisible(); // Cost
@@ -132,15 +133,15 @@ test.describe('Prompt Execution Flow', () => {
   });
 
   test('should show loading state during execution', async ({ page }) => {
-    // Mock slow execution
-    await page.route('/api/executions', async route => {
+    // Mock slow execution - Enhanced Panel uses prompt-specific endpoint
+    await page.route('/api/prompts/prompt-1/execute', async route => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
-          execution: { result: 'Test result' },
+          execution: { output: 'Test result' },
         }),
       });
     });
@@ -150,9 +151,9 @@ test.describe('Prompt Execution Flow', () => {
       .first()
       .click();
 
-    await page.getByPlaceholder('tone').fill('friendly');
-    await page.getByPlaceholder('name').fill('John');
-    await page.getByPlaceholder('company').fill('TechCorp');
+    await page.getByPlaceholder('Enter tone').fill('friendly');
+    await page.getByPlaceholder('Enter name').fill('John');
+    await page.getByPlaceholder('Enter company').fill('TechCorp');
     await page.getByRole('button', { name: /execute prompt/i }).click();
 
     // Should show loading state - match exact text from TestModePromptList
@@ -163,8 +164,8 @@ test.describe('Prompt Execution Flow', () => {
   });
 
   test('should handle execution errors', async ({ page }) => {
-    // Mock API error
-    await page.route('/api/executions', async route => {
+    // Mock API error - Enhanced Panel uses prompt-specific endpoint
+    await page.route('/api/prompts/prompt-1/execute', async route => {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -180,9 +181,9 @@ test.describe('Prompt Execution Flow', () => {
       .first()
       .click();
 
-    await page.getByPlaceholder('tone').fill('friendly');
-    await page.getByPlaceholder('name').fill('John');
-    await page.getByPlaceholder('company').fill('TechCorp');
+    await page.getByPlaceholder('Enter tone').fill('friendly');
+    await page.getByPlaceholder('Enter name').fill('John');
+    await page.getByPlaceholder('Enter company').fill('TechCorp');
     await page.getByRole('button', { name: /execute prompt/i }).click();
 
     // Error handling displays generic failure - TestModePromptList doesn't show API errors
@@ -207,15 +208,15 @@ test.describe('Prompt Execution Flow', () => {
   });
 
   test('should copy result to clipboard', async ({ page }) => {
-    // Mock execution API
-    await page.route('/api/executions', async route => {
+    // Mock execution API - Enhanced Panel uses prompt-specific endpoint
+    await page.route('/api/prompts/prompt-1/execute', async route => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           success: true,
           execution: {
-            result: 'Test result for copying',
+            output: 'Test result for copying',
           },
         }),
       });
@@ -225,15 +226,13 @@ test.describe('Prompt Execution Flow', () => {
       .getByRole('button', { name: /execute/i })
       .first()
       .click();
-    await page.getByPlaceholder('tone').fill('friendly');
-    await page.getByPlaceholder('name').fill('John');
-    await page.getByPlaceholder('company').fill('TechCorp');
+    await page.getByPlaceholder('Enter tone').fill('friendly');
+    await page.getByPlaceholder('Enter name').fill('John');
+    await page.getByPlaceholder('Enter company').fill('TechCorp');
     await page.getByRole('button', { name: /execute prompt/i }).click();
 
-    // Wait for result - TestModePromptList uses hardcoded result
-    await expect(
-      page.getByText(/Hello John! Welcome to Acme Corp/i)
-    ).toBeVisible();
+    // Wait for result - Enhanced Panel displays API response output
+    await expect(page.getByText(/Test result for copying/i)).toBeVisible();
 
     // Click copy button - match the exact button text from TestModePromptList
     await page.getByRole('button', { name: 'Copy Result' }).click();
@@ -256,8 +255,8 @@ test.describe('Prompt Execution Flow', () => {
   });
 
   test('should handle rate limiting', async ({ page }) => {
-    // Mock rate limit error
-    await page.route('/api/executions', async route => {
+    // Mock rate limit error - Enhanced Panel uses prompt-specific endpoint
+    await page.route('/api/prompts/prompt-1/execute', async route => {
       await route.fulfill({
         status: 429,
         contentType: 'application/json',
@@ -273,9 +272,9 @@ test.describe('Prompt Execution Flow', () => {
       .getByRole('button', { name: /execute/i })
       .first()
       .click();
-    await page.getByPlaceholder('tone').fill('friendly');
-    await page.getByPlaceholder('name').fill('John');
-    await page.getByPlaceholder('company').fill('TechCorp');
+    await page.getByPlaceholder('Enter tone').fill('friendly');
+    await page.getByPlaceholder('Enter name').fill('John');
+    await page.getByPlaceholder('Enter company').fill('TechCorp');
     await page.getByRole('button', { name: /execute prompt/i }).click();
 
     // Rate limiting is not handled in TestModePromptList
@@ -298,9 +297,9 @@ test.describe('Prompt Execution Flow', () => {
     ).toBeVisible();
 
     // Enter data in existing field - type validation is not implemented
-    await page.getByPlaceholder('tone').fill('123');
+    await page.getByPlaceholder('Enter tone').fill('123');
 
     // Just verify field accepts the input
-    await expect(page.getByPlaceholder('tone')).toHaveValue('123');
+    await expect(page.getByPlaceholder('Enter tone')).toHaveValue('123');
   });
 });
