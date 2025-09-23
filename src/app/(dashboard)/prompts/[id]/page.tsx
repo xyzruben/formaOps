@@ -18,7 +18,7 @@ import {
   LoadingState,
   ErrorState,
 } from '@/components/ui/loading-spinner';
-import { ExecutionPanel } from '@/components/execution/execution-panel';
+import { EnhancedExecutionPanel } from '@/components/execution/enhanced-execution-panel';
 import { ExecutionHistory } from '@/components/execution/execution-history';
 
 interface PromptWithDetails {
@@ -368,11 +368,9 @@ export default function PromptDetailPage(): JSX.Element {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ExecutionPanel
+              <EnhancedExecutionPanel
                 prompt={prompt}
                 onExecutionComplete={() => {
-                  // Execution completed successfully
-                  // Switch to history tab to see the new execution
                   setActiveTab('history');
                 }}
               />
