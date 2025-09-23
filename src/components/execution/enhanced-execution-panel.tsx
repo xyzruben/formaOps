@@ -204,8 +204,13 @@ function EnhancedExecutionPanelInternal({
     defaultValues: {
       inputs: variables.reduce(
         (acc, variable) => {
-          if (variable.defaultValue !== undefined) {
-            acc[variable.name] = variable.defaultValue;
+          if (
+            variable.defaultValue !== undefined &&
+            variable.defaultValue !== null &&
+            variable.defaultValue !== '' &&
+            typeof variable.defaultValue !== 'object'
+          ) {
+            acc[variable.name] = variable.defaultValue as InputValue;
           }
           if (initialInputs[variable.name] !== undefined) {
             acc[variable.name] = initialInputs[variable.name];
@@ -465,9 +470,11 @@ function EnhancedExecutionPanelInternal({
             model={watchedModel}
             temperature={watchedTemperature}
             maxTokens={watchedMaxTokens}
-            onChange={(field, value) =>
-              setValue(field as keyof ExecutionFormData, value)
-            }
+            onChange={(field, value) => {
+              if (value !== undefined) {
+                setValue(field as keyof ExecutionFormData, value as any);
+              }
+            }}
             showAdvanced={panelState.showAdvancedOptions}
             onToggleAdvanced={() =>
               setPanelState(prev => ({
@@ -998,7 +1005,9 @@ function AdvancedParametersSection({
               </div>
               {errors.maxTokens && (
                 <p className="text-xs text-destructive">
-                  {errors.maxTokens.message}
+                  {typeof errors.maxTokens === 'string'
+                    ? errors.maxTokens
+                    : errors.maxTokens.message}
                 </p>
               )}
             </div>
@@ -1039,7 +1048,9 @@ function AdvancedParametersSection({
               </div>
               {errors.temperature && (
                 <p className="text-xs text-destructive">
-                  {errors.temperature.message}
+                  {typeof errors.temperature === 'string'
+                    ? errors.temperature
+                    : errors.temperature.message}
                 </p>
               )}
             </div>
@@ -1136,7 +1147,7 @@ const estimateTokens = (text: string): number => {
 // Error categorization utility for enhanced error handling (Phase 3)
 const categorizeExecutionError = (
   status: number,
-  errorData: { error?: string } | null,
+  errorData: { error?: string; retryAfter?: string | number } | null,
   canRetry: boolean
 ): ExecutionError => {
   switch (status) {
@@ -1161,7 +1172,9 @@ const categorizeExecutionError = (
         type: 'RATE_LIMIT_ERROR',
         message: 'Rate limit exceeded. Please wait before retrying.',
         retryable: canRetry,
-        retryAfter: parseInt(errorData.retryAfter) || 60, // Default 60 seconds
+        retryAfter: errorData?.retryAfter
+          ? parseInt(String(errorData.retryAfter)) || 60
+          : 60, // Default 60 seconds
       };
 
     case 500:

@@ -41,7 +41,7 @@ const mockVariables = [
 // Utility functions extracted from enhanced-execution-panel
 const createInputValidationSchema = (
   variables: typeof mockVariables
-): Record<string, z.ZodSchema> => {
+): z.ZodSchema => {
   const schema: Record<string, z.ZodSchema> = {};
 
   variables.forEach(variable => {
