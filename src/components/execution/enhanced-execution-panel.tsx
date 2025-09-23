@@ -14,18 +14,22 @@ import {
 import { Button } from '../ui/button';
 import { LoadingSpinner } from '../ui/loading-spinner';
 import { Badge } from '../ui/badge';
+import { ExecutionErrorBoundary } from './execution-error-boundary';
 import type { Prompt, VariableDefinition } from '../../types/database';
 
-// Enhanced interfaces from the plan
+// Enhanced type definitions for better type safety
+type InputValue = string | number | boolean | string[] | undefined;
+type FormInputs = Record<string, InputValue>;
+
 interface EnhancedExecutionPanelProps {
   prompt: Prompt;
   onExecutionComplete?: (result: ExecutionResult) => void;
   onExecutionStart?: (executionId: string) => void;
-  initialInputs?: Record<string, any>;
+  initialInputs?: FormInputs;
 }
 
 interface ExecutionFormData {
-  inputs: Record<string, any>;
+  inputs: FormInputs;
   model: 'gpt-3.5-turbo' | 'gpt-4';
   maxTokens: number;
   temperature: number;
@@ -62,7 +66,7 @@ interface ExecutionError {
   message: string;
   retryable: boolean;
   retryAfter?: number;
-  details?: any;
+  details?: Record<string, unknown> | string | null;
 }
 
 interface ExecutionPanelState {
@@ -82,7 +86,14 @@ interface ExecutionPanelState {
 }
 
 // Dynamic validation schema creator from the plan
-const createInputValidationSchema = (variables: VariableDefinition[]) => {
+const createInputValidationSchema = (
+  variables: VariableDefinition[]
+): z.ZodObject<{
+  inputs: z.ZodObject<Record<string, z.ZodSchema>>;
+  model: z.ZodEnum<['gpt-3.5-turbo', 'gpt-4']>;
+  maxTokens: z.ZodNumber;
+  temperature: z.ZodNumber;
+}> => {
   const schema: Record<string, z.ZodSchema> = {};
 
   variables.forEach(variable => {
@@ -124,12 +135,30 @@ const createInputValidationSchema = (variables: VariableDefinition[]) => {
 };
 
 // Input preprocessing for different types (from the plan) - removed unused function
-// const _preprocessInputValue = (value: any, type: string): any => { ... }
+// Preprocesses form input values based on variable type
+const _preprocessInputValue = (value: InputValue, type: string): InputValue => {
+  switch (type) {
+    case 'number':
+      return value === '' ? undefined : Number(value);
+    case 'boolean':
+      return Boolean(value);
+    case 'array':
+      return typeof value === 'string'
+        ? value
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+        : value;
+    default:
+      return value;
+  }
+};
 
 // Execution parameter validation from the plan - removed unused schema
 // const _ExecutionParametersSchema = z.object({ ... })
 
-export function EnhancedExecutionPanel({
+// Internal component without error boundary
+function EnhancedExecutionPanelInternal({
   prompt,
   onExecutionComplete,
   onExecutionStart,
@@ -183,7 +212,7 @@ export function EnhancedExecutionPanel({
           }
           return acc;
         },
-        {} as Record<string, any>
+        {} as Record<string, InputValue>
       ),
       model: 'gpt-3.5-turbo',
       maxTokens: 2000,
@@ -313,7 +342,7 @@ export function EnhancedExecutionPanel({
     }
   };
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: FormData): Promise<void> => {
     try {
       const executionId = `exec_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
@@ -376,7 +405,7 @@ export function EnhancedExecutionPanel({
     }
   };
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     reset();
     setPanelState(prev => ({
       ...prev,
@@ -384,17 +413,28 @@ export function EnhancedExecutionPanel({
     }));
   };
 
-  const handleRetry = () => {
+  const handleRetry = (): void => {
     if (panelState.executionState.status === 'failed') {
       handleSubmit(onSubmit)();
     }
   };
 
+  // Ensure variables is an array to prevent runtime errors
+  if (!Array.isArray(variables)) {
+    console.warn('Variables is not an array, falling back to empty array');
+  }
+
   return (
-    <Card className="execution-panel" data-testid="enhanced-execution-panel">
+    <Card
+      className="execution-panel"
+      data-testid="enhanced-execution-panel"
+      role="region"
+      aria-labelledby="execution-panel-title"
+      aria-describedby="execution-panel-description"
+    >
       <CardHeader>
-        <CardTitle>Execute Prompt</CardTitle>
-        <CardDescription>
+        <CardTitle id="execution-panel-title">Execute Prompt</CardTitle>
+        <CardDescription id="execution-panel-description">
           {prompt.description || 'Configure inputs and run this prompt'}
         </CardDescription>
       </CardHeader>
@@ -425,7 +465,9 @@ export function EnhancedExecutionPanel({
             model={watchedModel}
             temperature={watchedTemperature}
             maxTokens={watchedMaxTokens}
-            onChange={(field, value) => setValue(field as any, value)}
+            onChange={(field, value) =>
+              setValue(field as keyof ExecutionFormData, value)
+            }
             showAdvanced={panelState.showAdvancedOptions}
             onToggleAdvanced={() =>
               setPanelState(prev => ({
@@ -556,7 +598,10 @@ export function EnhancedExecutionPanel({
                             Object.entries(
                               execution.executionData!.inputs
                             ).forEach(([key, value]) => {
-                              setValue(`inputs.${key}` as any, value);
+                              setValue(
+                                `inputs.${key}` as `inputs.${string}`,
+                                value
+                              );
                             });
                             setValue('model', execution.executionData!.model);
                             setValue(
@@ -607,13 +652,35 @@ export function EnhancedExecutionPanel({
   );
 }
 
+// Main export with error boundary wrapper
+export function EnhancedExecutionPanel(
+  props: EnhancedExecutionPanelProps
+): JSX.Element {
+  return (
+    <ExecutionErrorBoundary
+      onError={(error, errorInfo) => {
+        // Log error for debugging
+        console.error('Enhanced Execution Panel Error:', error);
+        console.error('Error Info:', errorInfo);
+
+        // In production, report to error tracking service
+        if (process.env.NODE_ENV === 'production') {
+          // Example: reportError(error, errorInfo, { component: 'EnhancedExecutionPanel' });
+        }
+      }}
+    >
+      <EnhancedExecutionPanelInternal {...props} />
+    </ExecutionErrorBoundary>
+  );
+}
+
 // Phase 1: Variable Input Field Component
 interface VariableInputFieldProps {
   variable: VariableDefinition;
   register: any;
   watch: any;
   setValue: any;
-  error?: any;
+  error?: { message?: string } | string;
 }
 
 function VariableInputField({
@@ -624,26 +691,35 @@ function VariableInputField({
   error,
 }: VariableInputFieldProps): JSX.Element {
   const fieldName = `inputs.${variable.name}` as const;
+  const fieldId = `field-${variable.name}`;
+  const errorId = `error-${variable.name}`;
+  const descriptionId = `desc-${variable.name}`;
 
   // String variables with options (dropdown)
   if (variable.options && variable.options.length > 0) {
     return (
       <div className="space-y-2">
-        <label className="text-sm font-medium">
+        <label htmlFor={fieldId} className="text-sm font-medium">
           {variable.name}
           {variable.required && (
-            <span className="text-destructive ml-1">*</span>
+            <span className="text-destructive ml-1" aria-label="required">
+              *
+            </span>
           )}
         </label>
         {variable.description && (
-          <p className="text-xs text-muted-foreground">
+          <p id={descriptionId} className="text-xs text-muted-foreground">
             {variable.description}
           </p>
         )}
         <select
+          id={fieldId}
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           value={watch(fieldName) || ''}
           onChange={e => setValue(fieldName, e.target.value)}
+          aria-describedby={`${variable.description ? descriptionId : ''} ${error ? errorId : ''}`.trim()}
+          aria-required={variable.required}
+          aria-invalid={!!error}
         >
           <option value="">{`Select ${variable.name}`}</option>
           {variable.options.map(option => (
@@ -653,10 +729,12 @@ function VariableInputField({
           ))}
         </select>
         {error && (
-          <p className="text-xs text-destructive">
+          <p id={errorId} className="text-xs text-destructive" role="alert">
             {typeof error === 'string'
               ? error
-              : error?.message || 'Invalid input'}
+              : error && typeof error === 'object' && 'message' in error
+                ? error.message || 'Invalid input'
+                : 'Invalid input'}
           </p>
         )}
       </div>
@@ -667,29 +745,40 @@ function VariableInputField({
   if (variable.type === 'boolean') {
     return (
       <div className="space-y-2">
-        <label className="flex items-center space-x-2">
+        <label
+          htmlFor={fieldId}
+          className="flex items-center space-x-2 cursor-pointer"
+        >
           <input
+            id={fieldId}
             type="checkbox"
             {...register(fieldName)}
-            className="rounded border-input"
+            className="rounded border-input focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            aria-describedby={`${variable.description ? descriptionId : ''} ${error ? errorId : ''}`.trim()}
+            aria-required={variable.required}
+            aria-invalid={!!error}
           />
           <span className="text-sm font-medium">
             {variable.name}
             {variable.required && (
-              <span className="text-destructive ml-1">*</span>
+              <span className="text-destructive ml-1" aria-label="required">
+                *
+              </span>
             )}
           </span>
         </label>
         {variable.description && (
-          <p className="text-xs text-muted-foreground">
+          <p id={descriptionId} className="text-xs text-muted-foreground">
             {variable.description}
           </p>
         )}
         {error && (
-          <p className="text-xs text-destructive">
+          <p id={errorId} className="text-xs text-destructive" role="alert">
             {typeof error === 'string'
               ? error
-              : error?.message || 'Invalid input'}
+              : error && typeof error === 'object' && 'message' in error
+                ? error.message || 'Invalid input'
+                : 'Invalid input'}
           </p>
         )}
       </div>
@@ -700,21 +789,27 @@ function VariableInputField({
   if (variable.type === 'array') {
     return (
       <div className="space-y-2">
-        <label className="text-sm font-medium">
+        <label htmlFor={fieldId} className="text-sm font-medium">
           {variable.name}
           {variable.required && (
-            <span className="text-destructive ml-1">*</span>
+            <span className="text-destructive ml-1" aria-label="required">
+              *
+            </span>
           )}
         </label>
         {variable.description && (
-          <p className="text-xs text-muted-foreground">
+          <p id={descriptionId} className="text-xs text-muted-foreground">
             {variable.description}
           </p>
         )}
         <input
+          id={fieldId}
           type="text"
           placeholder="Enter values separated by commas"
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-describedby={`${variable.description ? descriptionId : ''} ${error ? errorId : ''}`.trim()}
+          aria-required={variable.required}
+          aria-invalid={!!error}
           {...register(fieldName, {
             setValueAs: (value: string) =>
               value
@@ -726,10 +821,12 @@ function VariableInputField({
           })}
         />
         {error && (
-          <p className="text-xs text-destructive">
+          <p id={errorId} className="text-xs text-destructive" role="alert">
             {typeof error === 'string'
               ? error
-              : error?.message || 'Invalid input'}
+              : error && typeof error === 'object' && 'message' in error
+                ? error.message || 'Invalid input'
+                : 'Invalid input'}
           </p>
         )}
       </div>
@@ -739,14 +836,21 @@ function VariableInputField({
   // Default: string or number input
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">
+      <label htmlFor={fieldId} className="text-sm font-medium">
         {variable.name}
-        {variable.required && <span className="text-destructive ml-1">*</span>}
+        {variable.required && (
+          <span className="text-destructive ml-1" aria-label="required">
+            *
+          </span>
+        )}
       </label>
       {variable.description && (
-        <p className="text-xs text-muted-foreground">{variable.description}</p>
+        <p id={descriptionId} className="text-xs text-muted-foreground">
+          {variable.description}
+        </p>
       )}
       <input
+        id={fieldId}
         type={variable.type === 'number' ? 'number' : 'text'}
         placeholder={
           variable.defaultValue
@@ -754,12 +858,15 @@ function VariableInputField({
             : `Enter ${variable.name}`
         }
         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-describedby={`${variable.description ? descriptionId : ''} ${error ? errorId : ''}`.trim()}
+        aria-required={variable.required}
+        aria-invalid={!!error}
         {...register(fieldName, {
           valueAsNumber: variable.type === 'number',
         })}
       />
       {error && (
-        <p className="text-xs text-destructive">
+        <p id={errorId} className="text-xs text-destructive" role="alert">
           {typeof error === 'string'
             ? error
             : error?.message || 'Invalid input'}
@@ -770,15 +877,6 @@ function VariableInputField({
 }
 
 // Phase 2: Advanced Parameters Section - Enhanced Implementation
-interface ParametersControlProps {
-  model: string;
-  temperature: number;
-  maxTokens: number;
-  onChange: (field: string, value: any) => void;
-  showAdvanced: boolean;
-  onToggleAdvanced: () => void;
-  errors: any;
-}
 
 // Model capability data for cost and feature comparison
 const MODEL_INFO = {
@@ -800,6 +898,16 @@ const MODEL_INFO = {
   },
 } as const;
 
+interface ParametersControlProps {
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  onChange: (field: string, value: InputValue) => void;
+  showAdvanced: boolean;
+  onToggleAdvanced: () => void;
+  errors: Record<string, { message?: string } | string>;
+}
+
 function AdvancedParametersSection({
   model,
   temperature,
@@ -808,7 +916,7 @@ function AdvancedParametersSection({
   showAdvanced,
   onToggleAdvanced,
   errors,
-}: ParametersControlProps) {
+}: ParametersControlProps): JSX.Element {
   const currentModel = MODEL_INFO[model as keyof typeof MODEL_INFO];
 
   return (
@@ -968,7 +1076,7 @@ interface CostEstimation {
 // Cost calculation utilities from the plan
 const estimateExecutionCost = (
   template: string,
-  inputs: Record<string, any>,
+  inputs: FormInputs,
   parameters: { model: string; maxTokens: number; temperature: number }
 ): CostEstimation => {
   // Process template with variables for token estimation
@@ -1005,10 +1113,7 @@ const estimateExecutionCost = (
 };
 
 // Simple template processing for cost estimation
-const processTemplate = (
-  template: string,
-  inputs: Record<string, any>
-): string => {
+const processTemplate = (template: string, inputs: FormInputs): string => {
   let processed = template;
   Object.entries(inputs).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
@@ -1031,14 +1136,14 @@ const estimateTokens = (text: string): number => {
 // Error categorization utility for enhanced error handling (Phase 3)
 const categorizeExecutionError = (
   status: number,
-  errorData: any,
+  errorData: { error?: string } | null,
   canRetry: boolean
 ): ExecutionError => {
   switch (status) {
     case 400:
       return {
         type: 'VALIDATION_ERROR',
-        message: errorData.error || 'Invalid request parameters',
+        message: errorData?.error || 'Invalid request parameters',
         retryable: false,
         details: errorData,
       };
@@ -1072,7 +1177,7 @@ const categorizeExecutionError = (
     default:
       return {
         type: 'API_ERROR',
-        message: errorData.error || `Request failed with status ${status}`,
+        message: errorData?.error || `Request failed with status ${status}`,
         retryable: canRetry && status >= 500,
       };
   }
@@ -1084,11 +1189,11 @@ function CostEstimationDisplay({
   maxTokens,
   template,
 }: {
-  inputs: Record<string, any>;
+  inputs: FormInputs;
   model: string;
   maxTokens: number;
   template: string;
-}) {
+}): JSX.Element {
   const costEstimation = estimateExecutionCost(template, inputs, {
     model,
     maxTokens,
@@ -1165,7 +1270,17 @@ function CostEstimationDisplay({
   );
 }
 
-function ExecutionControls({ isExecuting, isFormValid, onReset }: any) {
+interface ExecutionControlsProps {
+  isExecuting: boolean;
+  isFormValid: boolean;
+  onReset: () => void;
+}
+
+function ExecutionControls({
+  isExecuting,
+  isFormValid,
+  onReset,
+}: ExecutionControlsProps): JSX.Element {
   return (
     <div className="flex gap-2">
       <Button
@@ -1190,16 +1305,24 @@ function ExecutionControls({ isExecuting, isFormValid, onReset }: any) {
   );
 }
 
+interface ExecutionStatusDisplayProps {
+  status: 'idle' | 'executing' | 'completed' | 'failed';
+  isExecuting: boolean;
+  result?: ExecutionResult;
+  error?: ExecutionError;
+  onRetry: () => void;
+}
+
 function ExecutionStatusDisplay({
   status,
   isExecuting,
   result,
   error,
   onRetry,
-}: any) {
+}: ExecutionStatusDisplayProps): JSX.Element | null {
   if (status === 'idle') return null;
 
-  const getStatusMessage = () => {
+  const getStatusMessage = (): string => {
     switch (status) {
       case 'executing':
         return 'Executing prompt...';
@@ -1212,7 +1335,7 @@ function ExecutionStatusDisplay({
     }
   };
 
-  const getErrorIcon = (errorType: string) => {
+  const getErrorIcon = (errorType: string): string => {
     switch (errorType) {
       case 'VALIDATION_ERROR':
         return '⚠️';
