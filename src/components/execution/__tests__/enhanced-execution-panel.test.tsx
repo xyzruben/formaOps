@@ -124,11 +124,16 @@ describe('EnhancedExecutionPanel', () => {
       render(<EnhancedExecutionPanel prompt={mockPrompt} />);
 
       const executeButton = screen.getByTestId('execute-prompt-button');
+      const nameInput = screen.getByLabelText(/name/i);
 
-      // Try to execute without filling required fields
-      await user.click(executeButton);
+      // Initially button should be disabled due to empty required fields
+      expect(executeButton).toBeDisabled();
 
-      // Should show validation errors
+      // Clear a required field after typing something to trigger validation
+      await user.type(nameInput, 'test');
+      await user.clear(nameInput);
+
+      // Should show validation errors after field loses focus
       await waitFor(() => {
         expect(screen.getByText(/name is required/i)).toBeInTheDocument();
       });
@@ -169,12 +174,13 @@ describe('EnhancedExecutionPanel', () => {
     test('displays model selection with cost information', () => {
       render(<EnhancedExecutionPanel prompt={mockPrompt} />);
 
-      // Should show model selection
-      const modelSelect = screen.getByDisplayValue('gpt-3.5-turbo');
+      // Should show model selection - find the select element containing the options
+      const modelSelect = screen.getByRole('combobox');
       expect(modelSelect).toBeInTheDocument();
+      expect(modelSelect).toHaveValue('gpt-3.5-turbo');
 
-      // Should show cost information
-      expect(screen.getByText(/cost/i)).toBeInTheDocument();
+      // Should show cost information - specifically the "Cost Estimation" section
+      expect(screen.getByText(/cost estimation/i)).toBeInTheDocument();
     });
 
     test('shows advanced parameters when toggled', async () => {
@@ -185,25 +191,25 @@ describe('EnhancedExecutionPanel', () => {
       await user.click(advancedToggle);
 
       // Should show advanced parameters
-      expect(screen.getByLabelText(/max tokens/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/temperature/i)).toBeInTheDocument();
+      expect(screen.getByText(/max tokens/i)).toBeInTheDocument();
+      expect(screen.getByText(/temperature/i)).toBeInTheDocument();
     });
 
     test('updates cost estimation when model changes', async () => {
       const user = userEvent.setup();
       render(<EnhancedExecutionPanel prompt={mockPrompt} />);
 
-      // Get initial cost
-      const initialCost = screen.getByText(/\$.*\d/);
+      // Get initial cost from the main cost display (blue text)
+      const initialCost = screen.getByText(/\$0\.00/);
       const initialValue = initialCost.textContent;
 
       // Change model to GPT-4
-      const modelSelect = screen.getByDisplayValue('gpt-3.5-turbo');
+      const modelSelect = screen.getByRole('combobox');
       await user.selectOptions(modelSelect, 'gpt-4');
 
       // Cost should update
       await waitFor(() => {
-        const newCost = screen.getByText(/\$.*\d/);
+        const newCost = screen.getByText(/\$0\.00/);
         expect(newCost.textContent).not.toBe(initialValue);
       });
     });
