@@ -818,13 +818,18 @@ function VariableInputField({
           aria-required={variable.required}
           aria-invalid={!!error}
           {...register(fieldName, {
-            setValueAs: (value: string) =>
-              value
-                ? value
-                    .split(',')
-                    .map(s => s.trim())
-                    .filter(Boolean)
-                : [],
+            setValueAs: (value: string | string[] | any) => {
+              if (Array.isArray(value)) {
+                return value;
+              }
+              if (typeof value === 'string' && value) {
+                return value
+                  .split(',')
+                  .map(s => s.trim())
+                  .filter(Boolean);
+              }
+              return [];
+            },
           })}
         />
         {error && (

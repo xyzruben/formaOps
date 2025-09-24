@@ -7,7 +7,7 @@ jest.mock('@/lib/database/queries', () => ({
 // Mock auth server
 jest.mock('@/lib/auth/server', () => ({
   requireAuth: jest.fn(() => {
-    console.log('requireAuth mock called');
+    // requireAuth mock called (removed console.log for linting compliance)
     return Promise.resolve({ id: 'user-123' });
   }),
   getUser: jest.fn(),
@@ -104,14 +104,11 @@ describe('/api/prompts', () => {
         const response = await GET(request);
         const data = await response.json();
 
-        // Debug information
-        console.log('Response status:', response.status);
-        console.log('Response data:', data);
-        console.log('Mock called times:', mockGetUserPrompts.mock.calls.length);
-        console.log(
-          'RequireAuth called times:',
-          mockRequireAuth.mock.calls.length
-        );
+        // Debug information (removed console.log to comply with linting rules)
+        // Response status: response.status
+        // Response data: data
+        // Mock called times: mockGetUserPrompts.mock.calls.length
+        // RequireAuth called times: mockRequireAuth.mock.calls.length
 
         expect(response.status).toBe(200);
         expect(data).toEqual(mockResult);

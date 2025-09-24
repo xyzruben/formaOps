@@ -84,9 +84,7 @@ async function withRetry<T>(
 
       // Log successful retry if it's not the first attempt
       if (attempt > 1) {
-        console.log(
-          `Database retry succeeded for ${operationName} on attempt ${attempt}`
-        );
+        // Database retry succeeded (removed console.log for linting compliance)
       }
 
       return result;
@@ -119,9 +117,7 @@ async function withRetry<T>(
         config.baseDelayMs,
         config.maxDelayMs
       );
-      console.log(
-        `Retrying ${operationName} in ${delay}ms (attempt ${attempt + 1}/${config.maxRetries})`
-      );
+      // Retrying operation (removed console.log for linting compliance)
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }

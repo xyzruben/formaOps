@@ -189,7 +189,7 @@ if (typeof window === 'undefined') {
     () => {
       const removed = queryCache.cleanup();
       if (removed > 0) {
-        console.log(`Cache cleanup: removed ${removed} expired entries`);
+        // Cache cleanup: removed expired entries (removed console.log for linting compliance)
       }
     },
     5 * 60 * 1000

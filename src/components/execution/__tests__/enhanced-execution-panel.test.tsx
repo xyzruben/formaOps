@@ -90,7 +90,9 @@ describe('EnhancedExecutionPanel', () => {
     test('renders dropdown for string variables with options', () => {
       render(<EnhancedExecutionPanel prompt={mockPromptWithOptions} />);
 
-      const categorySelect = screen.getByDisplayValue('');
+      const categorySelect = screen.getByRole('combobox', {
+        name: /category/i,
+      });
       expect(categorySelect.tagName).toBe('SELECT');
 
       // Check that options are present
@@ -109,9 +111,10 @@ describe('EnhancedExecutionPanel', () => {
     test('shows required indicators for required fields', () => {
       render(<EnhancedExecutionPanel prompt={mockPrompt} />);
 
-      // Required fields should have asterisk
-      expect(screen.getByText('name')).toBeInTheDocument();
-      expect(screen.getByText('*')).toBeInTheDocument();
+      // Required fields should have asterisk with aria-label="required"
+      const requiredIndicators = screen.getAllByLabelText('required');
+      expect(requiredIndicators.length).toBeGreaterThan(0);
+      expect(requiredIndicators[0]).toHaveTextContent('*');
     });
   });
 

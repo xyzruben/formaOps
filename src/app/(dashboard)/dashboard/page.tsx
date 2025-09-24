@@ -195,7 +195,7 @@ function TestModePromptList(): JSX.Element {
                   }}
                   onExecutionStart={_executionId => {
                     // Optional: Add execution tracking
-                    console.log('Test mode execution started');
+                    // Test mode execution started (removed console.log for linting compliance)
                   }}
                 />
                 <div className="mt-4 pt-4 border-t">

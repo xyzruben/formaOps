@@ -112,7 +112,7 @@ export class CircuitBreaker {
       this.state = CircuitState.HALF_OPEN;
       this.halfOpenCalls = 0;
       this.lastStateChange = now;
-      console.log(`Circuit breaker ${this.name} transitioning to HALF_OPEN`);
+      // Circuit breaker transitioning to HALF_OPEN (removed console.log for linting compliance)
     }
 
     return this.state;
@@ -155,7 +155,7 @@ export class CircuitBreaker {
     this.lastStateChange = Date.now();
     this.halfOpenCalls = 0;
     this.failureHistory = [];
-    console.log(`Circuit breaker ${this.name} manually reset`);
+    // Circuit breaker manually reset (removed console.log for linting compliance)
   }
 
   /**
@@ -164,7 +164,7 @@ export class CircuitBreaker {
   forceOpen(): void {
     this.state = CircuitState.OPEN;
     this.lastStateChange = Date.now();
-    console.log(`Circuit breaker ${this.name} manually opened`);
+    // Circuit breaker manually opened (removed console.log for linting compliance)
   }
 
   /**
@@ -179,9 +179,7 @@ export class CircuitBreaker {
         this.state = CircuitState.CLOSED;
         this.failures = 0; // Reset failure count
         this.lastStateChange = Date.now();
-        console.log(
-          `Circuit breaker ${this.name} transitioning to CLOSED after recovery`
-        );
+        // Circuit breaker transitioning to CLOSED after recovery (removed console.log for linting compliance)
       }
     }
   }
