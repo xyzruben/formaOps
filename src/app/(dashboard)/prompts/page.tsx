@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { PromptList } from '@/components/prompts/prompt-list';
 
 export default function PromptsPage(): JSX.Element {
+  const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
@@ -21,6 +24,24 @@ export default function PromptsPage(): JSX.Element {
   // In Phase 3, we'll add the actual create/edit forms
   return (
     <div className="container mx-auto py-8">
+      {/* Navigation Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+          >
+            ← Dashboard
+          </Button>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => router.push('/executions')}>
+            View Executions
+          </Button>
+        </div>
+      </div>
+
       <PromptList
         onCreatePrompt={handleCreatePrompt}
         onEditPrompt={handleEditPrompt}

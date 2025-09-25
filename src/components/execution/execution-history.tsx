@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatDate } from '../../lib/utils';
 import { useExecutions } from '../../hooks/use-executions';
 import { Button } from '../ui/button';
@@ -36,6 +37,7 @@ export function ExecutionHistory({
   userId: _userId,
   onExecutionSelect,
 }: ExecutionHistoryProps): JSX.Element {
+  const router = useRouter();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<ExecutionStatus | undefined>(
     undefined
@@ -64,10 +66,16 @@ export function ExecutionHistory({
   };
 
   const handleRowClick = (executionId: string): void => {
+    // First call the legacy callback if provided
     onExecutionSelect?.(executionId);
+
+    // Then navigate to the new execution detail page
+    router.push(`/executions/${executionId}`);
   };
 
-  const getStatusBadgeVariant = (status: ExecutionStatus) => {
+  const getStatusBadgeVariant = (
+    status: ExecutionStatus
+  ): 'default' | 'destructive' | 'secondary' | 'outline' => {
     switch (status) {
       case 'COMPLETED':
         return 'default';
@@ -84,7 +92,9 @@ export function ExecutionHistory({
     }
   };
 
-  const getValidationBadgeVariant = (status: string) => {
+  const getValidationBadgeVariant = (
+    status: string
+  ): 'default' | 'destructive' | 'secondary' | 'outline' => {
     switch (status) {
       case 'PASSED':
         return 'default';
@@ -109,7 +119,19 @@ export function ExecutionHistory({
     return `${latency}ms`;
   };
 
-  const formatTokens = (tokenUsage: any): string => {
+  const formatTokens = (
+    tokenUsage:
+      | {
+          total?: number;
+          totalTokens?: number;
+          input?: number;
+          inputTokens?: number;
+          output?: number;
+          outputTokens?: number;
+        }
+      | null
+      | undefined
+  ): string => {
     if (!tokenUsage) return '-';
     const total = tokenUsage.total || tokenUsage.totalTokens || 0;
     const input = tokenUsage.input || tokenUsage.inputTokens || 0;

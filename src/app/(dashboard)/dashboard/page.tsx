@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 // Type definitions for dashboard components
@@ -33,6 +34,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Prompt, VariableDefinition } from '@/types/database';
+import type { JsonValue } from '@prisma/client/runtime/library';
 
 // Test-mode component that provides basic prompt functionality without complex dependencies
 function TestModePromptList(): JSX.Element {
@@ -186,7 +188,8 @@ function TestModePromptList(): JSX.Element {
                   prompt={
                     {
                       ...selectedPrompt,
-                      variables: selectedPrompt.variables as any,
+                      variables:
+                        selectedPrompt.variables as unknown as JsonValue,
                       description: selectedPrompt.description || null,
                     } as Prompt
                   }
@@ -214,6 +217,7 @@ function TestModePromptList(): JSX.Element {
 
 export default function DashboardPage(): JSX.Element {
   const { user, logout, isLoading } = useAuth();
+  const router = useRouter();
   const [_componentError, _setComponentError] = useState(false);
 
   // Detect test mode
@@ -332,9 +336,56 @@ export default function DashboardPage(): JSX.Element {
             {user?.email ? `Welcome back, ${user.email}!` : 'Welcome!'}
           </p>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => router.push('/executions')}>
+            View Executions
+          </Button>
+          <Button variant="outline" onClick={handleLogout}>
+            Logout
+          </Button>
+        </div>
+      </div>
+
+      {/* Navigation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => router.push('/prompts')}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              📝 Prompts
+            </CardTitle>
+            <CardDescription>
+              Create, edit, and manage your AI prompts
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+        <Card
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => router.push('/executions')}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              ⚡ Executions
+            </CardTitle>
+            <CardDescription>
+              View execution history and analyze results
+            </CardDescription>
+          </CardHeader>
+        </Card>
+
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              📊 Analytics
+            </CardTitle>
+            <CardDescription>
+              Performance metrics and cost analysis (Coming Soon)
+            </CardDescription>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Main Prompt Management Interface */}

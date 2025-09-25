@@ -206,14 +206,24 @@ export default function PromptDetailPage(): JSX.Element {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push('/dashboard')}
+            >
+              Dashboard
+            </Button>
+            <span>/</span>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push('/prompts')}
             >
-              ← Back to Prompts
+              Prompts
             </Button>
+            <span>/</span>
+            <span>{prompt.name}</span>
           </div>
           <h1 className="text-3xl font-bold">{prompt.name}</h1>
           {prompt.description && (
@@ -231,6 +241,15 @@ export default function PromptDetailPage(): JSX.Element {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Navigation Actions */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/executions')}
+          >
+            View All Executions
+          </Button>
+
           {/* Status Actions */}
           {prompt.status === 'DRAFT' && (
             <Button

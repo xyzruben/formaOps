@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { PreferencesProvider } from '@/contexts/PreferencesContext';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -46,7 +47,9 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
           <AuthProvider>
-            <main className="min-h-screen bg-background">{children}</main>
+            <PreferencesProvider>
+              <main className="min-h-screen bg-background">{children}</main>
+            </PreferencesProvider>
           </AuthProvider>
         </ErrorBoundary>
       </body>

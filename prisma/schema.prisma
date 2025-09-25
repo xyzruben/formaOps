@@ -22,9 +22,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  prompts    Prompt[]
-  executions Execution[]
-  apiKeys    ApiKey[]
+  prompts     Prompt[]
+  executions  Execution[]
+  apiKeys     ApiKey[]
+  preferences UserPreferences?
 
   @@map("users")
 }
@@ -263,4 +264,62 @@ model ApiKey {
 
   @@map("api_keys")
   @@index([userId, isActive])
+}
+
+// ================================
+// USER PREFERENCES SYSTEM
+// ================================
+
+model UserPreferences {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // AI Results Viewer Preferences
+  defaultViewMode        String   @default("output") // "output" | "metrics" | "raw"
+  outputFontSize         String   @default("medium") // "small" | "medium" | "large" | "custom"
+  customFontSize         Int?     // Custom font size in px
+  enableSyntaxHighlight  Boolean  @default(true)
+  enableWordWrap         Boolean  @default(true)
+  showTokenMetrics       Boolean  @default(true)
+  showCostMetrics        Boolean  @default(true)
+  showLatencyMetrics     Boolean  @default(true)
+  enableAutoRefresh      Boolean  @default(true)
+  defaultExportFormat    String   @default("txt") // "txt" | "json" | "html" | "csv"
+  defaultCopyFormat      String   @default("formatted") // "plain" | "formatted"
+
+  // Dashboard Preferences
+  defaultLandingPage     String   @default("dashboard") // "dashboard" | "executions" | "prompts"
+  executionsPerPage      Int      @default(20)
+  executionsSortBy       String   @default("createdAt") // "createdAt" | "status" | "costUsd"
+  executionsSortOrder    String   @default("desc") // "asc" | "desc"
+  promptsViewMode        String   @default("list") // "list" | "grid"
+  promptsPerPage         Int      @default(20)
+  promptsSortBy          String   @default("updatedAt")
+  promptsSortOrder       String   @default("desc")
+  sidebarCollapsed       Boolean  @default(false)
+
+  // Display & Theme
+  theme                  String   @default("system") // "light" | "dark" | "system"
+  primaryColor           String   @default("blue") // "blue" | "green" | "purple" | "red" | "orange"
+  layoutDensity          String   @default("comfortable") // "compact" | "comfortable" | "spacious"
+  enableAnimations       Boolean  @default(true)
+
+  // Notifications & Behavior
+  enableDesktopNotifications Boolean @default(false)
+  showDetailedErrors         Boolean @default(true)
+  enableConfirmationDialogs  Boolean @default(true)
+  enableAutoSave             Boolean @default(true)
+
+  // Privacy & Data
+  dataRetentionDays      Int?     // null = keep forever
+  enableUsageAnalytics   Boolean  @default(false)
+  defaultShareExpiration Int      @default(168) // hours
+  includeMetadataInExports Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_preferences")
+  @@index([userId])
 }
