@@ -1,20 +1,23 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { OutputDisplay } from '../output-display';
 
 // Mock the clipboard API
-const mockWriteText = jest.fn(() => Promise.resolve());
-Object.assign(navigator, {
-  clipboard: {
+const mockWriteText = jest.fn();
+
+// Setup global clipboard mock
+Object.defineProperty(window.navigator, 'clipboard', {
+  value: {
     writeText: mockWriteText,
   },
+  writable: true,
 });
 
 describe('OutputDisplay', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockWriteText.mockClear();
+    mockWriteText.mockResolvedValue(undefined);
   });
 
   describe('Content Type Detection', () => {
@@ -79,28 +82,38 @@ describe('OutputDisplay', () => {
 
   describe('Copy Functionality', () => {
     test('copies content to clipboard when copy button is clicked', async () => {
-      const user = userEvent.setup();
       const testOutput = 'Test content to copy';
-
       render(<OutputDisplay output={testOutput} />);
 
       const copyButton = screen.getByRole('button', { name: /copy/i });
-      await user.click(copyButton);
+
+      // Use fireEvent to ensure the click is registered
+      fireEvent.click(copyButton);
 
       // Wait for the async operation to complete
+      await waitFor(
+        () => {
+          expect(mockWriteText).toHaveBeenCalledWith(testOutput);
+        },
+        { timeout: 3000 }
+      );
+
+      // Also verify the button text changed to indicate success
       await waitFor(() => {
-        expect(mockWriteText).toHaveBeenCalledWith(testOutput);
+        expect(screen.getByText('Copied!')).toBeInTheDocument();
       });
     });
 
     test('shows success feedback after successful copy', async () => {
-      const user = userEvent.setup();
       render(<OutputDisplay output="test content" />);
 
       const copyButton = screen.getByRole('button', { name: /copy/i });
-      await user.click(copyButton);
+      fireEvent.click(copyButton);
 
-      expect(screen.getByText('Copied!')).toBeInTheDocument();
+      // Wait for the success state to update
+      await waitFor(() => {
+        expect(screen.getByText('Copied!')).toBeInTheDocument();
+      });
     });
   });
 
@@ -117,13 +130,12 @@ describe('OutputDisplay', () => {
     });
 
     test('expands content when expand button is clicked', async () => {
-      const user = userEvent.setup();
       const longOutput = Array(20).fill('Line of content\n').join('');
 
       render(<OutputDisplay output={longOutput} collapsible={true} />);
 
       const expandButton = screen.getByRole('button', { name: /show more/i });
-      await user.click(expandButton);
+      fireEvent.click(expandButton);
 
       expect(
         screen.getByRole('button', { name: /show less/i })
@@ -245,15 +257,13 @@ describe('OutputDisplay', () => {
     });
 
     test('handles copy failure gracefully', async () => {
-      const user = userEvent.setup();
-
       // Mock clipboard to reject
       mockWriteText.mockRejectedValueOnce(new Error('Copy failed'));
 
       render(<OutputDisplay output="test content" />);
 
       const copyButton = screen.getByRole('button', { name: /copy/i });
-      await user.click(copyButton);
+      fireEvent.click(copyButton);
 
       // Should not crash, button should still be there
       expect(copyButton).toBeInTheDocument();
