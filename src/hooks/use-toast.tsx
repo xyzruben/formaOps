@@ -11,7 +11,7 @@ export interface Toast {
 export function useToast(): {
   toast: (toast: Toast) => void;
   toasts: Toast[];
-  removeToast: (id: string) => void;
+  dismiss: (id: string) => void;
 } {
   const [toasts, setToasts] = useState<Toast[]>([]);
 

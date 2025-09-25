@@ -23,6 +23,7 @@ type WorkflowState = 'configure' | 'executing' | 'results' | 'retry';
 interface WorkflowData {
   currentExecution?: ExecutionResult;
   executionHistory: ExecutionResult[];
+  executionStartTime?: number;
 }
 
 export function ExecutionWorkflow({
@@ -227,11 +228,12 @@ export function ExecutionWorkflow({
               </p>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>
-                Model: {prompt.versions?.[0]?.model || 'gpt-3.5-turbo'}
-              </span>
+              <span>Model: gpt-3.5-turbo</span>
               <span>•</span>
-              <span>{prompt.variables?.length || 0} variables</span>
+              <span>
+                {Array.isArray(prompt.variables) ? prompt.variables.length : 0}{' '}
+                variables
+              </span>
             </div>
           </div>
         </CardContent>
@@ -249,13 +251,6 @@ export function ExecutionWorkflow({
                 prompt={prompt}
                 onExecutionStart={handleExecutionStart}
                 onExecutionComplete={handleExecutionComplete}
-                // Pre-fill data when retrying
-                defaultValues={
-                  workflowState === 'retry' &&
-                  workflowData.currentExecution?.executionData
-                    ? workflowData.currentExecution.executionData
-                    : undefined
-                }
               />
             </CardContent>
           </Card>

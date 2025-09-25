@@ -380,10 +380,10 @@ export function AIResultsViewer({
           onSave={onSave ? (): void => onSave(execution) : undefined}
           onShare={
             onShare
-              ? (_options): Promise<void> => {
+              ? async (_options): Promise<void> => {
                   // For now, ignore share options and just call with execution
                   // In a real implementation, you'd use the options to configure sharing
-                  onShare(execution);
+                  await onShare(execution);
                 }
               : undefined
           }

@@ -66,8 +66,6 @@ The analysis processed 2,847 feedback entries using advanced NLP techniques incl
       model: 'gpt-4',
       maxTokens: 1000,
       temperature: 0.3,
-      systemPrompt:
-        'You are an expert data analyst specializing in customer feedback analysis...',
     },
     timestamp: new Date().toISOString(),
     executionTime: 4200,

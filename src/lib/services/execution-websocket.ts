@@ -409,9 +409,6 @@ export function useExecutionWebSocket(): {
     subscribe: executionWebSocketService.subscribeToExecution.bind(
       executionWebSocketService
     ),
-    disconnect: executionWebSocketService.disconnect.bind(
-      executionWebSocketService
-    ),
   };
 }
 

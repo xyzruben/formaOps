@@ -53,7 +53,7 @@ interface ErrorDisplayData {
   title: string;
   description: string;
   icon: React.ComponentType<any>;
-  variant: 'default' | 'destructive' | 'warning';
+  variant: 'default' | 'destructive';
   actions: Array<{
     label: string;
     action: () => void;
@@ -136,7 +136,7 @@ export function ErrorDisplay({
           description:
             'You have exceeded the API rate limit. Please wait before making another request.',
           icon: Clock,
-          variant: 'warning',
+          variant: 'default',
           actions: baseActions,
           suggestions: [
             'Wait for the rate limit to reset',
@@ -167,7 +167,7 @@ export function ErrorDisplay({
           description:
             'The request took too long to complete and was cancelled.',
           icon: AlertTriangle,
-          variant: 'warning',
+          variant: 'default',
           actions: baseActions,
           suggestions: [
             'Try breaking your prompt into smaller parts',
@@ -270,7 +270,7 @@ export function ErrorDisplay({
             description:
               'You have reached your usage quota or there is a billing issue.',
             icon: DollarSign,
-            variant: 'warning',
+            variant: 'default',
             actions: baseActions.concat([
               {
                 label: 'View Billing',
@@ -304,7 +304,7 @@ export function ErrorDisplay({
             description:
               'The selected AI model is currently unavailable or does not exist.',
             icon: Zap,
-            variant: 'warning',
+            variant: 'default',
             actions: baseActions,
             suggestions: [
               'Try using a different model',
@@ -320,7 +320,11 @@ export function ErrorDisplay({
                 </p>
                 <p>
                   <strong>Requested Model:</strong>{' '}
-                  {error.details?.model || 'Unknown'}
+                  {typeof error.details === 'object' &&
+                  error.details &&
+                  typeof error.details.model === 'string'
+                    ? error.details.model
+                    : 'Unknown'}
                 </p>
               </div>
             ),
@@ -478,7 +482,7 @@ export function ErrorDisplay({
           onOpenChange={setShowTechnicalDetails}
         >
           <Card>
-            <CollapsibleTrigger asChild>
+            <CollapsibleTrigger>
               <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors pb-3">
                 <CardTitle className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
