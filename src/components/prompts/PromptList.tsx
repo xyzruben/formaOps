@@ -26,7 +26,15 @@ interface PromptsResponse {
   };
 }
 
-export function PromptList(): JSX.Element {
+interface PromptListProps {
+  onCreatePrompt?: () => void;
+  onEditPrompt?: (id: string) => void;
+}
+
+export function PromptList({
+  onCreatePrompt,
+  onEditPrompt,
+}: PromptListProps = {}): JSX.Element {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +96,11 @@ export function PromptList(): JSX.Element {
   };
 
   const handleCreatePrompt = (): void => {
-    setIsCreateModalOpen(true);
+    if (onCreatePrompt) {
+      onCreatePrompt();
+    } else {
+      setIsCreateModalOpen(true);
+    }
   };
 
   const handlePromptCreated = (): void => {
@@ -112,7 +124,11 @@ export function PromptList(): JSX.Element {
   };
 
   const handleEditPrompt = (prompt: Prompt): void => {
-    setEditPrompt(prompt);
+    if (onEditPrompt) {
+      onEditPrompt(prompt.id);
+    } else {
+      setEditPrompt(prompt);
+    }
   };
 
   const handleDeletePrompt = (prompt: Prompt): void => {

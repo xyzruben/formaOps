@@ -3,25 +3,57 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { PromptList } from '@/components/prompts/prompt-list';
+import { PromptList } from '@/components/prompts/PromptList';
+import { PromptCreationModal } from '@/components/prompt-creation-form/PromptCreationModal';
+import { PromptEditModal } from '@/components/prompts/PromptEditModal';
+import { usePrompts } from '@/hooks/use-prompts';
+import { useToast } from '@/hooks/use-toast';
+import type { Prompt } from '@/types/database';
 
 export default function PromptsPage(): JSX.Element {
   const router = useRouter();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
+  const { prompts, refetch } = usePrompts();
+  const { toast } = useToast();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
 
   const handleCreatePrompt = (): void => {
-    setShowCreateForm(true);
-    setEditingPromptId(null);
+    setShowCreateModal(true);
   };
 
   const handleEditPrompt = (id: string): void => {
-    setEditingPromptId(id);
-    setShowCreateForm(false);
+    const prompt = prompts.find(p => p.id === id);
+    if (prompt) {
+      setEditingPrompt(prompt);
+    }
   };
 
-  // For Phase 2, we'll show a simple list
-  // In Phase 3, we'll add the actual create/edit forms
+  const handleCreateSuccess = (newPrompt: any): void => {
+    setShowCreateModal(false);
+    refetch();
+    toast({
+      title: 'Prompt Created',
+      description: `${newPrompt.name} has been created successfully.`,
+    });
+  };
+
+  const handleCreateError = (error: string): void => {
+    toast({
+      title: 'Creation Failed',
+      description: error,
+      variant: 'destructive',
+    });
+  };
+
+  const handleEditSuccess = (): void => {
+    setEditingPrompt(null);
+    refetch();
+    toast({
+      title: 'Prompt Updated',
+      description: 'Your prompt has been updated successfully.',
+    });
+  };
+
   return (
     <div className="container mx-auto py-8">
       {/* Navigation Header */}
@@ -47,40 +79,24 @@ export default function PromptsPage(): JSX.Element {
         onEditPrompt={handleEditPrompt}
       />
 
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Create New Prompt</h3>
-            <p className="text-muted-foreground mb-4">
-              Create prompt form will be implemented in Phase 3.
-            </p>
-            <button
-              onClick={() => setShowCreateForm(false)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Prompt Creation Modal */}
+      <PromptCreationModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+        onError={handleCreateError}
+      />
 
-      {editingPromptId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Edit Prompt</h3>
-            <p className="text-muted-foreground mb-4">
-              Edit prompt form will be implemented in Phase 3.
-              <br />
-              Prompt ID: {editingPromptId}
-            </p>
-            <button
-              onClick={() => setEditingPromptId(null)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+      {/* Prompt Edit Modal */}
+      {editingPrompt && (
+        <PromptEditModal
+          isOpen={!!editingPrompt}
+          onOpenChange={open => {
+            if (!open) setEditingPrompt(null);
+          }}
+          onSuccess={handleEditSuccess}
+          prompt={editingPrompt}
+        />
       )}
     </div>
   );
