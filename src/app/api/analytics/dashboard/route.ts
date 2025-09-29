@@ -5,6 +5,9 @@ import { getExecutionStats } from '../../../../lib/database/queries';
 import { costTracker } from '../../../../lib/monitoring/cost-tracker';
 import { handleApiError } from '../../../../lib/utils/error-handler';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 const AnalyticsQuerySchema = z.object({
   from: z.string().optional(),
   to: z.string().optional(),

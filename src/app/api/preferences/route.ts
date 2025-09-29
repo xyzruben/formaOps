@@ -4,6 +4,9 @@ import { requireAuth } from '../../../lib/auth/server';
 import { prisma } from '../../../lib/database/client';
 import { handleApiError } from '../../../lib/utils/error-handler';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 // Validation schemas for user preferences
 const UserPreferencesUpdateSchema = z.object({
   // AI Results Viewer Preferences

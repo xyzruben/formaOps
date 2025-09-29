@@ -7,6 +7,12 @@ declare global {
 
 // Enhanced Prisma Client configuration for connection stability
 const createPrismaClient = (): PrismaClient => {
+  // During build time in CI/CD, DATABASE_URL might not be available
+  // Use a fallback URL to prevent build failures
+  const databaseUrl =
+    process.env.DATABASE_URL ||
+    'postgresql://fallback:fallback@localhost:5432/fallback';
+
   return new PrismaClient({
     log:
       process.env.NODE_ENV === 'development'
@@ -14,7 +20,7 @@ const createPrismaClient = (): PrismaClient => {
         : ['error'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: databaseUrl,
       },
     },
     // Enhanced error handling for production

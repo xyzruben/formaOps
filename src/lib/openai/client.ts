@@ -31,33 +31,43 @@ export class OpenAIClient {
   private defaultConfig: OpenAIConfig;
 
   constructor(apiKey?: string) {
+    // During build time, we don't need a valid API key
+    const isBuildTime =
+      process.env.NODE_ENV === 'test' || process.env.VERCEL_ENV === 'build';
+
     // Try to load configuration from config manager first
     let configFromManager: any = null;
     try {
       configFromManager = openAIConfig.getConfig();
     } catch (error) {
       // Fall back to environment variables if config manager fails
-
-      console.warn(
-        'Failed to load OpenAI config, falling back to environment variables:',
-        error
-      );
+      if (!isBuildTime) {
+        console.warn(
+          'Failed to load OpenAI config, falling back to environment variables:',
+          error
+        );
+      }
     }
 
     // Determine API key
     const resolvedApiKey =
       apiKey || configFromManager?.apiKey || process.env.OPENAI_API_KEY;
-    if (!resolvedApiKey) {
+
+    // During build time, use a placeholder to prevent errors
+    const effectiveApiKey =
+      isBuildTime && !resolvedApiKey ? 'sk-build-placeholder' : resolvedApiKey;
+
+    if (!effectiveApiKey) {
       throw new ValidationError('OpenAI API key is required');
     }
 
     this.client = new OpenAI({
-      apiKey: resolvedApiKey,
+      apiKey: effectiveApiKey,
     });
 
     // Use config manager values if available, otherwise fall back to environment variables
     this.defaultConfig = {
-      apiKey: resolvedApiKey,
+      apiKey: effectiveApiKey,
       model:
         configFromManager?.defaultModel ||
         (process.env.OPENAI_DEFAULT_MODEL as 'gpt-3.5-turbo' | 'gpt-4') ||
@@ -322,8 +332,24 @@ export class OpenAIClient {
   }
 }
 
-// Create and export singleton instance
-const openAIClient = new OpenAIClient();
+// Lazy singleton instance
+let _openAIClient: OpenAIClient | null = null;
 
-export { openAIClient };
+export const openAIClient = {
+  get instance(): OpenAIClient {
+    if (!_openAIClient) {
+      _openAIClient = new OpenAIClient();
+    }
+    return _openAIClient;
+  },
+
+  // Proxy methods for backwards compatibility
+  executePrompt: (
+    prompt: string,
+    config?: Partial<OpenAIConfig>,
+    executionId?: string
+  ) => openAIClient.instance.executePrompt(prompt, config, executionId),
+  validateConnection: () => openAIClient.instance.validateConnection(),
+};
+
 export default openAIClient;

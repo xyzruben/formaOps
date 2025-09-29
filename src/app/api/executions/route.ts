@@ -7,6 +7,9 @@ import {
 } from '../../../lib/database/queries';
 import { handleApiError } from '../../../lib/utils/error-handler';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 const ExecutionsQuerySchema = z.object({
   page: z.preprocess(
     val => (val === null ? undefined : val),

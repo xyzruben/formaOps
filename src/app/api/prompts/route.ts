@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/server';
 import { getUserPrompts, createPrompt } from '@/lib/database/queries';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 function extractVariablesFromTemplate(template: string): string[] {
   // Extract variables from {{variable}} patterns
   const variableRegex = /\{\{([^}]+)\}\}/g;

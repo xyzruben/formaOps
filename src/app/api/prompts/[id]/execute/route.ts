@@ -15,6 +15,9 @@ import {
   ExecutionError,
 } from '../../../../../lib/execution/error-handler';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 const ExecutePromptSchema = z.object({
   inputs: z.record(z.unknown()),
   model: z.enum(['gpt-3.5-turbo', 'gpt-4']).optional(),
