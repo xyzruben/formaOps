@@ -5,9 +5,14 @@ const nextConfig = {
     NEXT_PUBLIC_IS_TEST_MODE:
       process.env.NODE_ENV === 'test' ? 'true' : 'false',
   },
+  // Enable typed routes
+  typedRoutes: true,
+
+  // Server external packages for better serverless performance
+  serverExternalPackages: ['@prisma/client', 'prisma'],
+
   // Enable experimental features for better performance
   experimental: {
-    typedRoutes: true,
     optimizePackageImports: ['@supabase/supabase-js', 'openai', 'lucide-react'],
     optimizeServerReact: true,
   },
@@ -57,6 +62,19 @@ const nextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': require('path').resolve(__dirname, './src'),
+    };
+
+    // Prisma serverless configuration
+    if (isServer) {
+      config.externals.push('@prisma/client');
+    }
+
+    // Prisma-specific optimizations
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
     };
 
     // Optimize bundle splitting

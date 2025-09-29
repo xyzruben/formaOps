@@ -10,6 +10,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && next build",
     "lint": "eslint . --ext .ts,.tsx --fix",
     "lint:check": "eslint . --ext .ts,.tsx",
     "format": "prettier --write .",

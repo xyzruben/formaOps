@@ -1,54 +1,32 @@
 import { PrismaClient } from '@prisma/client';
 
+// Global instance management for serverless
 declare global {
-  var prisma: PrismaClient | undefined;
+  var __prisma: PrismaClient | undefined;
 }
 
 // Enhanced Prisma Client configuration for connection stability
-// Handle build-time scenarios where DATABASE_URL might not be available
 const createPrismaClient = (): PrismaClient => {
-  // During build time, provide minimal configuration to prevent errors
-  if (
-    !process.env.DATABASE_URL &&
-    (process.env.NODE_ENV === 'test' || process.env.VERCEL)
-  ) {
-    console.warn(
-      'DATABASE_URL not available during build, using minimal Prisma configuration'
-    );
-    return new PrismaClient({
-      log: ['error'],
-      errorFormat: 'pretty',
-    });
-  }
-
   return new PrismaClient({
     log:
       process.env.NODE_ENV === 'development'
         ? ['query', 'error', 'warn']
         : ['error'],
-
-    // Connection pool and timeout configuration for better stability
-    // Provide fallback for build-time when DATABASE_URL might not be available
-    ...(process.env.DATABASE_URL && {
-      datasources: {
-        db: {
-          url: process.env.DATABASE_URL,
-        },
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
       },
-    }),
-
-    // Enhanced error handling and connection management
+    },
+    // Enhanced error handling for production
     errorFormat: 'pretty',
-
-    // Connection pool configuration optimized for serverless environment
-    ...(process.env.NODE_ENV === 'production' && {
-      // Production-specific optimizations
-      log: ['error', 'warn'], // More verbose logging in production for debugging
-    }),
   });
 };
 
-export const prisma = globalThis.prisma ?? createPrismaClient();
+export const prisma = globalThis.__prisma ?? createPrismaClient();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.__prisma = prisma;
+}
 
 // Connection health check utility
 export const checkDatabaseConnection = async (): Promise<{
@@ -110,7 +88,4 @@ if (typeof process !== 'undefined') {
   process.on('beforeExit', gracefulShutdown);
 }
 
-// Store globally to prevent multiple instances in development
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = prisma;
-}
+// Prisma instance is already stored globally via __prisma

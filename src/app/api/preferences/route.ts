@@ -54,21 +54,30 @@ const UserPreferencesUpdateSchema = z.object({
  */
 export async function GET(): Promise<NextResponse> {
   try {
+    console.log('Preferences API: Starting request');
     const user = await requireAuth();
+    console.log('Preferences API: User authenticated', user.id);
 
     // Try to get existing preferences
     let preferences = await prisma.userPreferences.findUnique({
       where: { userId: user.id },
     });
 
+    console.log(
+      'Preferences API: Query successful',
+      preferences ? 'found' : 'not found'
+    );
+
     let isDefault = false;
 
     // If no preferences exist, create defaults
     if (!preferences) {
+      console.log('Preferences API: Creating default preferences');
       preferences = await prisma.userPreferences.create({
         data: { userId: user.id },
       });
       isDefault = true;
+      console.log('Preferences API: Default preferences created');
     }
 
     return NextResponse.json({
@@ -79,6 +88,7 @@ export async function GET(): Promise<NextResponse> {
       },
     });
   } catch (error) {
+    console.error('Preferences API Error:', error);
     const apiError = handleApiError(error);
     return NextResponse.json(apiError, { status: apiError.statusCode });
   }

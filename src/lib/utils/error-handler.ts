@@ -64,6 +64,33 @@ export function handleApiError(error: unknown): {
   details?: unknown;
   statusCode: number;
 } {
+  console.error('API Error:', error);
+
+  if (error instanceof Error) {
+    // Handle Prisma-specific errors
+    if (error.message.includes('PrismaClient')) {
+      return {
+        statusCode: 500,
+        error: 'Database connection error',
+        code: 'DATABASE_ERROR',
+        details: 'Unable to connect to database. Please try again.',
+      };
+    }
+
+    // Handle Prisma query errors
+    if (
+      error.message.includes('prisma') ||
+      error.message.includes('database')
+    ) {
+      return {
+        statusCode: 500,
+        error: 'Database operation failed',
+        code: 'DATABASE_ERROR',
+        details: 'Database operation failed. Please try again.',
+      };
+    }
+  }
+
   // Handle custom app errors
   if (
     error &&

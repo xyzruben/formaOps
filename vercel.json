@@ -1,13 +1,14 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "prisma generate && npm run build",
   "outputDirectory": ".next",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci && prisma generate",
   "devCommand": "npm run dev",
   "framework": "nextjs",
   "regions": ["sfo1"],
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 1024
     }
   },
   "headers": [
@@ -82,7 +83,8 @@
   "env": {
     "NODE_ENV": "production",
     "NEXT_TELEMETRY_DISABLED": "1",
-    "NEXT_PUBLIC_APP_URL": "https://forma-ops.vercel.app"
+    "NEXT_PUBLIC_APP_URL": "https://forma-ops.vercel.app",
+    "PRISMA_GENERATE_DATAPROXY": "false"
   },
   "build": {
     "env": {
