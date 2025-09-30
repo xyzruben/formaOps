@@ -1,354 +1,137 @@
-# Claude Code Fix Prompt for FormaOps Critical Issues
+# Claude Code Prompt: FormaOps Production Error Resolution
 
 ## Context
 
-You are working on FormaOps, an AI-native developer platform for creating, testing, validating, and executing reusable operational prompts. The application is deployed on Vercel with Supabase as the database backend using Prisma ORM.
+You are an expert software engineer assisting with the FormaOps application, an AI-native developer platform for creating, testing, validating, and executing reusable operational prompts. The application is deployed on Vercel and utilizes Prisma ORM for database interactions, likely with a Supabase backend (common pairing with Prisma on Vercel).
 
-## Critical Issues Identified
+## Problem Description (from Screenshot Analysis)
 
-### 1. **SYNTAX ERRORS** (Blocking - Immediate Fix Required)
+The FormaOps application is experiencing critical production errors, preventing the "Execution History" page from loading and indicating fundamental issues with database connectivity and API functionality.
 
-The `/src/app/api/preferences/route.ts` file has critical syntax errors preventing API execution:
+### 1. Primary Issue: PrismaClient Environment Mismatch (DATABASE_ERROR)
 
-- **Line 10**: Missing comma after `defaultViewMode` field
-- **Line 91**: Missing opening brace `{` after `try` statement in PUT function
-- **Line 125**: Missing opening brace `{` after `try` statement in DELETE function
+The main content area of the application displays a prominent error message in red:
 
-### 2. **PRISMA CLIENT BUNDLING ISSUE** (Critical - Production Breaking)
-
-Error: `"PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in 'unknown')"`
-
-This indicates PrismaClient is incorrectly configured for Vercel's serverless environment.
-
-### 3. **500 INTERNAL SERVER ERRORS** (Cascading Failures)
-
-Multiple API endpoints failing, specifically `/api/preferences`, causing application-wide failures.
-
-## Required Fixes
-
-### Phase 1: Critical Syntax Fixes (IMMEDIATE)
-
-**File: `src/app/api/preferences/route.ts`**
-
-Fix these specific syntax errors:
-
-1. **Line 10**: Add missing comma:
-
-```typescript
-// BEFORE (broken):
-defaultViewMode: z.enum(['output', 'metrics', 'raw']).optional()
-outputFontSize: z.enum(['small', 'medium', 'large', 'custom']).optional(),
-
-// AFTER (fixed):
-defaultViewMode: z.enum(['output', 'metrics', 'raw']).optional(),
-outputFontSize: z.enum(['small', 'medium', 'large', 'custom']).optional(),
+```
+Error: Failed to fetch executions: PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `unknown`). If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report (DATABASE_ERROR)
 ```
 
-2. **Line 91**: Add missing opening brace:
+This error clearly indicates that `PrismaClient` is being initialized or executed in an incorrect environment. Specifically:
 
-```typescript
-// BEFORE (broken):
-export async function PUT(request: NextRequest): Promise<NextResponse> {
-  try
-    const user = await requireAuth();
+- It suggests `PrismaClient` is either running directly in the browser (which it should not, as it's a server-side library) or has been incorrectly bundled for a browser environment.
+- Given the Vercel deployment, this often points to issues with how `PrismaClient` is configured for serverless functions, where it needs to be initialized correctly for a Node.js runtime, not a browser.
+- The `(DATABASE_ERROR)` tag confirms that the root cause is related to database access.
 
-// AFTER (fixed):
-export async function PUT(request: NextRequest): Promise<NextResponse> {
-  try {
-    const user = await requireAuth();
-```
+### 2. Secondary Issue: Cascading API Failures (500 Internal Server Errors)
 
-3. **Line 125**: Add missing opening brace:
+The browser's developer console (specifically the "Console" tab) shows multiple critical errors, all indicating server-side failures:
 
-```typescript
-// BEFORE (broken):
-export async function DELETE(): Promise<NextResponse> {
-  try
-    const user = await requireAuth();
+- **Multiple "Failed to load resource" errors**:
 
-// AFTER (fixed):
-export async function DELETE(): Promise<NextResponse> {
-  try {
-    const user = await requireAuth();
-```
+  ```
+  Failed to load resource: api/preferences:1 the server responded with a status of 500 ()
+  ```
 
-### Phase 2: Prisma Client Configuration Fix
+  These messages appear three times, indicating that the browser attempted to fetch resources from `/api/preferences` but received a `500 Internal Server Error` response.
 
-**File: `next.config.js`**
+- **Specific GET request failures**:
+  ```
+  ► GET layout-f59b758f331901b6.js:1 https://forma-ops.vercel.app/api/preferences 500 (Internal Server Error)
+  ```
+  These messages appear twice, explicitly showing that `GET` requests to the `https://forma-ops.vercel.app/api/preferences` endpoint are failing with a `500 Internal Server Error`.
 
-Add Prisma-specific configuration to the existing webpack section:
+These API failures are almost certainly a direct consequence of the primary `PrismaClient` environment mismatch. The `/api/preferences` endpoint likely attempts to use `PrismaClient` to interact with the database, and when `PrismaClient` fails to initialize or run correctly, the API route throws a 500 error.
 
-```javascript
-webpack: (config, { isServer }) => {
-  // Existing code...
+## Task for Claude Code
 
-  // ADD THIS: Prisma serverless configuration
-  if (isServer) {
-    config.externals.push('@prisma/client');
-  }
+As an expert in Vercel deployments, Prisma ORM, and Next.js applications, your task is to:
 
-  // ADD THIS: Prisma-specific optimizations
-  config.resolve.fallback = {
-    ...config.resolve.fallback,
-    fs: false,
-    net: false,
-    tls: false,
-  };
+1.  **Systematically Identify the Root Cause**: Based on the described errors, pinpoint the exact configuration or code issue that is causing `PrismaClient` to fail in the Vercel serverless environment and subsequently lead to the 500 Internal Server Errors on the `/api/preferences` endpoint.
 
-  return config;
-},
+2.  **Propose a Detailed Plan to Solve the Issues**: Provide a step-by-step plan that includes:
+    - **Code Modifications**: Specific changes to files (e.g., `next.config.js`, `src/lib/database/client.ts`, API routes, `package.json`, `vercel.json`) to correctly configure and initialize `PrismaClient` for a Vercel serverless environment.
+    - **Configuration Adjustments**: Recommendations for Vercel project settings or environment variables if necessary.
+    - **Best Practices**: Ensure the proposed solution adheres to best practices for Prisma and Next.js on Vercel, including connection management, bundling, and deployment.
+    - **Verification Steps**: Suggest how to verify that the fix has been successfully implemented and the errors are resolved.
 
-// ADD THIS: Experimental configuration for Prisma
-experimental: {
-  serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
-  // ... existing experimental config
-},
-```
+The goal is to ensure `PrismaClient` runs correctly on the server-side, enabling the `/api/preferences` endpoint to function, and ultimately allowing the "Execution History" page to load data without errors.
 
-**File: `vercel.json`**
+## Current Codebase Context
 
-Update the build configuration:
+Based on the project structure, you should focus on these key files:
 
-```json
-{
-  "buildCommand": "prisma generate && npm run build",
-  "installCommand": "npm ci && prisma generate",
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "maxDuration": 30,
-      "memory": 1024
-    }
-  },
-  "env": {
-    "PRISMA_GENERATE_DATAPROXY": "false"
-  }
-}
-```
+### Core Configuration Files
 
-**File: `package.json`**
+- `next.config.js` - Next.js configuration and webpack settings
+- `vercel.json` - Vercel deployment configuration
+- `package.json` - Dependencies and build scripts
+- `prisma/schema.prisma` - Database schema and Prisma configuration
 
-Update build scripts:
+### Database and API Files
 
-```json
-{
-  "scripts": {
-    "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && next build"
-  }
-}
-```
+- `src/lib/database/client.ts` - Prisma client initialization
+- `src/app/api/preferences/route.ts` - Failing API endpoint
+- `src/lib/utils/error-handler.ts` - Error handling utilities
 
-### Phase 3: Database Client Enhancement
+### Environment Considerations
 
-**File: `src/lib/database/client.ts`**
+- The application is deployed on Vercel (serverless environment)
+- Uses Prisma ORM for database operations
+- Likely uses Supabase as the database backend
+- Next.js 15 with App Router architecture
 
-Replace the existing `createPrismaClient` function with this enhanced version:
+## Expected Analysis Areas
 
-```typescript
-const createPrismaClient = (): PrismaClient => {
-  return new PrismaClient({
-    log:
-      process.env.NODE_ENV === 'development'
-        ? ['query', 'error', 'warn']
-        : ['error'],
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-    // Add connection pooling for serverless
-    ...(process.env.NODE_ENV === 'production' && {
-      __internal: {
-        engine: {
-          connectTimeout: 60000,
-          queryTimeout: 30000,
-        },
-      },
-    }),
-  });
-};
+When investigating the root cause, consider these common issues:
 
-// Global instance management for serverless
-declare global {
-  var __prisma: PrismaClient | undefined;
-}
+### 1. Prisma Client Bundling Issues
 
-export const prisma = globalThis.__prisma ?? createPrismaClient();
+- Incorrect webpack configuration for serverless environments
+- Missing `serverExternalPackages` in Next.js config
+- Prisma client being bundled for browser instead of server
 
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.__prisma = prisma;
-}
-```
+### 2. Serverless Environment Configuration
 
-### Phase 4: Error Handling Enhancement
+- Missing or incorrect environment variables
+- Prisma client not properly initialized for serverless functions
+- Connection pooling issues in serverless context
 
-**File: `src/lib/utils/error-handler.ts`**
+### 3. API Route Configuration
 
-Add Prisma-specific error handling:
+- Missing `export const dynamic = 'force-dynamic'` in API routes
+- Improper error handling in API endpoints
+- Authentication or middleware issues
 
-```typescript
-export function handleApiError(error: unknown) {
-  console.error('API Error:', error);
+### 4. Deployment Configuration
 
-  if (error instanceof Error) {
-    // Handle Prisma-specific errors
-    if (error.message.includes('PrismaClient')) {
-      return {
-        statusCode: 500,
-        error: 'Database connection error',
-        code: 'DATABASE_ERROR',
-        message: 'Unable to connect to database. Please try again.',
-      };
-    }
+- Incorrect build commands in Vercel
+- Missing Prisma generation in build process
+- Environment variable configuration issues
 
-    // Handle Prisma query errors
-    if (
-      error.message.includes('prisma') ||
-      error.message.includes('database')
-    ) {
-      return {
-        statusCode: 500,
-        error: 'Database operation failed',
-        code: 'DATABASE_ERROR',
-        message: 'Database operation failed. Please try again.',
-      };
-    }
-  }
+## Success Criteria
 
-  return {
-    statusCode: 500,
-    error: 'Internal server error',
-    code: 'INTERNAL_ERROR',
-    message: 'An unexpected error occurred.',
-  };
-}
-```
+After implementing the proposed solution, the application should:
 
-### Phase 5: Health Check Endpoint
+1. ✅ **PrismaClient Initialization**: Successfully initialize in serverless environment
+2. ✅ **API Endpoint Functionality**: `/api/preferences` returns 200 status instead of 500
+3. ✅ **Database Connectivity**: Successful database operations in production
+4. ✅ **Frontend Data Loading**: Execution History page loads data without errors
+5. ✅ **Error Resolution**: No more "PrismaClient is unable to run in this browser environment" errors
+6. ✅ **Console Clean**: No 500 Internal Server Errors in browser console
 
-**Create: `src/app/api/health/route.ts`**
+## Investigation Priority
 
-```typescript
-import { NextResponse } from 'next/server';
-import { prisma } from '../../../lib/database/client';
+1. **Immediate**: Check current Prisma client configuration and initialization
+2. **High Priority**: Verify Next.js and Vercel configuration for serverless deployment
+3. **Medium Priority**: Review API route implementation and error handling
+4. **Low Priority**: Optimize performance and add monitoring
 
-export async function GET() {
-  try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1`;
+## Deliverables Expected
 
-    return NextResponse.json({
-      status: 'healthy',
-      database: 'connected',
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return NextResponse.json(
-      {
-        status: 'unhealthy',
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
-      },
-      { status: 500 }
-    );
-  }
-}
-```
+1. **Root Cause Analysis**: Clear explanation of why the errors are occurring
+2. **Step-by-Step Fix Plan**: Detailed implementation guide with specific code changes
+3. **File Modifications**: Exact changes needed for each file
+4. **Verification Steps**: How to test and confirm the fixes work
+5. **Prevention Measures**: Recommendations to avoid similar issues in the future
 
-### Phase 6: Enhanced API Logging
-
-**File: `src/app/api/preferences/route.ts`**
-
-Add logging to the GET function (after fixing syntax errors):
-
-```typescript
-export async function GET(): Promise<NextResponse> {
-  try {
-    console.log('Preferences API: Starting request');
-    const user = await requireAuth();
-    console.log('Preferences API: User authenticated', user.id);
-
-    // Try to get existing preferences
-    let preferences = await prisma.userPreferences.findUnique({
-      where: { userId: user.id },
-    });
-
-    console.log(
-      'Preferences API: Query successful',
-      preferences ? 'found' : 'not found'
-    );
-
-    let isDefault = false;
-
-    // If no preferences exist, create defaults
-    if (!preferences) {
-      console.log('Preferences API: Creating default preferences');
-      preferences = await prisma.userPreferences.create({
-        data: { userId: user.id },
-      });
-      isDefault = true;
-      console.log('Preferences API: Default preferences created');
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        preferences,
-        isDefault,
-      },
-    });
-  } catch (error) {
-    console.error('Preferences API Error:', error);
-    const apiError = handleApiError(error);
-    return NextResponse.json(apiError, { status: apiError.statusCode });
-  }
-}
-```
-
-## Implementation Order
-
-1. **IMMEDIATE**: Fix syntax errors in `src/app/api/preferences/route.ts`
-2. **HIGH PRIORITY**: Update Prisma configuration in `next.config.js` and `vercel.json`
-3. **MEDIUM PRIORITY**: Enhance database client and error handling
-4. **LOW PRIORITY**: Add health check endpoint and enhanced logging
-
-## Verification Steps
-
-After implementing fixes:
-
-1. **Local Testing**: Run `npm run dev` and test `/api/preferences` endpoint
-2. **Health Check**: Test `/api/health` endpoint for database connectivity
-3. **Build Test**: Run `npm run build` to ensure no build errors
-4. **Deployment**: Deploy to Vercel and verify production functionality
-
-## Environment Variables Required
-
-Ensure these are set in Vercel:
-
-- `DATABASE_URL`: PostgreSQL connection string
-- `DIRECT_URL`: Direct database connection (if using connection pooling)
-- `PRISMA_GENERATE_DATAPROXY`: Set to "false"
-- `NODE_ENV`: Set to "production"
-
-## Expected Outcome
-
-After implementing these fixes:
-
-- ✅ API endpoints will return 200 status instead of 500 errors
-- ✅ PrismaClient will work correctly in serverless environment
-- ✅ Database operations will be stable and performant
-- ✅ Application will load preferences and execute prompts successfully
-- ✅ Console errors will be resolved
-
-## Notes
-
-- The syntax errors are **blocking** and must be fixed first
-- Prisma configuration changes require a **full redeployment**
-- Test each phase individually before proceeding to the next
-- Monitor Vercel function logs for any remaining issues
-
-This prompt provides a systematic approach to resolving the critical issues preventing your FormaOps application from functioning properly in production.
+This prompt provides Claude Code with all the necessary context to systematically diagnose and resolve the critical production issues preventing the FormaOps application from functioning properly.

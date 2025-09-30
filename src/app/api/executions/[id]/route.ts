@@ -3,6 +3,9 @@ import { requireAuth } from '../../../../lib/auth/server';
 import { getExecutionById } from '../../../../lib/database/queries';
 import { handleApiError } from '../../../../lib/utils/error-handler';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }

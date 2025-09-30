@@ -67,6 +67,12 @@ const nextConfig = {
     // Prisma serverless configuration
     if (isServer) {
       config.externals.push('@prisma/client');
+    } else {
+      // Prevent Prisma from being bundled on the client side
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        '@prisma/client': false,
+      };
     }
 
     // Prisma-specific optimizations
@@ -75,6 +81,15 @@ const nextConfig = {
       fs: false,
       net: false,
       tls: false,
+      // Additional fallbacks for Prisma dependencies
+      crypto: false,
+      stream: false,
+      assert: false,
+      http: false,
+      https: false,
+      os: false,
+      url: false,
+      zlib: false,
     };
 
     // Optimize bundle splitting

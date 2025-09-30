@@ -34,7 +34,15 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { Prompt, VariableDefinition } from '@/types/database';
-import type { JsonValue } from '@prisma/client/runtime/library';
+
+// Use a generic JSON type instead of Prisma's JsonValue to avoid client-side bundling issues
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
 
 // Test-mode component that provides basic prompt functionality without complex dependencies
 function TestModePromptList(): JSX.Element {

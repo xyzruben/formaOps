@@ -7,6 +7,9 @@ import {
   deletePrompt,
 } from '@/lib/database/queries';
 
+// Force dynamic rendering - do not try to statically generate this API route
+export const dynamic = 'force-dynamic';
+
 const VariableSchema = z.object({
   name: z
     .string()
