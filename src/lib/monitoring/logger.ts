@@ -1,6 +1,15 @@
 /* eslint-disable no-console */
-import { prisma } from '../database/client';
 import type { LogLevel } from '@prisma/client';
+
+// Conditional import of prisma - only on server
+const getPrisma = () => {
+  if (typeof window === 'undefined') {
+    // Server-side: import prisma
+    const { prisma } = require('../database/client');
+    return prisma;
+  }
+  return null; // Client-side: no prisma
+};
 
 export interface LogEntry {
   level: LogLevel;
@@ -36,19 +45,22 @@ export class Logger {
 
     // Database logging for execution-related logs
     if (entry.executionId) {
-      try {
-        await prisma.executionLog.create({
-          data: {
-            level: entry.level,
-            message: entry.message,
-            metadata: (entry.metadata || {}) as any,
-            executionId: entry.executionId,
-          },
-        });
-      } catch (error) {
-        // Fallback to console if database logging fails
-        console.error('Failed to log to database:', error);
-        console.log(`[FALLBACK] ${entry.level}: ${entry.message}`);
+      const prisma = getPrisma();
+      if (prisma) {
+        try {
+          await prisma.executionLog.create({
+            data: {
+              level: entry.level,
+              message: entry.message,
+              metadata: (entry.metadata || {}) as any,
+              executionId: entry.executionId,
+            },
+          });
+        } catch (error) {
+          // Fallback to console if database logging fails
+          console.error('Failed to log to database:', error);
+          console.log(`[FALLBACK] ${entry.level}: ${entry.message}`);
+        }
       }
     }
   }
@@ -240,6 +252,11 @@ export class Logger {
       timestamp: Date;
     }>
   > {
+    const prisma = getPrisma();
+    if (!prisma) {
+      return [];
+    }
+
     const logs = await prisma.executionLog.findMany({
       where: { executionId },
       orderBy: { timestamp: 'desc' },

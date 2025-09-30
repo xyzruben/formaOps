@@ -72,6 +72,7 @@ const nextConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         '@prisma/client': false,
+        '@/lib/database/client': false,
       };
     }
 
