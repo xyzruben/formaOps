@@ -263,7 +263,7 @@ export class Logger {
       take: limit,
     });
 
-    return logs.map(log => ({
+    return logs.map((log: any) => ({
       id: log.id,
       level: log.level,
       message: log.message,
