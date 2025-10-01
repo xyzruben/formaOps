@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { LoadingState, ErrorState } from '@/components/ui/loading-spinner';
 import { AIResultsViewer } from '@/components/execution/ai-results-viewer';
 import {
-  executionService,
-  ExecutionServiceError,
-} from '@/lib/services/execution-service';
+  getExecutionById,
+  retryExecution,
+  ExecutionAPIError,
+} from '@/lib/api/execution-client';
 import {
   useExecutionWebSocket,
   type ExecutionStatusUpdate,
@@ -39,14 +40,11 @@ export default function ExecutionDetailPage(): JSX.Element {
       setLoading(true);
       setError(null);
 
-      const executionResult = await executionService.getExecutionById(
-        executionId,
-        user.id
-      );
+      const executionResult = await getExecutionById(executionId);
       setExecution(executionResult);
     } catch (err) {
-      if (err instanceof ExecutionServiceError) {
-        setError(`${err.message} (${err.code})`);
+      if (err instanceof ExecutionAPIError) {
+        setError(`${err.message} (${err.code || err.statusCode})`);
       } else {
         setError(
           err instanceof Error ? err.message : 'Failed to load execution'
@@ -63,15 +61,12 @@ export default function ExecutionDetailPage(): JSX.Element {
     if (!execution || !user) return;
 
     try {
-      const result = await executionService.retryExecution(
-        executionId,
-        user.id
-      );
+      const result = await retryExecution(executionId);
 
       // Navigate to the new execution
-      router.push(`/executions/${result.newExecutionId}`);
+      router.push(`/executions/${result.data.newExecutionId}`);
     } catch (err) {
-      if (err instanceof ExecutionServiceError) {
+      if (err instanceof ExecutionAPIError) {
         alert(`Failed to retry execution: ${err.message}`);
       } else {
         alert('Failed to retry execution');

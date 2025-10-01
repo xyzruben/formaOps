@@ -14,12 +14,12 @@ import {
 } from '@/components/ui/loading-spinner';
 import { formatDate } from '@/lib/utils';
 import {
-  executionService,
-  ExecutionServiceError,
+  getExecutions,
+  ExecutionAPIError,
   type ExecutionFilters,
   type ExecutionListResponse,
-} from '@/lib/services/execution-service';
-// ExecutionResult type imported through the service
+} from '@/lib/api/execution-client';
+// ExecutionResult type imported through the API client
 
 // Using types from the execution service
 
@@ -59,11 +59,11 @@ export default function ExecutionsPage(): JSX.Element {
             | 'CANCELLED';
         }
 
-        const data = await executionService.getExecutions(filters, user.id);
+        const data = await getExecutions(filters);
         setExecutionData(data);
       } catch (err) {
-        if (err instanceof ExecutionServiceError) {
-          setError(`${err.message} (${err.code})`);
+        if (err instanceof ExecutionAPIError) {
+          setError(`${err.message} (${err.code || err.statusCode})`);
         } else {
           setError(
             err instanceof Error ? err.message : 'Failed to load executions'
