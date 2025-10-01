@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
-import { logger } from '@/lib/monitoring/logger';
 
 interface ErrorInfo {
   componentStack: string;
@@ -69,8 +68,8 @@ class ErrorBoundary extends React.Component<
       errorInfo: enhancedErrorInfo,
     });
 
-    // Log error to monitoring system
-    logger.error('React Error Boundary caught error', error, {
+    // Log error to console (client-side error boundary)
+    console.error('React Error Boundary caught error:', error, {
       componentStack: errorInfo.componentStack,
       errorBoundary: this.constructor.name,
       errorId: this.state.errorId,
@@ -310,7 +309,7 @@ export function useErrorHandler() {
 
   const handleError = React.useCallback((error: Error) => {
     setError(error);
-    logger.error('Component error caught by useErrorHandler', error);
+    console.error('Component error caught by useErrorHandler:', error);
   }, []);
 
   const clearError = React.useCallback(() => {
@@ -330,7 +329,7 @@ export function useErrorHandler() {
 // Async error handler for promises
 export function handleAsyncError(promise: Promise<any>): Promise<any> {
   return promise.catch(error => {
-    logger.error('Async operation failed', error);
+    console.error('Async operation failed:', error);
     throw error;
   });
 }
