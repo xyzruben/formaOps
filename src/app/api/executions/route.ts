@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '../../../lib/auth/server';
-import {
-  getExecutionHistory,
-  type ExecutionFilters,
-} from '../../../lib/database/queries';
+import { ExecutionRepository } from '../../../lib/repositories/execution-repository';
 import { handleApiError } from '../../../lib/utils/error-handler';
 
 // Force dynamic rendering - do not try to statically generate this API route
@@ -41,33 +38,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       to: searchParams.get('to') || undefined,
     });
 
-    const options = {
-      page: query.page,
-      limit: query.limit,
-      status: query.status,
-      promptId: query.promptId,
-      from: query.from ? new Date(query.from) : undefined,
-      to: query.to ? new Date(query.to) : undefined,
-    };
-
-    // Build filters for the new getExecutionHistory function
-    const filters: ExecutionFilters = {
+    // Use ExecutionRepository for proper data transformation
+    const repository = new ExecutionRepository();
+    const result = await repository.getExecutions({
       userId: user.id,
       promptId: query.promptId,
       status: query.status,
       page: query.page,
       limit: query.limit,
-    };
-
-    // Add date range filter if provided
-    if (options.from || options.to) {
-      filters.dateRange = {
-        from: options.from || new Date(0),
-        to: options.to || new Date(),
-      };
-    }
-
-    const result = await getExecutionHistory(filters);
+      from: query.from,
+      to: query.to,
+    });
 
     return NextResponse.json({
       success: true,

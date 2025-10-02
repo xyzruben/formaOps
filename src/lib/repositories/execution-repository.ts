@@ -13,7 +13,7 @@ import {
   type ExecutionWithDetails,
 } from '../database/queries';
 import type { ExecutionResult } from '@/components/execution/ai-results-viewer';
-import { ExecutionServiceError } from '../services/execution-service';
+import { ExecutionServiceError } from '../errors/execution-errors';
 
 // Repository-specific filter types that align with our service layer
 export interface ExecutionRepositoryFilters {

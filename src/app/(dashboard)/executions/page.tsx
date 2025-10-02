@@ -371,7 +371,9 @@ export default function ExecutionsPage(): JSX.Element {
                           <span className="text-muted-foreground">
                             Tokens:{' '}
                           </span>
-                          {execution.tokenUsage.totalTokens.toLocaleString()}
+                          {(
+                            execution.tokenUsage?.totalTokens ?? 0
+                          ).toLocaleString()}
                         </div>
                         <div>
                           <span className="text-muted-foreground">Cost: </span>
