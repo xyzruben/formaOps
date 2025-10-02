@@ -131,7 +131,8 @@ export default function ExecutionsPage(): JSX.Element {
   };
 
   // Handle execution click - navigate to detail page
-  const handleExecutionClick = (executionId: string): void => {
+  const handleExecutionClick = (executionId: string | undefined): void => {
+    if (!executionId) return;
     router.push(`/executions/${executionId}`);
   };
 
@@ -329,7 +330,7 @@ export default function ExecutionsPage(): JSX.Element {
                               'Unknown Prompt'}
                           </span>
                           <span className="text-sm text-muted-foreground">
-                            ID: {execution.executionId.slice(-8)}
+                            ID: {execution.executionId?.slice(-8) || 'N/A'}
                           </span>
                         </div>
 
