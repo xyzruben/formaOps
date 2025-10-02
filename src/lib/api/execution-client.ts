@@ -74,8 +74,8 @@ export async function getExecutions(
     );
   }
 
-  const data = await response.json();
-  return data;
+  const response_data = await response.json();
+  return response_data.data;
 }
 
 /**
