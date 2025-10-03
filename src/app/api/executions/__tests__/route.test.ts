@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import type { ExecutionResult } from '@/components/execution/ai-results-viewer';
 
 // Mock authentication first
 jest.mock('@/lib/auth/server', () => ({
@@ -16,58 +17,96 @@ jest.mock('@/lib/utils/error-handler', () => ({
   }),
 }));
 
-// Mock database queries using the same relative path as the route
-jest.mock('@/lib/database/queries', () => ({
-  getExecutionHistory: jest.fn(),
+// Mock ExecutionRepository instead of database layer
+jest.mock('@/lib/repositories/execution-repository', () => ({
+  ExecutionRepository: jest.fn().mockImplementation(() => ({
+    getExecutions: jest.fn(),
+  })),
 }));
 
 import { GET } from '../route';
-import { getExecutionHistory } from '@/lib/database/queries';
+import { ExecutionRepository } from '@/lib/repositories/execution-repository';
 
-// Get typed mocks for better intellisense
-const mockGetExecutionHistory = getExecutionHistory as jest.MockedFunction<
-  typeof getExecutionHistory
+// Get typed mock instance
+const MockExecutionRepository = ExecutionRepository as jest.MockedClass<
+  typeof ExecutionRepository
 >;
 
 describe('/api/executions', () => {
+  let mockGetExecutions: jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockGetExecutions = jest.fn();
+    MockExecutionRepository.mockImplementation(
+      () =>
+        ({
+          getExecutions: mockGetExecutions,
+        }) as any
+    );
   });
 
   it('should return execution history successfully', async () => {
-    const mockExecutions = [
+    // Mock data in ExecutionResult format (what the repository returns)
+    const mockExecutions: ExecutionResult[] = [
       {
-        id: 'execution-1',
+        executionId: 'execution-1',
         status: 'COMPLETED' as const,
-        inputs: { name: 'John' },
         output: 'Hello John',
-        validationStatus: 'PASSED' as const,
-        latencyMs: 150,
-        costUsd: 0.001,
-        tokenUsage: { input: 10, output: 5, total: 15 },
-        createdAt: new Date(),
-        startedAt: new Date(),
-        completedAt: new Date(),
-        prompt: {
-          id: 'prompt-1',
-          name: 'Test Prompt 1',
+        tokenUsage: {
+          inputTokens: 10,
+          outputTokens: 5,
+          totalTokens: 15,
         },
+        costUsd: 0.001,
+        validationStatus: 'PASSED' as const,
+        validationErrors: [],
+        executionData: {
+          inputs: { name: 'John' },
+          model: 'gpt-3.5-turbo',
+          maxTokens: 2000,
+          temperature: 0.7,
+          prompt: {
+            id: 'prompt-1',
+            name: 'Test Prompt 1',
+          },
+        },
+        timestamp: new Date().toISOString(),
+        executionTime: 150,
+        latencyMs: 150,
       },
       {
-        id: 'execution-2',
+        executionId: 'execution-2',
         status: 'FAILED' as const,
-        inputs: { name: 'Jane' },
-        output: null,
-        validationStatus: 'FAILED' as const,
-        latencyMs: null,
+        output: '',
+        tokenUsage: {
+          inputTokens: 8,
+          outputTokens: 0,
+          totalTokens: 8,
+        },
         costUsd: 0,
-        tokenUsage: { input: 8, output: 0, total: 8 },
-        createdAt: new Date(),
-        startedAt: new Date(),
-        completedAt: null,
-        prompt: {
-          id: 'prompt-2',
-          name: 'Test Prompt 2',
+        validationStatus: 'FAILED' as const,
+        validationErrors: [],
+        executionData: {
+          inputs: { name: 'Jane' },
+          model: 'gpt-3.5-turbo',
+          maxTokens: 2000,
+          temperature: 0.7,
+          prompt: {
+            id: 'prompt-2',
+            name: 'Test Prompt 2',
+          },
+        },
+        timestamp: new Date().toISOString(),
+        executionTime: undefined,
+        latencyMs: undefined,
+        error: {
+          type: 'API_ERROR',
+          message: 'Execution failed with no specific error message',
+          retryable: true,
+          details: {
+            logs: [],
+          },
         },
       },
     ];
@@ -82,7 +121,7 @@ describe('/api/executions', () => {
       },
     };
 
-    mockGetExecutionHistory.mockResolvedValue(mockResult);
+    mockGetExecutions.mockResolvedValue(mockResult);
 
     const request = new NextRequest('http://localhost:3000/api/executions');
 
@@ -94,12 +133,14 @@ describe('/api/executions', () => {
     expect(data.data.executions).toEqual(mockExecutions);
     expect(data.data.pagination).toEqual(mockResult.pagination);
 
-    expect(mockGetExecutionHistory).toHaveBeenCalledWith({
+    expect(mockGetExecutions).toHaveBeenCalledWith({
       userId: 'user-123',
       promptId: undefined,
       status: undefined,
       page: 1,
       limit: 20,
+      from: undefined,
+      to: undefined,
     });
   });
 
@@ -109,7 +150,7 @@ describe('/api/executions', () => {
       pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
     };
 
-    mockGetExecutionHistory.mockResolvedValue(mockResult);
+    mockGetExecutions.mockResolvedValue(mockResult);
 
     const request = new NextRequest(
       'http://localhost:3000/api/executions?promptId=prompt-1'
@@ -120,12 +161,14 @@ describe('/api/executions', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockGetExecutionHistory).toHaveBeenCalledWith({
+    expect(mockGetExecutions).toHaveBeenCalledWith({
       userId: 'user-123',
       promptId: 'prompt-1',
       status: undefined,
       page: 1,
       limit: 20,
+      from: undefined,
+      to: undefined,
     });
   });
 
@@ -135,7 +178,7 @@ describe('/api/executions', () => {
       pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
     };
 
-    mockGetExecutionHistory.mockResolvedValue(mockResult);
+    mockGetExecutions.mockResolvedValue(mockResult);
 
     const request = new NextRequest(
       'http://localhost:3000/api/executions?status=COMPLETED'
@@ -146,12 +189,14 @@ describe('/api/executions', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockGetExecutionHistory).toHaveBeenCalledWith({
+    expect(mockGetExecutions).toHaveBeenCalledWith({
       userId: 'user-123',
       promptId: undefined,
       status: 'COMPLETED',
       page: 1,
       limit: 20,
+      from: undefined,
+      to: undefined,
     });
   });
 
@@ -161,7 +206,7 @@ describe('/api/executions', () => {
       pagination: { page: 2, limit: 10, total: 0, totalPages: 0 },
     };
 
-    mockGetExecutionHistory.mockResolvedValue(mockResult);
+    mockGetExecutions.mockResolvedValue(mockResult);
 
     const request = new NextRequest(
       'http://localhost:3000/api/executions?page=2&limit=10'
@@ -172,17 +217,19 @@ describe('/api/executions', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockGetExecutionHistory).toHaveBeenCalledWith({
+    expect(mockGetExecutions).toHaveBeenCalledWith({
       userId: 'user-123',
       promptId: undefined,
       status: undefined,
       page: 2,
       limit: 10,
+      from: undefined,
+      to: undefined,
     });
   });
 
   it('should handle database errors', async () => {
-    mockGetExecutionHistory.mockRejectedValue(new Error('Database error'));
+    mockGetExecutions.mockRejectedValue(new Error('Database error'));
 
     const request = new NextRequest('http://localhost:3000/api/executions');
 
@@ -200,7 +247,7 @@ describe('/api/executions', () => {
       pagination: { page: 1, limit: 20, total: 0, totalPages: 0 },
     };
 
-    mockGetExecutionHistory.mockResolvedValue(mockResult);
+    mockGetExecutions.mockResolvedValue(mockResult);
 
     const fromDate = '2024-01-01';
     const toDate = '2024-01-31';
@@ -213,16 +260,14 @@ describe('/api/executions', () => {
 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
-    expect(mockGetExecutionHistory).toHaveBeenCalledWith({
+    expect(mockGetExecutions).toHaveBeenCalledWith({
       userId: 'user-123',
       promptId: undefined,
       status: undefined,
       page: 1,
       limit: 20,
-      dateRange: {
-        from: new Date(fromDate),
-        to: new Date(toDate),
-      },
+      from: fromDate,
+      to: toDate,
     });
   });
 });
