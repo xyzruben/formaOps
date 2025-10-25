@@ -22,28 +22,35 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      version: process.env.npm_package_version || '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      uptime: process.uptime(),
       responseTime: `${responseTime}ms`,
       services: {
         database: 'connected',
         openai: hasOpenAI ? 'configured' : 'missing',
         supabase: hasSupabase ? 'configured' : 'missing',
       },
-      system: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        memory: {
-          used:
-            Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) /
-            100,
-          total:
-            Math.round((process.memoryUsage().heapTotal / 1024 / 1024) * 100) /
-            100,
-        },
-      },
     };
+
+    // Only expose detailed system info in development
+    if (process.env.NODE_ENV === 'development') {
+      Object.assign(health, {
+        version: process.env.npm_package_version || '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        uptime: process.uptime(),
+        system: {
+          nodeVersion: process.version,
+          platform: process.platform,
+          memory: {
+            used:
+              Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) /
+              100,
+            total:
+              Math.round(
+                (process.memoryUsage().heapTotal / 1024 / 1024) * 100
+              ) / 100,
+          },
+        },
+      });
+    }
 
     // Determine overall health status
     if (!hasOpenAI || !hasSupabase) {

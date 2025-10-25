@@ -5,8 +5,16 @@ import { logger } from '@/lib/monitoring/logger';
 // Cleanup job for old data and maintenance tasks
 export async function GET(request: NextRequest): Promise<NextResponse> {
   // Verify cron job authorization
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    return NextResponse.json(
+      { error: 'CRON_SECRET not configured' },
+      { status: 500 }
+    );
+  }
+
   const authHeader = request.headers.get('authorization');
-  const expectedAuth = `Bearer ${process.env.CRON_SECRET || 'default-cron-secret'}`;
+  const expectedAuth = `Bearer ${cronSecret}`;
 
   if (authHeader !== expectedAuth) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
