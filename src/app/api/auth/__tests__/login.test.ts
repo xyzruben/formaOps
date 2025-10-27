@@ -63,7 +63,7 @@ describe('/api/auth/login', () => {
       method: 'POST',
       body: JSON.stringify({
         email: 'test@example.com',
-        password: 'password123',
+        password: 'password12345',
       }),
     });
 
@@ -80,7 +80,7 @@ describe('/api/auth/login', () => {
     expect(data.refresh_token).toBe('refresh-123');
     expect(mockSignInWithPassword).toHaveBeenCalledWith({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'password12345',
     });
   });
 
@@ -136,7 +136,7 @@ describe('/api/auth/login', () => {
       method: 'POST',
       body: JSON.stringify({
         email: 'invalid-email',
-        password: 'password123',
+        password: 'password12345',
       }),
     });
 
@@ -163,7 +163,7 @@ describe('/api/auth/login', () => {
       method: 'POST',
       body: JSON.stringify({
         email: 'test@example.com',
-        password: 'password123',
+        password: 'password12345',
       }),
     });
 
@@ -197,7 +197,7 @@ describe('/api/auth/login', () => {
       headers: { 'x-forwarded-for': '192.168.1.1' },
       body: JSON.stringify({
         email: 'test@example.com',
-        password: 'password123',
+        password: 'password12345',
       }),
     });
 
