@@ -37,10 +37,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Generate nonce for CSP (Section 2.3: security_dog.md)
-  // Use Web Crypto API for Edge Runtime compatibility
-  const nonce = Buffer.from(
-    crypto.getRandomValues(new Uint8Array(16))
-  ).toString('base64');
+  // Use Web Crypto API with btoa() for Edge Runtime compatibility
+  // eslint-disable-next-line no-undef
+  const nonce = btoa(
+    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16)))
+  );
 
   // Security checks
   const response = NextResponse.next();
