@@ -10,6 +10,23 @@
 
 ---
 
+## 🔧 Troubleshooting
+
+**Common Problems and Fixes:**
+
+- **Login errors** → Clear browser cookies and refresh page, verify email/password (minimum 12 characters)
+- **API returned 403** → Check CSRF token in cookies, verify authentication token is valid
+- **API returned 429** → Rate limit exceeded, wait 15-60 minutes depending on endpoint
+- **Database timeout** → Circuit breaker may be open, check `/api/health/database` endpoint
+- **Execution failed** → Check OpenAI API status at status.openai.com, verify `OPENAI_API_KEY` in environment
+- **Budget exceeded** → Monthly limit reached (FREE: $10, PRO: $100), upgrade plan or wait until next month
+- **Prompt injection detected** → Rephrase prompt to avoid flagged patterns, see SUPPORT.md for details
+- **Variable validation error** → Check variable types and required fields in prompt definition
+
+📚 **For detailed troubleshooting, see [SUPPORT.md](./SUPPORT.md)** - Complete support playbook with decision trees, runbooks, and diagnostic queries.
+
+---
+
 ## 📋 Project Overview
 
 FormaOps is a portfolio project showcasing enterprise-level development patterns in a full-stack AI prompt management platform. Built to demonstrate proficiency in modern TypeScript development, database design, API architecture, and production deployment.

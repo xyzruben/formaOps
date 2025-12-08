@@ -297,23 +297,16 @@ export class InputValidator {
     }
   }
 
-  // Prompt template validation for security
+  // Prompt template validation for security (Section 5.1: security_dog.md - Enhanced detection)
   static validatePromptTemplate(template: string): string {
-    // Check for potential prompt injection attempts
-    const dangerousPatterns = [
-      /ignore\s+previous\s+instructions/i,
-      /system\s*:/i,
-      /assistant\s*:/i,
-      /\bexec\b/i,
-      /\beval\b/i,
-      /<script/i,
-      /javascript:/i,
-    ];
+    // Use enhanced prompt injection detection
+    const { detectPromptInjection } = require('./prompt-injection-guard');
+    const result = detectPromptInjection(template);
 
-    for (const pattern of dangerousPatterns) {
-      if (pattern.test(template)) {
-        throw new Error('Template contains potentially dangerous content');
-      }
+    if (result.isInjection) {
+      throw new Error(
+        `Template contains potentially dangerous content: ${result.reason || 'Injection detected'}`
+      );
     }
 
     // Sanitize the template

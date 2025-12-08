@@ -14,6 +14,10 @@ import {
   executionErrorHandler,
   ExecutionError,
 } from '../../../../../lib/execution/error-handler';
+import {
+  budgetManager,
+  QuotaExceededError,
+} from '../../../../../lib/cost/budget-manager';
 
 // Force dynamic rendering - do not try to statically generate this API route
 export const dynamic = 'force-dynamic';
@@ -56,6 +60,39 @@ export async function POST(
         { error: 'Cannot execute archived prompt', code: 'VALIDATION_ERROR' },
         { status: 400 }
       );
+    }
+
+    // Check user budget before execution (Section 5.2: security_dog.md)
+    try {
+      const estimatedCost = budgetManager.estimateCost(
+        prompt.template.length,
+        data.maxTokens || 500,
+        data.model || 'gpt-3.5-turbo'
+      );
+
+      await budgetManager.checkUserBudget(user.id, estimatedCost);
+
+      await logger.info('Budget check passed', {
+        userId: user.id,
+        estimatedCost,
+        promptId,
+      });
+    } catch (error) {
+      if (error instanceof QuotaExceededError) {
+        return NextResponse.json(
+          {
+            error: 'Monthly budget exceeded',
+            code: 'QUOTA_EXCEEDED',
+            details: {
+              currentSpend: error.currentSpend,
+              limit: error.limit,
+              message: error.message,
+            },
+          },
+          { status: 402 } // Payment Required
+        );
+      }
+      throw error; // Re-throw other errors
     }
 
     // Create execution record

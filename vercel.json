@@ -85,7 +85,8 @@
   "build": {
     "env": {
       "NODE_ENV": "production",
-      "TYPESCRIPT_STRICT": "false"
+      "TYPESCRIPT_STRICT": "true",
+      "CI": "true"
     }
   },
   "crons": [

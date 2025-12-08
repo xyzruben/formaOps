@@ -29,8 +29,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Section 10.2: security_dog.md - Enable TypeScript strict mode in production
   typescript: {
-    ignoreBuildErrors: true,
+    // Only ignore errors in development, enforce in production/CI
+    ignoreBuildErrors: process.env.CI !== 'true',
   },
 
   compiler: {

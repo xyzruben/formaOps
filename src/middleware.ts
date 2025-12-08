@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-// Rate limiting storage (in production, use Redis or database)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+import crypto from 'crypto';
+import {
+  checkRateLimit,
+  getClientId,
+  getRateLimitConfig,
+} from '@/lib/security/rate-limit';
+import {
+  generateCsrfToken,
+  validateCsrfToken,
+  requiresCsrfProtection,
+  getCsrfTokenFromHeader,
+  getCsrfTokenFromCookie,
+} from '@/lib/security/csrf';
 
 // Security headers
 const securityHeaders = {
@@ -14,71 +24,7 @@ const securityHeaders = {
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
 };
 
-// Rate limit configuration
-const RATE_LIMIT_CONFIG = {
-  '/api/auth/login': { limit: 50, window: 15 * 60 * 1000 }, // 50 attempts per 15 minutes - allows for testing/debugging while preventing brute force
-  '/api/auth/register': { limit: 20, window: 15 * 60 * 1000 }, // 20 registration attempts per 15 minutes
-  '/api/executions': { limit: 1000, window: 60 * 60 * 1000 }, // 1000 read requests per hour (view history, pagination, filtering)
-  '/api/prompts/[id]/execute': { limit: 50, window: 60 * 60 * 1000 }, // 50 prompt executions per hour
-  '/api/prompts': { limit: 1000, window: 60 * 60 * 1000 }, // 1000 read requests per hour
-  default: { limit: 500, window: 60 * 60 * 1000 }, // 500 requests per hour default
-};
-
-function getRateLimit(pathname: string): { limit: number; window: number } {
-  for (const [path, config] of Object.entries(RATE_LIMIT_CONFIG)) {
-    if (path !== 'default' && pathname.startsWith(path)) {
-      return config;
-    }
-  }
-  return RATE_LIMIT_CONFIG.default;
-}
-
-function getClientId(request: NextRequest): string {
-  // In production, consider using multiple factors for client identification
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  const ip = forwarded?.split(',')[0] || realIp || 'unknown';
-
-  // Add user agent for better identification (optional)
-  const userAgent = request.headers.get('user-agent') || 'unknown';
-
-  return `${ip}:${userAgent.substring(0, 50)}`;
-}
-
-function isRateLimited(
-  clientId: string,
-  config: { limit: number; window: number }
-): boolean {
-  const now = Date.now();
-  const clientData = rateLimitMap.get(clientId);
-
-  if (!clientData || now > clientData.resetTime) {
-    // Reset or initialize
-    rateLimitMap.set(clientId, { count: 1, resetTime: now + config.window });
-    return false;
-  }
-
-  if (clientData.count >= config.limit) {
-    return true;
-  }
-
-  clientData.count++;
-  return false;
-}
-
-function cleanupRateLimit(): void {
-  const now = Date.now();
-  for (const [key, data] of rateLimitMap.entries()) {
-    if (now > data.resetTime) {
-      rateLimitMap.delete(key);
-    }
-  }
-}
-
-// Cleanup old rate limit entries every 10 minutes
-setInterval(cleanupRateLimit, 10 * 60 * 1000);
-
-export function middleware(request: NextRequest): NextResponse {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for static files and certain paths
@@ -91,6 +37,9 @@ export function middleware(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
+  // Generate nonce for CSP (Section 2.3: security_dog.md)
+  const nonce = crypto.randomBytes(16).toString('base64');
+
   // Security checks
   const response = NextResponse.next();
 
@@ -101,27 +50,70 @@ export function middleware(request: NextRequest): NextResponse {
 
   // CORS for API routes
   if (pathname.startsWith('/api/')) {
-    // Rate limiting for API routes
-    const clientId = getClientId(request);
-    const rateLimit = getRateLimit(pathname);
+    // CSRF Token Protection (Section 7.1: security_dog.md)
+    // Validate CSRF tokens on state-changing operations
+    if (requiresCsrfProtection(request.method)) {
+      const tokenFromHeader = getCsrfTokenFromHeader(request);
+      const tokenFromCookie = getCsrfTokenFromCookie(
+        request.headers.get('cookie')
+      );
 
-    if (isRateLimited(clientId, rateLimit)) {
+      if (!validateCsrfToken(tokenFromHeader, tokenFromCookie)) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'CSRF validation failed',
+            message: 'Invalid or missing CSRF token',
+            code: 'CSRF_VALIDATION_FAILED',
+          }),
+          {
+            status: 403,
+            headers: {
+              'Content-Type': 'application/json',
+              ...securityHeaders,
+            },
+          }
+        );
+      }
+    }
+
+    // Rate limiting for API routes (Section 2.2: security_dog.md - Distributed rate limiting)
+    const clientId = getClientId(request);
+    const rateLimitConfig = getRateLimitConfig(pathname);
+
+    const { success, limit, remaining, reset } = await checkRateLimit(
+      clientId,
+      rateLimitConfig
+    );
+
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
       return new NextResponse(
         JSON.stringify({
           error: 'Rate limit exceeded',
           message: `Too many requests. Try again later.`,
-          retryAfter: Math.ceil(rateLimit.window / 1000),
+          limit,
+          remaining: 0,
+          reset,
+          retryAfter,
         }),
         {
           status: 429,
           headers: {
             'Content-Type': 'application/json',
-            'Retry-After': Math.ceil(rateLimit.window / 1000).toString(),
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': reset.toString(),
+            'Retry-After': retryAfter.toString(),
             ...securityHeaders,
           },
         }
       );
     }
+
+    // Add rate limit headers to successful responses
+    response.headers.set('X-RateLimit-Limit', limit.toString());
+    response.headers.set('X-RateLimit-Remaining', remaining.toString());
+    response.headers.set('X-RateLimit-Reset', reset.toString());
 
     // CORS headers
     if (process.env.NODE_ENV === 'development') {
@@ -142,11 +134,11 @@ export function middleware(request: NextRequest): NextResponse {
     }
   }
 
-  // Content Security Policy
+  // Content Security Policy (Section 2.3: security_dog.md - nonce-based CSP)
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'unsafe-eval' 'unsafe-inline' https://va.vercel-scripts.com;
-    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+    script-src 'self' 'nonce-${nonce}' https://va.vercel-scripts.com;
+    style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: https:;
     connect-src 'self' https://api.openai.com https://*.supabase.co;
@@ -159,6 +151,9 @@ export function middleware(request: NextRequest): NextResponse {
     .trim();
 
   response.headers.set('Content-Security-Policy', cspHeader);
+
+  // Pass nonce to the app via response header for inline scripts/styles
+  response.headers.set('X-Nonce', nonce);
 
   // Additional security for production
   if (process.env.NODE_ENV === 'production') {
@@ -233,6 +228,25 @@ export function middleware(request: NextRequest): NextResponse {
 
     // eslint-disable-next-line no-console
     console.log('Request:', JSON.stringify(requestInfo));
+  }
+
+  // Set CSRF token cookie (Section 7.1: security_dog.md)
+  // Check if CSRF token already exists in cookies
+  const existingCsrfToken = getCsrfTokenFromCookie(
+    request.headers.get('cookie')
+  );
+
+  if (!existingCsrfToken) {
+    // Generate new CSRF token if none exists
+    const csrfToken = generateCsrfToken();
+
+    response.cookies.set('csrf-token', csrfToken, {
+      httpOnly: false, // Must be readable by JavaScript
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 24 hours
+    });
   }
 
   return response;
