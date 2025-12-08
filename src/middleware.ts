@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import crypto from 'crypto';
 import {
   checkRateLimit,
   getClientId,
@@ -38,7 +37,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   // Generate nonce for CSP (Section 2.3: security_dog.md)
-  const nonce = crypto.randomBytes(16).toString('base64');
+  // Use Web Crypto API for Edge Runtime compatibility
+  const nonce = Buffer.from(
+    crypto.getRandomValues(new Uint8Array(16))
+  ).toString('base64');
 
   // Security checks
   const response = NextResponse.next();

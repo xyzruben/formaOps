@@ -10,13 +10,29 @@
  * - Protection against sophisticated CSRF attacks that can bypass SameSite
  */
 
-import crypto from 'crypto';
-
 /**
  * Generate a cryptographically secure CSRF token
+ * Uses Web Crypto API for Edge Runtime compatibility
  */
 export function generateCsrfToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Buffer.from(array).toString('hex');
+}
+
+/**
+ * Timing-safe string comparison to prevent timing attacks
+ * Edge Runtime compatible implementation
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 /**
@@ -36,15 +52,7 @@ export function validateCsrfToken(
   }
 
   // Use timing-safe comparison to prevent timing attacks
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(tokenFromHeader),
-      Buffer.from(tokenFromCookie)
-    );
-  } catch {
-    // If buffers are different lengths, timingSafeEqual throws
-    return false;
-  }
+  return timingSafeEqual(tokenFromHeader, tokenFromCookie);
 }
 
 /**
